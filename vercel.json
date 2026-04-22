@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/events/process",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/actions/evaluate",
+      "schedule": "0 * * * *"
+    }
+  ]
+}

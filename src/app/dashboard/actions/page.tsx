@@ -1,0 +1,409 @@
+'use client'
+import { useState, useEffect, useCallback } from 'react'
+import { Action, PriorityLevel } from '@/lib/types'
+import { formatDate } from '@/lib/utils'
+import {
+  CheckCircle2, Clock, AlertTriangle, ChevronRight,
+  Loader2, RefreshCw, Zap, Info,
+} from 'lucide-react'
+
+// ─── Priority config ──────────────────────────────────────────
+
+const PRIORITY_CONFIG: Record<PriorityLevel, {
+  label: string; badge: string; header: string; dot: string
+}> = {
+  CRITICAL: {
+    label:  'CRITICAL',
+    badge:  'bg-red-500/15 text-red-400 border border-red-500/30',
+    header: 'text-red-400',
+    dot:    'bg-red-500',
+  },
+  HIGH: {
+    label:  'HIGH',
+    badge:  'bg-amber-500/15 text-amber-400 border border-amber-500/30',
+    header: 'text-amber-400',
+    dot:    'bg-amber-500',
+  },
+  MEDIUM: {
+    label:  'MEDIUM',
+    badge:  'bg-blue-500/15 text-blue-400 border border-blue-500/30',
+    header: 'text-blue-400',
+    dot:    'bg-blue-500',
+  },
+  LOW: {
+    label:  'LOW',
+    badge:  'bg-[#1E3A5F] text-[#64748B] border border-[#1E3A5F]',
+    header: 'text-[#64748B]',
+    dot:    'bg-[#64748B]',
+  },
+}
+
+const PRIORITY_ORDER: PriorityLevel[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
+
+// ─── Effectiveness label (confidence-gated) ──────────────────
+// Only surfaces a score when there's real signal behind it.
+// Seeded priors (sample_size = 0) fall through to "Learning..."
+
+function EffectivenessChip({
+  score,
+  tier,
+  sampleSize,
+}: {
+  score?:      number | null
+  tier?:       'org' | 'global' | null
+  sampleSize?: number
+}) {
+  if (score == null || tier == null) {
+    return <span className="text-[10px] text-[#334155] italic">Learning...</span>
+  }
+
+  const pct   = Math.round(score * 100)
+  const color = pct >= 75 ? 'text-emerald-400' : pct >= 55 ? 'text-amber-400' : 'text-[#64748B]'
+  const label = tier === 'org'
+    ? `${pct}% · your data`
+    : `${pct}% · industry`
+
+  return (
+    <span className={`text-[10px] font-semibold ${color}`} title={`Based on ${sampleSize} outcomes`}>
+      {label}
+    </span>
+  )
+}
+
+// ─── Days until due ───────────────────────────────────────────
+
+function DueLabel({ due }: { due?: string }) {
+  if (!due) return <span className="text-[#64748B] text-xs">No deadline</span>
+  const days = Math.ceil((new Date(due).getTime() - Date.now()) / 86400000)
+  if (days < 0)  return <span className="text-red-400 text-xs font-semibold">{Math.abs(days)}d overdue</span>
+  if (days === 0) return <span className="text-red-400 text-xs font-semibold">Due today</span>
+  if (days <= 3)  return <span className="text-red-400 text-xs">{days}d remaining</span>
+  if (days <= 7)  return <span className="text-amber-400 text-xs">{days}d remaining</span>
+  return <span className="text-[#64748B] text-xs">{days}d remaining</span>
+}
+
+// ─── Action card ─────────────────────────────────────────────
+
+function ActionCard({
+  action,
+  onComplete,
+  onDismiss,
+  completing,
+}: {
+  action:     Action
+  onComplete: (id: string) => void
+  onDismiss:  (id: string) => void
+  completing: string | null
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const cfg     = PRIORITY_CONFIG[action.priority]
+  const isBusy  = completing === action.id
+  const shipRef = (action as any).shipment
+
+  return (
+    <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-4 hover:border-[#2A4A7F] transition-colors">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          {/* Header row */}
+          <div className="flex items-center gap-2 flex-wrap mb-1.5">
+            <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${cfg.badge}`}>
+              {cfg.label}
+            </span>
+            {shipRef && (
+              <span className="text-[10px] text-[#64748B] font-medium">
+                {shipRef.name ?? shipRef.reference_number}
+              </span>
+            )}
+            <EffectivenessChip
+              score={      (action as any).predicted_effectiveness}
+              tier={       (action as any).effectiveness_tier}
+              sampleSize={ (action as any).effectiveness_sample_size}
+            />
+          </div>
+
+          {/* Title */}
+          <p className="text-sm font-semibold text-white leading-snug mb-1">{action.title}</p>
+
+          {/* Why + deadline row */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <DueLabel due={action.due_date} />
+            {action.trigger_reason && (
+              <span className="text-[10px] text-[#64748B] truncate max-w-[260px]" title={action.trigger_reason}>
+                {action.trigger_reason}
+              </span>
+            )}
+          </div>
+
+          {/* Expand toggle */}
+          {action.description && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="flex items-center gap-1 text-[10px] text-[#64748B] hover:text-[#94A3B8] mt-1.5 transition-colors"
+            >
+              <Info size={10} />
+              {expanded ? 'Less' : 'Details'}
+              <ChevronRight size={10} className={`transition-transform ${expanded ? 'rotate-90' : ''}`} />
+            </button>
+          )}
+
+          {expanded && action.description && (
+            <p className="text-xs text-[#94A3B8] mt-2 pl-1 border-l border-[#1E3A5F] leading-relaxed">
+              {action.description}
+            </p>
+          )}
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex flex-col gap-1.5 shrink-0">
+          <button
+            onClick={() => onComplete(action.id)}
+            disabled={isBusy}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00C896]/10 text-[#00C896] border border-[#00C896]/25 rounded-lg text-xs font-semibold hover:bg-[#00C896]/20 disabled:opacity-50 transition-all"
+          >
+            {isBusy
+              ? <Loader2 size={11} className="animate-spin" />
+              : <CheckCircle2 size={11} />}
+            Done
+          </button>
+          <button
+            onClick={() => onDismiss(action.id)}
+            disabled={isBusy}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[#64748B] border border-[#1E3A5F] rounded-lg text-xs hover:text-[#94A3B8] disabled:opacity-50 transition-colors"
+          >
+            Dismiss
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Priority group ───────────────────────────────────────────
+
+function PriorityGroup({
+  level,
+  actions,
+  onComplete,
+  onDismiss,
+  completing,
+}: {
+  level:      PriorityLevel
+  actions:    Action[]
+  onComplete: (id: string) => void
+  onDismiss:  (id: string) => void
+  completing: string | null
+}) {
+  if (!actions.length) return null
+  const cfg = PRIORITY_CONFIG[level]
+
+  return (
+    <section>
+      <div className="flex items-center gap-2 mb-3">
+        <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
+        <h3 className={`text-xs font-bold uppercase tracking-widest ${cfg.header}`}>{cfg.label}</h3>
+        <span className="text-[#64748B] text-xs">— {actions.length}</span>
+      </div>
+      <div className="space-y-2">
+        {actions.map((a) => (
+          <ActionCard
+            key={a.id}
+            action={a}
+            onComplete={onComplete}
+            onDismiss={onDismiss}
+            completing={completing}
+          />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// ─── Page ─────────────────────────────────────────────────────
+
+export default function ActionsPage() {
+  const [actions, setActions]     = useState<Action[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [error, setError]         = useState<string | null>(null)
+  const [completing, setCompleting] = useState<string | null>(null)
+  const [evaluating, setEvaluating] = useState(false)
+  const [evalResult, setEvalResult] = useState<string | null>(null)
+  const [filter, setFilter]       = useState<'active' | 'all'>('active')
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const status = filter === 'active' ? '' : '?status=all'
+      const url = filter === 'active'
+        ? '/api/actions'
+        : '/api/actions?status=all'
+      const res  = await fetch(url)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setActions(data)
+    } catch (e: any) {
+      setError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [filter])
+
+  useEffect(() => { load() }, [load])
+
+  async function handleComplete(id: string) {
+    setCompleting(id)
+    try {
+      const res = await fetch(`/api/actions/${id}/complete`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+      if (res.ok) setActions((prev) => prev.filter((a) => a.id !== id))
+    } finally {
+      setCompleting(null)
+    }
+  }
+
+  async function handleDismiss(id: string) {
+    setCompleting(id)
+    try {
+      const res = await fetch(`/api/actions/${id}/complete`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'DISMISSED' }),
+      })
+      if (res.ok) setActions((prev) => prev.filter((a) => a.id !== id))
+    } finally {
+      setCompleting(null)
+    }
+  }
+
+  async function runEvaluation() {
+    setEvaluating(true)
+    setEvalResult(null)
+    try {
+      const res  = await fetch('/api/actions/evaluate', { method: 'POST' })
+      const data = await res.json()
+      setEvalResult(`${data.evaluated} action${data.evaluated !== 1 ? 's' : ''} evaluated`)
+      await load()
+    } catch {
+      setEvalResult('Evaluation failed')
+    } finally {
+      setEvaluating(false)
+      setTimeout(() => setEvalResult(null), 5000)
+    }
+  }
+
+  // Group by priority
+  const grouped = PRIORITY_ORDER.reduce<Record<PriorityLevel, Action[]>>((acc, p) => {
+    acc[p] = actions.filter((a) => a.priority === p)
+    return acc
+  }, { CRITICAL: [], HIGH: [], MEDIUM: [], LOW: [] })
+
+  const criticalCount = grouped.CRITICAL.length
+  const highCount     = grouped.HIGH.length
+  const total         = actions.length
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Action Center</h1>
+          <p className="text-[#64748B] text-sm mt-1">
+            {loading ? 'Loading...' : (
+              <>
+                {total} open action{total !== 1 ? 's' : ''}
+                {criticalCount > 0 && (
+                  <span className="text-red-400 font-semibold ml-2">
+                    · {criticalCount} critical
+                  </span>
+                )}
+                {highCount > 0 && (
+                  <span className="text-amber-400 font-semibold ml-2">
+                    · {highCount} high
+                  </span>
+                )}
+              </>
+            )}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {/* Filter toggle */}
+          <div className="flex rounded-lg border border-[#1E3A5F] overflow-hidden">
+            {(['active', 'all'] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-3 py-1.5 text-xs font-medium transition-all ${
+                  filter === f
+                    ? 'bg-[#00C896]/10 text-[#00C896]'
+                    : 'text-[#64748B] hover:text-white'
+                }`}
+              >
+                {f === 'active' ? 'Active' : 'All'}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={load}
+            className="p-2 border border-[#1E3A5F] text-[#64748B] rounded-lg hover:text-white hover:border-[#2A4A7F] transition-all"
+            title="Refresh"
+          >
+            <RefreshCw size={14} />
+          </button>
+
+          <button
+            onClick={runEvaluation}
+            disabled={evaluating}
+            className="flex items-center gap-2 px-3 py-2 border border-[#1E3A5F] text-[#94A3B8] rounded-lg text-sm font-medium hover:border-[#00C896]/40 hover:text-[#00C896] disabled:opacity-50 transition-all"
+          >
+            {evaluating ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
+            {evaluating ? 'Evaluating...' : 'Run Evaluation'}
+          </button>
+
+          {evalResult && (
+            <span className="text-xs font-medium text-[#00C896]">{evalResult}</span>
+          )}
+        </div>
+      </div>
+
+      {/* Critical banner */}
+      {criticalCount > 0 && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/25 rounded-xl">
+          <AlertTriangle size={16} className="text-red-400 shrink-0" />
+          <p className="text-sm text-red-300">
+            <span className="font-bold">{criticalCount} critical action{criticalCount !== 1 ? 's' : ''}</span> require immediate attention — shipment failure risk is elevated.
+          </p>
+        </div>
+      )}
+
+      {/* Content */}
+      {loading ? (
+        <div className="flex items-center justify-center h-48 text-[#64748B]">
+          <Loader2 size={20} className="animate-spin mr-2" />
+          Loading actions...
+        </div>
+      ) : error ? (
+        <div className="flex items-center justify-center h-48 text-red-400">Error: {error}</div>
+      ) : total === 0 ? (
+        <div className="flex flex-col items-center justify-center h-48 gap-2">
+          <CheckCircle2 size={32} className="text-[#00C896]" />
+          <p className="text-white font-semibold">All clear</p>
+          <p className="text-[#64748B] text-sm">No open actions. System is monitoring.</p>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {PRIORITY_ORDER.map((level) => (
+            <PriorityGroup
+              key={level}
+              level={level}
+              actions={grouped[level]}
+              onComplete={handleComplete}
+              onDismiss={handleDismiss}
+              completing={completing}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
