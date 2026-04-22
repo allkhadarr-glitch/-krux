@@ -9,6 +9,7 @@ import AlertBanner from '@/components/AlertBanner'
 import PortalStatusModal from '@/components/PortalStatusModal'
 import { AlertTriangle, Clock, Search, Globe, Plus, Bell, Loader2, ChevronDown } from 'lucide-react'
 import AddShipmentModal from '@/components/AddShipmentModal'
+import ShipmentDrawer from '@/components/ShipmentDrawer'
 
 const priorityColors: Record<PriorityLevel, string> = {
   CRITICAL: 'bg-red-500/15 text-red-400 border border-red-500/30',
@@ -87,6 +88,7 @@ export default function OperationsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [portalModal, setPortalModal] = useState<Shipment | null>(null)
+  const [drawerShipment, setDrawerShipment] = useState<Shipment | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [alertSending, setAlertSending]   = useState(false)
   const [alertResult, setAlertResult]     = useState<string | null>(null)
@@ -273,7 +275,12 @@ export default function OperationsPage() {
                     <RiskDriversTooltip drivers={s.risk?.risk_drivers} />
                   </td>
                   <td className="px-4 py-3">
-                    <div className="text-sm font-medium text-white">{s.name}</div>
+                    <button
+                      onClick={() => setDrawerShipment(s)}
+                      className="text-sm font-medium text-white hover:text-[#00C896] transition-colors text-left"
+                    >
+                      {s.name}
+                    </button>
                     <div className="text-xs text-[#64748B] mt-0.5">{s.origin_port}</div>
                     {alert && (
                       <div className="text-[10px] text-red-400 mt-0.5 font-medium truncate max-w-[200px]">
@@ -325,6 +332,13 @@ export default function OperationsPage() {
             setShipments((prev) => [newShipment, ...prev])
             setShowAddModal(false)
           }}
+        />
+      )}
+
+      {drawerShipment && (
+        <ShipmentDrawer
+          shipment={drawerShipment}
+          onClose={() => setDrawerShipment(null)}
         />
       )}
 
