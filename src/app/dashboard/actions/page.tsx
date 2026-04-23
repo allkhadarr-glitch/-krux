@@ -5,6 +5,7 @@ import { formatDate } from '@/lib/utils'
 import {
   CheckCircle2, Clock, AlertTriangle, ChevronRight,
   Loader2, RefreshCw, Zap, Info, Square, CheckSquare, FileText, XCircle,
+  MessageSquare, User, Send,
 } from 'lucide-react'
 
 // ─── Document checklist per action type ──────────────────────
@@ -196,10 +197,16 @@ function ActionCard({
   completing: string | null
   onRefresh:  () => void
 }) {
-  const [expanded, setExpanded]   = useState(false)
-  const [acting, setActing]       = useState(false)
-  const [failNote, setFailNote]   = useState('')
-  const [showFail, setShowFail]   = useState(false)
+  const [expanded, setExpanded]       = useState(false)
+  const [acting, setActing]           = useState(false)
+  const [failNote, setFailNote]       = useState('')
+  const [showFail, setShowFail]       = useState(false)
+  const [noteText, setNoteText]       = useState('')
+  const [showNote, setShowNote]       = useState(false)
+  const [noteSending, setNoteSending] = useState(false)
+  const [assignee, setAssignee]       = useState<string>((action as any).assignee_name ?? '')
+  const [editAssignee, setEditAssignee] = useState(false)
+  const [assigneeDraft, setAssigneeDraft] = useState(assignee)
 
   const cfg     = PRIORITY_CONFIG[action.priority]
   const isBusy  = completing === action.id || acting
@@ -227,6 +234,29 @@ function ActionCard({
     onRefresh()
   }
 
+  async function handleNote() {
+    if (!noteText.trim()) return
+    setNoteSending(true)
+    await fetch(`/api/actions/${action.id}/note`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ text: noteText }),
+    })
+    setNoteSending(false)
+    setNoteText('')
+    setShowNote(false)
+  }
+
+  async function handleAssign() {
+    await fetch(`/api/actions/${action.id}/assign`, {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ assignee_name: assigneeDraft.trim() || null }),
+    })
+    setAssignee(assigneeDraft.trim())
+    setEditAssignee(false)
+  }
+
   return (
     <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-4 hover:border-[#2A4A7F] transition-colors">
       <div className="flex items-start justify-between gap-3">
@@ -247,6 +277,11 @@ function ActionCard({
               tier={       (action as any).effectiveness_tier}
               sampleSize={ (action as any).effectiveness_sample_size}
             />
+            {assignee && (
+              <span className="flex items-center gap-1 text-[10px] text-blue-400">
+                <User size={9} />{assignee}
+              </span>
+            )}
           </div>
 
           {/* Title */}
@@ -280,6 +315,64 @@ function ActionCard({
                 </p>
               )}
               <DocChecklist actionId={action.id} actionType={action.action_type} />
+
+              {/* Assignee */}
+              <div className="mt-3 pt-3 border-t border-[#1E3A5F]">
+                <div className="flex items-center gap-2">
+                  <User size={10} className="text-[#64748B]" />
+                  <span className="text-[10px] text-[#64748B] font-semibold uppercase tracking-wide">Assigned to</span>
+                </div>
+                {editAssignee ? (
+                  <div className="flex gap-2 mt-1.5">
+                    <input
+                      value={assigneeDraft}
+                      onChange={(e) => setAssigneeDraft(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAssign()}
+                      placeholder="Name or team..."
+                      className="flex-1 text-xs bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-2 py-1.5 text-white placeholder:text-[#334155] focus:outline-none focus:border-[#00C896]"
+                    />
+                    <button onClick={handleAssign} className="px-2 py-1.5 bg-[#00C896]/10 text-[#00C896] border border-[#00C896]/25 rounded-lg text-xs font-semibold hover:bg-[#00C896]/20">Save</button>
+                    <button onClick={() => { setEditAssignee(false); setAssigneeDraft(assignee) }} className="px-2 py-1.5 text-[#64748B] text-xs hover:text-white">✕</button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setEditAssignee(true)}
+                    className="mt-1 text-xs text-[#64748B] hover:text-blue-400 transition-colors"
+                  >
+                    {assignee || '+ Assign someone'}
+                  </button>
+                )}
+              </div>
+
+              {/* Note input */}
+              <div className="mt-3">
+                {showNote ? (
+                  <div className="flex gap-2">
+                    <input
+                      value={noteText}
+                      onChange={(e) => setNoteText(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleNote()}
+                      placeholder="Add a note..."
+                      className="flex-1 text-xs bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-2 py-1.5 text-[#94A3B8] placeholder:text-[#334155] focus:outline-none focus:border-[#00C896]"
+                    />
+                    <button
+                      onClick={handleNote}
+                      disabled={!noteText.trim() || noteSending}
+                      className="px-2 py-1.5 bg-[#00C896]/10 text-[#00C896] border border-[#00C896]/25 rounded-lg text-xs font-semibold hover:bg-[#00C896]/20 disabled:opacity-40"
+                    >
+                      {noteSending ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
+                    </button>
+                    <button onClick={() => setShowNote(false)} className="text-[#64748B] text-xs hover:text-white px-1">✕</button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowNote(true)}
+                    className="flex items-center gap-1 text-[10px] text-[#64748B] hover:text-[#94A3B8] transition-colors"
+                  >
+                    <MessageSquare size={10} /> Add note
+                  </button>
+                )}
+              </div>
 
               {/* Fail input */}
               {showFail && (

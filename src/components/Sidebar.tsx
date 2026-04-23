@@ -1,13 +1,14 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BarChart3, Briefcase, User, Factory, Settings, Shield, LogOut, Zap, ShoppingCart, Archive } from 'lucide-react'
+import { BarChart3, Briefcase, User, Factory, Settings, Shield, LogOut, Zap, ShoppingCart, Archive, Smartphone } from 'lucide-react'
 import { signOut } from '@/app/login/actions'
 
 const nav = [
   { href: '/dashboard/actions',     label: 'Action Center',    icon: Zap },
   { href: '/dashboard/operations',  label: 'Operations',       icon: Shield },
   { href: '/dashboard/closed',      label: 'Closed Shipments', icon: Archive },
+  { href: '/dashboard/mobile',      label: 'Field View',       icon: Smartphone },
   { href: '/dashboard/orders',      label: 'Order Protection', icon: ShoppingCart },
   { href: '/dashboard/management',  label: 'Management',       icon: BarChart3 },
   { href: '/dashboard/agents',      label: 'Clearing Agents',  icon: Briefcase },

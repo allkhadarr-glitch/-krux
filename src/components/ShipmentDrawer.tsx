@@ -6,29 +6,35 @@ import { RiskBadge } from './RiskBadge'
 import {
   X, Sparkles, Loader2, FileText, Wrench, List, Calculator,
   Clock, CheckCircle2, XCircle, AlertTriangle, Zap, Bell,
+  MessageSquare, User, DollarSign, Upload, Trash2, ExternalLink,
 } from 'lucide-react'
 
 // ─── Tabs ────────────────────────────────────────────────────
 
-type Tab = 'brief' | 'remediation' | 'checklist' | 'tax' | 'timeline'
+type Tab = 'brief' | 'remediation' | 'checklist' | 'tax' | 'costs' | 'files' | 'timeline'
 
-const AI_TABS: { key: Exclude<Tab, 'timeline'>; label: string; icon: React.ElementType; endpoint: string }[] = [
+const AI_TABS: { key: Exclude<Tab, 'timeline' | 'costs' | 'files'>; label: string; icon: React.ElementType; endpoint: string }[] = [
   { key: 'brief',       label: 'Brief',      icon: FileText,    endpoint: '/api/ai/brief' },
   { key: 'remediation', label: 'Steps',      icon: Wrench,      endpoint: '/api/ai/remediation' },
-  { key: 'checklist',   label: 'Documents',  icon: List,        endpoint: '/api/ai/checklist' },
-  { key: 'tax',         label: 'Tax Quote',  icon: Calculator,  endpoint: '/api/ai/tax' },
+  { key: 'checklist',   label: 'Checklist',  icon: List,        endpoint: '/api/ai/checklist' },
+  { key: 'tax',         label: 'Tax',        icon: Calculator,  endpoint: '/api/ai/tax' },
 ]
 
 // ─── Timeline event config ────────────────────────────────────
 
 const EVENT_CONFIG: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
-  ACTION_CREATED:   { icon: Zap,           color: 'text-blue-400',    bg: 'bg-blue-400/10' },
-  ACTION_STARTED:   { icon: Clock,         color: 'text-amber-400',   bg: 'bg-amber-400/10' },
-  ACTION_COMPLETED: { icon: CheckCircle2,  color: 'text-[#00C896]',   bg: 'bg-[#00C896]/10' },
-  ACTION_FAILED:    { icon: XCircle,       color: 'text-red-400',     bg: 'bg-red-400/10' },
-  RISK_UPDATED:     { icon: AlertTriangle, color: 'text-amber-400',   bg: 'bg-amber-400/10' },
-  ALERT_SENT:       { icon: Bell,          color: 'text-purple-400',  bg: 'bg-purple-400/10' },
-  STATUS_CHANGED:   { icon: Zap,           color: 'text-[#64748B]',   bg: 'bg-[#1E3A5F]' },
+  ACTION_CREATED:    { icon: Zap,            color: 'text-blue-400',    bg: 'bg-blue-400/10' },
+  ACTION_STARTED:    { icon: Clock,          color: 'text-amber-400',   bg: 'bg-amber-400/10' },
+  ACTION_COMPLETED:  { icon: CheckCircle2,   color: 'text-[#00C896]',   bg: 'bg-[#00C896]/10' },
+  ACTION_FAILED:     { icon: XCircle,        color: 'text-red-400',     bg: 'bg-red-400/10' },
+  ACTION_AT_RISK:    { icon: AlertTriangle,  color: 'text-red-400',     bg: 'bg-red-400/10' },
+  ACTION_NOTE:       { icon: MessageSquare,  color: 'text-slate-400',   bg: 'bg-slate-400/10' },
+  ACTION_ASSIGNED:   { icon: User,           color: 'text-blue-300',    bg: 'bg-blue-300/10' },
+  RISK_RECALCULATED: { icon: AlertTriangle,  color: 'text-amber-400',   bg: 'bg-amber-400/10' },
+  RISK_UPDATED:      { icon: AlertTriangle,  color: 'text-amber-400',   bg: 'bg-amber-400/10' },
+  ALERT_SENT:        { icon: Bell,           color: 'text-purple-400',  bg: 'bg-purple-400/10' },
+  SHIPMENT_CLOSED:   { icon: CheckCircle2,   color: 'text-[#00C896]',   bg: 'bg-[#00C896]/10' },
+  STATUS_CHANGED:    { icon: Zap,            color: 'text-[#64748B]',   bg: 'bg-[#1E3A5F]' },
 }
 
 function defaultConfig() {
@@ -126,6 +132,232 @@ function TimelinePanel({ shipmentId }: { shipmentId: string }) {
   )
 }
 
+// ─── Costs Panel ─────────────────────────────────────────────
+
+const COST_TYPES = ['AGENT_FEE', 'INSPECTION', 'DEMURRAGE', 'STORAGE', 'CUSTOMS_DUTY', 'OTHER'] as const
+type CostType = typeof COST_TYPES[number]
+
+const COST_LABELS: Record<CostType, string> = {
+  AGENT_FEE:    'Agent Fee',
+  INSPECTION:   'Inspection',
+  DEMURRAGE:    'Demurrage',
+  STORAGE:      'Storage',
+  CUSTOMS_DUTY: 'Customs Duty',
+  OTHER:        'Other',
+}
+
+function CostsPanel({ shipmentId }: { shipmentId: string }) {
+  const [costs, setCosts]       = useState<any[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [type, setType]         = useState<CostType>('AGENT_FEE')
+  const [amount, setAmount]     = useState('')
+  const [note, setNote]         = useState('')
+  const [saving, setSaving]     = useState(false)
+
+  function load() {
+    fetch(`/api/shipments/${shipmentId}/costs`)
+      .then((r) => r.json())
+      .then((d) => setCosts(d.costs ?? []))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { load() }, [shipmentId])
+
+  async function addCost() {
+    if (!amount || isNaN(Number(amount))) return
+    setSaving(true)
+    await fetch(`/api/shipments/${shipmentId}/costs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cost_type: type, amount_kes: Number(amount), note: note || null }),
+    })
+    setAmount('')
+    setNote('')
+    setSaving(false)
+    load()
+  }
+
+  async function deleteCost(id: string, storagePath: string) {
+    await fetch(`/api/shipments/${shipmentId}/costs`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cost_id: id, storage_path: storagePath }),
+    })
+    load()
+  }
+
+  const total = costs.reduce((s, c) => s + Number(c.amount_kes), 0)
+
+  if (loading) return <div className="flex items-center justify-center h-32 text-[#64748B]"><Loader2 size={16} className="animate-spin" /></div>
+
+  return (
+    <div className="space-y-4">
+      {/* Total */}
+      {costs.length > 0 && (
+        <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-lg px-4 py-3 flex items-center justify-between">
+          <span className="text-xs text-[#64748B] font-semibold uppercase tracking-wide">Total Actual Costs</span>
+          <span className="text-lg font-bold text-[#00C896]">KES {total.toLocaleString()}</span>
+        </div>
+      )}
+
+      {/* Cost list */}
+      {costs.map((c) => (
+        <div key={c.id} className="flex items-start justify-between gap-2 py-2 border-b border-[#1E3A5F]">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-[#64748B] uppercase">{COST_LABELS[c.cost_type as CostType] ?? c.cost_type}</span>
+              <span className="text-sm font-semibold text-white">KES {Number(c.amount_kes).toLocaleString()}</span>
+            </div>
+            {c.note && <p className="text-xs text-[#64748B] mt-0.5">{c.note}</p>}
+          </div>
+          <button onClick={() => deleteCost(c.id, '')} className="text-[#334155] hover:text-red-400 transition-colors shrink-0">
+            <Trash2 size={12} />
+          </button>
+        </div>
+      ))}
+
+      {/* Add form */}
+      <div className="border border-[#1E3A5F] rounded-xl p-3 space-y-2 bg-[#0F2040]">
+        <p className="text-[10px] text-[#64748B] font-semibold uppercase tracking-wide">Add Cost</p>
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value as CostType)}
+          className="w-full text-xs bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-[#00C896]"
+        >
+          {COST_TYPES.map((t) => <option key={t} value={t}>{COST_LABELS[t]}</option>)}
+        </select>
+        <div className="flex gap-2">
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="Amount (KES)"
+            className="flex-1 text-xs bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-2 py-1.5 text-white placeholder:text-[#334155] focus:outline-none focus:border-[#00C896]"
+          />
+          <input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Note (optional)"
+            className="flex-1 text-xs bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-2 py-1.5 text-white placeholder:text-[#334155] focus:outline-none focus:border-[#00C896]"
+          />
+        </div>
+        <button
+          onClick={addCost}
+          disabled={saving || !amount}
+          className="w-full py-1.5 bg-[#00C896]/10 text-[#00C896] border border-[#00C896]/25 rounded-lg text-xs font-semibold hover:bg-[#00C896]/20 disabled:opacity-40 flex items-center justify-center gap-1.5"
+        >
+          {saving ? <Loader2 size={11} className="animate-spin" /> : <DollarSign size={11} />}
+          Add Cost
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Files Panel ──────────────────────────────────────────────
+
+const DOC_TYPES = ['PVoC Certificate', 'KEBS Inspection Report', 'KRA Entry', 'Commercial Invoice', 'Bill of Lading', 'Packing List', 'Phytosanitary Certificate', 'PPB Registration', 'Other'] as const
+
+function FilesPanel({ shipmentId }: { shipmentId: string }) {
+  const [docs, setDocs]         = useState<any[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [uploading, setUploading] = useState(false)
+  const [docType, setDocType]   = useState<string>(DOC_TYPES[0])
+  const [error, setError]       = useState<string | null>(null)
+
+  function load() {
+    fetch(`/api/shipments/${shipmentId}/documents`)
+      .then((r) => r.json())
+      .then((d) => setDocs(d.documents ?? []))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { load() }, [shipmentId])
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    setError(null)
+    const form = new FormData()
+    form.append('file', file)
+    form.append('document_type', docType)
+    const res = await fetch(`/api/shipments/${shipmentId}/documents/upload`, { method: 'POST', body: form })
+    const data = await res.json()
+    if (!res.ok) setError(data.error ?? 'Upload failed')
+    else load()
+    setUploading(false)
+    e.target.value = ''
+  }
+
+  async function deleteDoc(id: string, storagePath: string) {
+    await fetch(`/api/shipments/${shipmentId}/documents`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ doc_id: id, storage_path: storagePath }),
+    })
+    load()
+  }
+
+  function formatSize(bytes?: number) {
+    if (!bytes) return ''
+    if (bytes < 1024) return `${bytes}B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)}KB`
+    return `${(bytes / 1024 / 1024).toFixed(1)}MB`
+  }
+
+  if (loading) return <div className="flex items-center justify-center h-32 text-[#64748B]"><Loader2 size={16} className="animate-spin" /></div>
+
+  return (
+    <div className="space-y-4">
+      {/* Upload */}
+      <div className="border border-[#1E3A5F] rounded-xl p-3 space-y-2 bg-[#0F2040]">
+        <p className="text-[10px] text-[#64748B] font-semibold uppercase tracking-wide">Upload Document</p>
+        <select
+          value={docType}
+          onChange={(e) => setDocType(e.target.value as typeof DOC_TYPES[number])}
+          className="w-full text-xs bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-[#00C896]"
+        >
+          {DOC_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <label className={`flex items-center justify-center gap-2 w-full py-2 border border-dashed rounded-lg text-xs cursor-pointer transition-all ${uploading ? 'border-[#1E3A5F] text-[#334155]' : 'border-[#00C896]/30 text-[#00C896] hover:bg-[#00C896]/5'}`}>
+          {uploading ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+          {uploading ? 'Uploading...' : 'Choose file (PDF, JPG, PNG, DOCX · max 10MB)'}
+          <input type="file" className="hidden" onChange={handleUpload} disabled={uploading} accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx" />
+        </label>
+        {error && <p className="text-xs text-red-400">{error}</p>}
+      </div>
+
+      {/* File list */}
+      {docs.length === 0 ? (
+        <p className="text-xs text-[#64748B] text-center py-4">No documents uploaded yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {docs.map((doc) => (
+            <div key={doc.id} className="flex items-center gap-3 py-2 border-b border-[#1E3A5F]">
+              <FileText size={14} className="text-[#64748B] shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-white truncate">{doc.file_name}</p>
+                <p className="text-[10px] text-[#64748B]">{doc.document_type} · {formatSize(doc.file_size)}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {doc.signed_url && (
+                  <a href={doc.signed_url} target="_blank" rel="noopener noreferrer" className="text-[#64748B] hover:text-[#00C896] transition-colors">
+                    <ExternalLink size={12} />
+                  </a>
+                )}
+                <button onClick={() => deleteDoc(doc.id, doc.storage_path)} className="text-[#334155] hover:text-red-400 transition-colors">
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main Drawer ──────────────────────────────────────────────
 
 export default function ShipmentDrawer({
@@ -136,7 +368,7 @@ export default function ShipmentDrawer({
   onClose:  () => void
 }) {
   const [tab, setTab]         = useState<Tab>('brief')
-  const [results, setResults] = useState<Partial<Record<Exclude<Tab, 'timeline'>, string>>>({})
+  const [results, setResults] = useState<Partial<Record<Exclude<Tab, 'timeline' | 'costs' | 'files'>, string>>>({})
   const [loading, setLoading] = useState<Tab | null>(null)
 
   const payload = {
@@ -149,7 +381,7 @@ export default function ShipmentDrawer({
     hs_code:          shipment.hs_code,
   }
 
-  async function generate(t: Exclude<Tab, 'timeline'>) {
+  async function generate(t: Exclude<Tab, 'timeline' | 'costs' | 'files'>) {
     if (results[t] || loading) return
     setLoading(t)
     try {
@@ -170,18 +402,21 @@ export default function ShipmentDrawer({
 
   function switchTab(t: Tab) {
     setTab(t)
-    if (t !== 'timeline') generate(t)
+    if (t !== 'timeline' && t !== 'costs' && t !== 'files') generate(t)
   }
 
   // Auto-load brief on open
   useState(() => { generate('brief') })
 
   const currentAITab = AI_TABS.find((t) => t.key === tab)
-  const result       = tab !== 'timeline' ? results[tab as Exclude<Tab, 'timeline'>] : null
+  const isAITab      = tab !== 'timeline' && tab !== 'costs' && tab !== 'files'
+  const result       = isAITab ? results[tab as Exclude<Tab, 'timeline' | 'costs' | 'files'>] : null
   const isLoading    = loading === tab
 
   const allTabs = [
     ...AI_TABS,
+    { key: 'costs'    as const, label: 'Costs',    icon: DollarSign },
+    { key: 'files'    as const, label: 'Files',    icon: Upload },
     { key: 'timeline' as const, label: 'Timeline', icon: Clock },
   ]
 
@@ -235,6 +470,10 @@ export default function ShipmentDrawer({
         <div className="flex-1 overflow-y-auto p-6">
           {tab === 'timeline' ? (
             <TimelinePanel shipmentId={shipment.id} />
+          ) : tab === 'costs' ? (
+            <CostsPanel shipmentId={shipment.id} />
+          ) : tab === 'files' ? (
+            <FilesPanel shipmentId={shipment.id} />
           ) : isLoading ? (
             <div className="flex flex-col items-center justify-center h-48 gap-3">
               <div className="relative">
@@ -250,7 +489,7 @@ export default function ShipmentDrawer({
               </pre>
               <button
                 onClick={() => {
-                  const aiTab = tab as Exclude<Tab, 'timeline'>
+                  const aiTab = tab as Exclude<Tab, 'timeline' | 'costs' | 'files'>
                   setResults((p) => ({ ...p, [aiTab]: undefined }))
                   generate(aiTab)
                 }}
@@ -266,7 +505,7 @@ export default function ShipmentDrawer({
                 Click to generate {currentAITab?.label.toLowerCase()} for this shipment
               </p>
               <button
-                onClick={() => generate(tab as Exclude<Tab, 'timeline'>)}
+                onClick={() => generate(tab as Exclude<Tab, 'timeline' | 'costs' | 'files'>)}
                 className="flex items-center gap-2 px-4 py-2 bg-[#00C896]/10 text-[#00C896] border border-[#00C896]/25 rounded-lg text-sm font-semibold hover:bg-[#00C896]/20 transition-all"
               >
                 <Sparkles size={13} /> Generate

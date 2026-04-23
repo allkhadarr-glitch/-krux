@@ -55,6 +55,18 @@ export async function POST(
   // Timing honesty: compute start-relative-to-deadline for every action that was actually started.
   // avg_days_before_deadline < 0 means actions were started after the deadline on average.
   // first_action_started_after_deadline = true means nothing was touched until it was already too late.
+  // Fetch actual costs logged during execution
+  const { data: costs } = await supabase
+    .from('shipment_costs')
+    .select('cost_type, amount_kes')
+    .eq('shipment_id', id)
+
+  const actual_total_cost_kes = (costs ?? []).reduce((s, c) => s + Number(c.amount_kes), 0)
+  const actual_cost_breakdown = (costs ?? []).reduce<Record<string, number>>((acc, c) => {
+    acc[c.cost_type] = (acc[c.cost_type] ?? 0) + Number(c.amount_kes)
+    return acc
+  }, {})
+
   const startedActions = allActions.filter((a) => a.started_at)
   let avg_days_before_deadline: number | null = null
   let first_action_started_after_deadline: boolean | null = null
@@ -105,6 +117,8 @@ export async function POST(
       cif_value_usd:                       shipment.cif_value_usd,
       avg_days_before_deadline,
       first_action_started_after_deadline,
+      actual_total_cost_kes:   actual_total_cost_kes > 0 ? actual_total_cost_kes : null,
+      actual_cost_breakdown:   Object.keys(actual_cost_breakdown).length > 0 ? actual_cost_breakdown : null,
     },
   })
 
