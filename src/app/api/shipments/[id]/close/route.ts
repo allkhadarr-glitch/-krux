@@ -59,16 +59,21 @@ export async function POST(
   let avg_days_before_deadline: number | null = null
   let first_action_started_after_deadline: boolean | null = null
 
-  if (shipment.pvoc_deadline && startedActions.length > 0) {
+  if (shipment.pvoc_deadline) {
     const deadlineMs = new Date(shipment.pvoc_deadline).getTime()
-    const daysBeforeDeadline = startedActions.map(
-      (a) => (deadlineMs - new Date(a.started_at).getTime()) / 86400000
-    )
-    avg_days_before_deadline = parseFloat(
-      (daysBeforeDeadline.reduce((s, d) => s + d, 0) / daysBeforeDeadline.length).toFixed(1)
-    )
-    const firstStartMs = Math.min(...startedActions.map((a) => new Date(a.started_at).getTime()))
-    first_action_started_after_deadline = firstStartMs > deadlineMs
+    if (startedActions.length > 0) {
+      const daysBeforeDeadline = startedActions.map(
+        (a) => (deadlineMs - new Date(a.started_at).getTime()) / 86400000
+      )
+      avg_days_before_deadline = parseFloat(
+        (daysBeforeDeadline.reduce((s, d) => s + d, 0) / daysBeforeDeadline.length).toFixed(1)
+      )
+      const firstStartMs = Math.min(...startedActions.map((a) => new Date(a.started_at).getTime()))
+      first_action_started_after_deadline = firstStartMs > deadlineMs
+    } else {
+      // Zero actions started = everything started too late; outcome-independent so correlation stays clean
+      first_action_started_after_deadline = true
+    }
   }
 
   // Update shipment status
