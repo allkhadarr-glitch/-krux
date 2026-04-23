@@ -7,10 +7,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-const ORG_ID = '00000000-0000-0000-0000-000000000001'
-
 export async function GET(req: NextRequest) {
-  // Cron auth
   const auth   = req.headers.get('authorization')
   const secret = process.env.CRON_SECRET
   if (secret && auth !== `Bearer ${secret}`) {
@@ -19,14 +16,13 @@ export async function GET(req: NextRequest) {
 
   const today = new Date(); today.setHours(0, 0, 0, 0)
 
-  // Find open actions on shipments with ≤3 days to deadline, not yet started
+  // All orgs — cron scans across the entire platform
   const { data: actions } = await supabase
     .from('actions')
     .select(`
       id, title, action_type, priority, shipment_id, organization_id, execution_status,
       shipment:shipments!inner(pvoc_deadline, remediation_status, name)
     `)
-    .eq('organization_id', ORG_ID)
     .in('status', ['OPEN', 'IN_PROGRESS'])
     .in('execution_status', ['PENDING', 'IN_PROGRESS'])
     .neq('execution_status', 'AT_RISK')
@@ -43,17 +39,15 @@ export async function GET(req: NextRequest) {
       (new Date(shipment.pvoc_deadline).getTime() - today.getTime()) / 86400000
     )
 
-    if (daysToDeadline > 3) continue  // only flag ≤3 days
+    if (daysToDeadline > 3) continue
 
     atRiskIds.push(a.id)
 
-    // Update execution_status to AT_RISK
     await supabase
       .from('actions')
       .update({ execution_status: 'AT_RISK', updated_at: new Date().toISOString() })
       .eq('id', a.id)
 
-    // Log to timeline — SYSTEM confidence
     if (a.shipment_id) {
       await insertTimelineEvent(supabase, {
         shipment_id:     a.shipment_id,
@@ -73,7 +67,6 @@ export async function GET(req: NextRequest) {
       })
     }
 
-    // Emit in-app notification
     await supabase.from('notifications').insert({
       organization_id: a.organization_id,
       title:           `AT RISK: ${a.title}`,
@@ -85,9 +78,9 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({
-    ok:           true,
-    flagged:      atRiskIds.length,
-    action_ids:   atRiskIds,
-    checked_at:   new Date().toISOString(),
+    ok:         true,
+    flagged:    atRiskIds.length,
+    action_ids: atRiskIds,
+    checked_at: new Date().toISOString(),
   })
 }

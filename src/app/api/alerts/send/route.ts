@@ -9,7 +9,6 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const ORG_ID           = '00000000-0000-0000-0000-000000000001'
 const ALERT_EMAIL      = process.env.ALERT_EMAIL      ?? 'mabdikadirhaji@gmail.com'
 const ALERT_WHATSAPP   = process.env.ALERT_WHATSAPP_TO ?? ''
 const FROM_EMAIL       = 'KRUXVON Alerts <alerts@kruxvon.com>'
@@ -206,8 +205,7 @@ async function runAlerts() {
   // ── Shipment PVoC deadline alerts ──────────────────────────
   const { data: shipments } = await supabaseAdmin
     .from('shipments')
-    .select('id, name, reference_number, pvoc_deadline, risk_flag_status, remediation_status, storage_rate_per_day, regulatory_body_id, alert_sent_14d_at, alert_sent_7d_at, alert_sent_3d_at')
-    .eq('organization_id', ORG_ID)
+    .select('id, organization_id, name, reference_number, pvoc_deadline, risk_flag_status, remediation_status, storage_rate_per_day, regulatory_body_id, alert_sent_14d_at, alert_sent_7d_at, alert_sent_3d_at')
     .is('deleted_at', null)
     .not('pvoc_deadline', 'is', null)
     .neq('remediation_status', 'CLOSED')
@@ -248,7 +246,7 @@ async function runAlerts() {
     const levelTag = daysRemaining <= 3 ? 'CRITICAL' : daysRemaining <= 7 ? 'URGENT' : 'WARNING'
     await insertTimelineEvent(supabaseAdmin, {
       shipment_id:     s.id,
-      organization_id: ORG_ID,
+      organization_id: s.organization_id,
       event_type:      'ALERT_SENT',
       actor_type:      'SYSTEM',
       actor_label:     'Alert Engine',
@@ -274,7 +272,6 @@ async function runAlerts() {
   const { data: licenses } = await supabaseAdmin
     .from('manufacturer_licenses')
     .select('*, manufacturers!inner(company_name, organization_id)')
-    .eq('manufacturers.organization_id', ORG_ID)
     .not('expiry_date', 'is', null)
 
   for (const l of licenses ?? []) {

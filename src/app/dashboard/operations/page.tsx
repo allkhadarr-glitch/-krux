@@ -6,9 +6,10 @@ import { RiskBadge, StatusBadge, RegulatorBadge } from '@/components/RiskBadge'
 import { computeAlerts } from '@/lib/alerts'
 import AlertBanner from '@/components/AlertBanner'
 import PortalStatusModal from '@/components/PortalStatusModal'
-import { AlertTriangle, Clock, Search, Globe, Plus, Bell, Loader2, ChevronDown, CheckCircle2, X, Copy, FileDown, Truck, Lock } from 'lucide-react'
+import { AlertTriangle, Clock, Search, Globe, Plus, Bell, Loader2, ChevronDown, CheckCircle2, X, Copy, FileDown, Truck, Lock, Pencil } from 'lucide-react'
 import { useRole } from '@/hooks/useRole'
 import AddShipmentModal from '@/components/AddShipmentModal'
+import EditShipmentModal from '@/components/EditShipmentModal'
 import ShipmentDrawer from '@/components/ShipmentDrawer'
 import { OnboardingWizard } from '@/components/OnboardingWizard'
 import { supabase } from '@/lib/supabase'
@@ -340,6 +341,7 @@ export default function OperationsPage() {
   const [eventsResult, setEventsResult]   = useState<string | null>(null)
   const [kesRate, setKesRate]             = useState(130)
   const [closeTarget, setCloseTarget]     = useState<Shipment | null>(null)
+  const [editTarget, setEditTarget]       = useState<Shipment | null>(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const { canWrite } = useRole()
 
@@ -595,6 +597,13 @@ export default function OperationsPage() {
                   <td className="px-4 py-3"><StatusBadge status={s.remediation_status} /></td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
+                      {canWrite && (
+                        <button onClick={() => setEditTarget(s)}
+                          className="flex items-center gap-1 px-2 py-1 border border-[#1E3A5F] text-[#64748B] rounded-md text-[10px] font-semibold hover:border-[#00C896]/40 hover:text-[#00C896] transition-all"
+                          title="Edit shipment">
+                          <Pencil size={11} />
+                        </button>
+                      )}
                       {canWrite && s.remediation_status !== 'CLOSED' && (
                         <button onClick={() => setCloseTarget(s)}
                           className="flex items-center gap-1 px-2 py-1 border border-[#1E3A5F] text-[#64748B] rounded-md text-[10px] font-semibold hover:border-emerald-500/40 hover:text-emerald-400 transition-all">
@@ -663,6 +672,17 @@ export default function OperationsPage() {
           shipment={closeTarget}
           onClose={() => setCloseTarget(null)}
           onClosed={handleShipmentClosed}
+        />
+      )}
+
+      {editTarget && (
+        <EditShipmentModal
+          shipment={editTarget}
+          onClose={() => setEditTarget(null)}
+          onSaved={(updated) => {
+            setShipments((prev) => prev.map((s) => s.id === updated.id ? { ...s, ...updated } : s))
+            setEditTarget(null)
+          }}
         />
       )}
     </div>
