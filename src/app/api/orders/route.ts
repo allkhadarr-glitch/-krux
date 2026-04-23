@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getSessionContext } from '@/lib/session'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
-const ORG_ID = '00000000-0000-0000-0000-000000000001'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const { orgId } = await getSessionContext(req)
   const { data, error } = await supabase
     .from('purchase_orders')
     .select(`
@@ -15,7 +16,7 @@ export async function GET() {
       manufacturer:manufacturers(id, company_name, overall_risk, reliability_score),
       milestones:po_milestones(*)
     `)
-    .eq('organization_id', ORG_ID)
+    .eq('organization_id', orgId)
     .order('created_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -23,12 +24,13 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const { orgId } = await getSessionContext(req)
   const body = await req.json()
 
   const { data, error } = await supabase
     .from('purchase_orders')
     .insert({
-      organization_id:       ORG_ID,
+      organization_id:       orgId,
       manufacturer_id:       body.manufacturer_id,
       po_number:             body.po_number,
       product_name:          body.product_name,

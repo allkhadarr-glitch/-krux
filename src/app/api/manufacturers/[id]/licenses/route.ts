@@ -1,14 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { getSessionContext } from '@/lib/session'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const ORG_ID = '00000000-0000-0000-0000-000000000001'
-
-export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const { data, error } = await supabaseAdmin
     .from('manufacturer_licenses')
@@ -21,6 +20,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { orgId } = await getSessionContext(req)
   const { id } = await params
   const body = await req.json()
   const {
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .from('manufacturer_licenses')
     .insert({
       manufacturer_id:  id,
-      organization_id:  ORG_ID,
+      organization_id:  orgId,
       license_name,
       license_type,
       license_number:   license_number || null,

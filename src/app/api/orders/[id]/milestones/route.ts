@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getSessionContext } from '@/lib/session'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
-const ORG_ID = '00000000-0000-0000-0000-000000000001'
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { orgId } = await getSessionContext(req)
   const { id } = await params
   const body = await req.json()
 
@@ -18,7 +19,7 @@ export async function POST(
     .from('po_milestones')
     .insert({
       purchase_order_id: id,
-      organization_id:   ORG_ID,
+      organization_id:   orgId,
       name:              body.name,
       description:       body.description ?? null,
       milestone_type:    body.milestone_type ?? null,

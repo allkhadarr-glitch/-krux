@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { Shipment, ShipmentPortal, PriorityLevel } from '@/lib/types'
 import { formatUSD, formatDate, daysUntilDeadline } from '@/lib/utils'
 import { RiskBadge, StatusBadge, RegulatorBadge } from '@/components/RiskBadge'
-import { getShipments } from '@/lib/supabase'
 import { computeAlerts } from '@/lib/alerts'
 import AlertBanner from '@/components/AlertBanner'
 import PortalStatusModal from '@/components/PortalStatusModal'
@@ -378,7 +377,7 @@ export default function OperationsPage() {
 
   useEffect(() => {
     Promise.all([
-      getShipments(),
+      fetch('/api/shipments').then((r) => r.json()),
       fetch('/api/fx/rate').then((r) => r.json()).catch(() => ({ usd_kes: 130 })),
     ])
       .then(([ships, fx]) => {
@@ -393,7 +392,7 @@ export default function OperationsPage() {
     const channel = supabase
       .channel('shipments-ops')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'shipments' }, () => {
-        getShipments().then(setShipments)
+        fetch('/api/shipments').then((r) => r.json()).then(setShipments)
       })
       .subscribe()
 

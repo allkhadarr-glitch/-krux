@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { formatUSD, formatKES } from '@/lib/utils'
-import { getKPIs, getShipments } from '@/lib/supabase'
 import { Shipment } from '@/lib/types'
 import { TrendingUp, Package, DollarSign, AlertCircle } from 'lucide-react'
 
@@ -27,17 +26,24 @@ export default function ManagementPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([getKPIs(), getShipments()])
-      .then(([k, s]) => {
-        setKpis({
-          total_shipments: k.total_shipments,
-          total_cif_usd: k.total_cif_usd,
-          total_usd: k.total_landed_cost_usd,
-          total_kes: k.total_landed_cost_kes,
-          risk: k.risk,
-          status: k.status,
+    fetch('/api/shipments')
+      .then((r) => r.json())
+      .then((rows: Shipment[]) => {
+        const risk: Record<string, number> = { GREEN: 0, AMBER: 0, RED: 0 }
+        const status: Record<string, number> = { OPEN: 0, IN_PROGRESS: 0, CLOSED: 0, ESCALATED: 0 }
+        rows.forEach((s) => {
+          if (s.risk_flag_status) risk[s.risk_flag_status] = (risk[s.risk_flag_status] ?? 0) + 1
+          if (s.remediation_status) status[s.remediation_status] = (status[s.remediation_status] ?? 0) + 1
         })
-        setShipments(s)
+        setShipments(rows)
+        setKpis({
+          total_shipments:  rows.length,
+          total_cif_usd:    rows.reduce((s, x) => s + (x.cif_value_usd ?? 0), 0),
+          total_usd:        rows.reduce((s, x) => s + (x.total_landed_cost_usd ?? 0), 0),
+          total_kes:        rows.reduce((s, x) => s + (x.total_landed_cost_kes ?? 0), 0),
+          risk,
+          status,
+        })
       })
       .finally(() => setLoading(false))
   }, [])

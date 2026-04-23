@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { Shipment } from '@/lib/types'
-import { getShipments } from '@/lib/supabase'
 import { formatUSD, formatKES, formatDate, daysUntilDeadline } from '@/lib/utils'
 import { RiskBadge, StatusBadge, RegulatorBadge } from '@/components/RiskBadge'
 import { Clock, Ship, MapPin, AlertTriangle } from 'lucide-react'
@@ -12,10 +11,13 @@ export default function ClientPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getShipments().then((data) => {
-      setShipments(data)
-      if (data.length > 0) setSelectedId(data[0].id)
-    }).finally(() => setLoading(false))
+    fetch('/api/shipments')
+      .then((r) => r.json())
+      .then((data: Shipment[]) => {
+        setShipments(data)
+        if (data.length > 0) setSelectedId(data[0].id)
+      })
+      .finally(() => setLoading(false))
   }, [])
 
   const s = shipments.find((x) => x.id === selectedId) ?? shipments[0]
@@ -23,7 +25,7 @@ export default function ClientPage() {
   if (loading) return <div className="flex items-center justify-center h-64 text-[#64748B]">Loading...</div>
   if (!s) return <div className="flex items-center justify-center h-64 text-[#64748B]">No shipments found.</div>
 
-  const days = daysUntilDeadline(s.pvoc_deadline!)
+  const days = s.pvoc_deadline ? daysUntilDeadline(s.pvoc_deadline) : null
 
   return (
     <div className="p-6 space-y-6">
@@ -67,7 +69,7 @@ export default function ClientPage() {
             </div>
             <div>
               <div className="text-[#64748B] text-xs mb-1">PVoC Deadline</div>
-              <div className="text-white text-sm font-semibold">{formatDate(s.pvoc_deadline!)}</div>
+              <div className="text-white text-sm font-semibold">{s.pvoc_deadline ? formatDate(s.pvoc_deadline) : '—'}</div>
             </div>
             <div>
               <div className="text-[#64748B] text-xs mb-1">Compliance Status</div>
@@ -75,7 +77,7 @@ export default function ClientPage() {
             </div>
           </div>
 
-          {days <= 7 && (
+          {days != null && days <= 7 && (
             <div className="mt-4 p-3 bg-amber-400/10 border border-amber-400/30 rounded-lg flex items-center gap-2">
               <AlertTriangle size={14} className="text-amber-400" />
               <span className="text-amber-400 text-sm font-medium">
@@ -90,8 +92,8 @@ export default function ClientPage() {
             <Clock size={14} className="text-[#00C896]" />
             <span className="text-white text-sm font-semibold">Deadline Status</span>
           </div>
-          <div className={`text-4xl font-black ${days <= 3 ? 'text-red-400' : days <= 7 ? 'text-amber-400' : 'text-[#00C896]'}`}>
-            {days > 0 ? days : 0}
+          <div className={`text-4xl font-black ${days != null && days <= 3 ? 'text-red-400' : days != null && days <= 7 ? 'text-amber-400' : 'text-[#00C896]'}`}>
+            {days != null && days > 0 ? days : days != null ? 0 : '—'}
           </div>
           <div className="text-[#64748B] text-sm">days remaining</div>
           <div className="mt-4 pt-4 border-t border-[#1E3A5F]">
@@ -107,7 +109,7 @@ export default function ClientPage() {
       </div>
 
       <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-5">
-        <h3 className="text-white font-semibold mb-3">What This Means For You</h3>
+        <h3 className="text-white font-semibold mb-3">Shipment Details</h3>
         <div className="grid grid-cols-3 gap-4 text-sm">
           <div className="p-3 bg-[#0A1628] rounded-lg">
             <div className="text-[#64748B] text-xs mb-1">Regulator</div>
@@ -123,6 +125,18 @@ export default function ClientPage() {
             <div className="text-[#64748B] text-xs mb-1">Risk Level</div>
             <div className="text-white font-medium">{s.risk_flag_status}</div>
             <div className="text-[#64748B] text-xs mt-1">Current compliance risk</div>
+          </div>
+          <div className="p-3 bg-[#0A1628] rounded-lg">
+            <div className="text-[#64748B] text-xs mb-1">HS Code</div>
+            <div className="text-white font-medium">{s.hs_code ?? '—'}</div>
+          </div>
+          <div className="p-3 bg-[#0A1628] rounded-lg">
+            <div className="text-[#64748B] text-xs mb-1">Reference</div>
+            <div className="text-white font-medium">{s.reference_number}</div>
+          </div>
+          <div className="p-3 bg-[#0A1628] rounded-lg">
+            <div className="text-[#64748B] text-xs mb-1">Import Duty</div>
+            <div className="text-white font-medium">{(s as any).import_duty_rate_pct != null ? `${(s as any).import_duty_rate_pct}%` : '—'}</div>
           </div>
         </div>
       </div>

@@ -8,6 +8,49 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+export async function GET(req: NextRequest) {
+  const { orgId } = await getSessionContext(req)
+
+  const { data: rows, error } = await supabaseAdmin
+    .from('shipments')
+    .select('*')
+    .eq('organization_id', orgId)
+    .is('deleted_at', null)
+    .order('pvoc_deadline', { ascending: true })
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (!rows?.length) return NextResponse.json([])
+
+  const ids = rows.map((s: any) => s.id)
+
+  const [bodiesRes, portalsRes, riskRes] = await Promise.all([
+    supabaseAdmin.from('regulatory_bodies').select('*'),
+    supabaseAdmin.from('shipment_portals').select('*').in('shipment_id', ids),
+    supabaseAdmin.from('shipment_risk').select('*').in('shipment_id', ids),
+  ])
+
+  const bodiesById: Record<string, any> = Object.fromEntries(
+    (bodiesRes.data ?? []).map((b: any) => [b.id, b])
+  )
+  const portalsByShipment: Record<string, any[]> = {}
+  for (const p of portalsRes.data ?? []) {
+    if (!portalsByShipment[p.shipment_id]) portalsByShipment[p.shipment_id] = []
+    portalsByShipment[p.shipment_id].push(p)
+  }
+  const riskByShipment: Record<string, any> = Object.fromEntries(
+    (riskRes.data ?? []).map((r: any) => [r.shipment_id, r])
+  )
+
+  const shipments = rows.map((s: any) => ({
+    ...s,
+    regulatory_body: s.regulatory_body_id ? bodiesById[s.regulatory_body_id] : undefined,
+    portals: portalsByShipment[s.id] ?? [],
+    risk: riskByShipment[s.id],
+  }))
+
+  return NextResponse.json(shipments)
+}
+
 async function nextReferenceNumber(): Promise<string> {
   const year = new Date().getFullYear()
   const { count } = await supabaseAdmin

@@ -13,11 +13,10 @@ import {
 
 type Tab = 'brief' | 'remediation' | 'checklist' | 'tax' | 'costs' | 'files' | 'timeline'
 
-const AI_TABS: { key: Exclude<Tab, 'timeline' | 'costs' | 'files'>; label: string; icon: React.ElementType; endpoint: string }[] = [
+const AI_TABS: { key: Exclude<Tab, 'timeline' | 'costs' | 'files' | 'tax'>; label: string; icon: React.ElementType; endpoint: string }[] = [
   { key: 'brief',       label: 'Brief',      icon: FileText,    endpoint: '/api/ai/brief' },
   { key: 'remediation', label: 'Steps',      icon: Wrench,      endpoint: '/api/ai/remediation' },
   { key: 'checklist',   label: 'Checklist',  icon: List,        endpoint: '/api/ai/checklist' },
-  { key: 'tax',         label: 'Tax',        icon: Calculator,  endpoint: '/api/ai/tax' },
 ]
 
 // ─── Timeline event config ────────────────────────────────────
@@ -127,6 +126,108 @@ function TimelinePanel({ shipmentId }: { shipmentId: string }) {
             </div>
           )
         })}
+      </div>
+    </div>
+  )
+}
+
+// ─── Duty Calculator Panel ───────────────────────────────────
+
+function DutyPanel({ shipment }: { shipment: any }) {
+  const [calc, setCalc]       = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [aiText, setAiText]   = useState<string | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
+
+  useEffect(() => {
+    setLoading(true)
+    fetch('/api/duty-calc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cif_value_usd:    shipment.cif_value_usd,
+        import_duty_pct:  shipment.import_duty_pct ?? 25,
+        hs_code:          shipment.hs_code,
+        regulatory_body:  shipment.regulatory_body?.code,
+      }),
+    })
+      .then((r) => r.json())
+      .then(setCalc)
+      .finally(() => setLoading(false))
+  }, [shipment.id])
+
+  async function generateAI() {
+    setAiLoading(true)
+    const res = await fetch('/api/ai/tax', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name:            shipment.name,
+        regulatory_body: shipment.regulatory_body?.code ?? '—',
+        cif_value_usd:   shipment.cif_value_usd,
+        pvoc_deadline:   shipment.pvoc_deadline,
+        hs_code:         shipment.hs_code,
+      }),
+    })
+    const data = await res.json()
+    setAiText(data.result ?? data.error ?? 'No response')
+    setAiLoading(false)
+  }
+
+  if (loading) return <div className="flex items-center justify-center h-48 gap-2 text-[#64748B]"><Loader2 size={16} className="animate-spin" /><span className="text-sm">Calculating...</span></div>
+
+  return (
+    <div className="space-y-4">
+      {calc?.lines && (
+        <div>
+          <div className="bg-[#0A1628] border border-[#1E3A5F] rounded-xl overflow-hidden">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-[#1E3A5F] bg-[#0F2040]">
+                  <th className="text-left px-3 py-2.5 text-[#64748B] font-semibold">Item</th>
+                  <th className="text-left px-3 py-2.5 text-[#64748B] font-semibold">Rate</th>
+                  <th className="text-right px-3 py-2.5 text-[#64748B] font-semibold">USD</th>
+                  <th className="text-right px-3 py-2.5 text-[#64748B] font-semibold">KES</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1E3A5F]">
+                {calc.lines.map((line: any) => (
+                  <tr key={line.label} className={line.isTotal ? 'bg-[#0F2040]' : ''}>
+                    <td className={`px-3 py-2 ${line.isTotal ? 'text-white font-bold' : 'text-[#94A3B8]'}`}>{line.label}</td>
+                    <td className="px-3 py-2 text-[#64748B]">{line.rate ?? '—'}</td>
+                    <td className={`px-3 py-2 text-right font-mono ${line.isTotal ? 'text-[#00C896] font-bold' : 'text-white'}`}>
+                      ${line.usd.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </td>
+                    <td className={`px-3 py-2 text-right font-mono ${line.isTotal ? 'text-[#00C896] font-bold' : 'text-[#64748B]'}`}>
+                      {line.kes.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-[10px] text-[#334155] mt-1.5">1 USD = KES {calc.fx_rate} · Estimates only, verify with KRA iTax portal</p>
+        </div>
+      )}
+
+      <div>
+        {!aiText ? (
+          <button
+            onClick={generateAI}
+            disabled={aiLoading}
+            className="flex items-center gap-2 text-xs text-[#64748B] hover:text-[#00C896] transition-colors disabled:opacity-40"
+          >
+            {aiLoading ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+            {aiLoading ? 'Generating AI narrative...' : 'Get AI narrative'}
+          </button>
+        ) : (
+          <div>
+            <p className="text-[10px] text-[#64748B] font-semibold uppercase tracking-wide mb-2">AI Analysis</p>
+            <pre className="whitespace-pre-wrap text-xs text-[#94A3B8] bg-[#0A1628] border border-[#1E3A5F] rounded-lg p-3 leading-relaxed font-sans">
+              {aiText}
+            </pre>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -368,7 +469,7 @@ export default function ShipmentDrawer({
   onClose:  () => void
 }) {
   const [tab, setTab]         = useState<Tab>('brief')
-  const [results, setResults] = useState<Partial<Record<Exclude<Tab, 'timeline' | 'costs' | 'files'>, string>>>({})
+  const [results, setResults] = useState<Partial<Record<Exclude<Tab, 'timeline' | 'costs' | 'files' | 'tax'>, string>>>({})
   const [loading, setLoading] = useState<Tab | null>(null)
 
   const payload = {
@@ -381,7 +482,7 @@ export default function ShipmentDrawer({
     hs_code:          shipment.hs_code,
   }
 
-  async function generate(t: Exclude<Tab, 'timeline' | 'costs' | 'files'>) {
+  async function generate(t: Exclude<Tab, 'timeline' | 'costs' | 'files' | 'tax'>) {
     if (results[t] || loading) return
     setLoading(t)
     try {
@@ -402,19 +503,20 @@ export default function ShipmentDrawer({
 
   function switchTab(t: Tab) {
     setTab(t)
-    if (t !== 'timeline' && t !== 'costs' && t !== 'files') generate(t)
+    if (t !== 'timeline' && t !== 'costs' && t !== 'files' && t !== 'tax') generate(t)
   }
 
   // Auto-load brief on open
   useState(() => { generate('brief') })
 
   const currentAITab = AI_TABS.find((t) => t.key === tab)
-  const isAITab      = tab !== 'timeline' && tab !== 'costs' && tab !== 'files'
-  const result       = isAITab ? results[tab as Exclude<Tab, 'timeline' | 'costs' | 'files'>] : null
+  const isAITab      = tab !== 'timeline' && tab !== 'costs' && tab !== 'files' && tab !== 'tax'
+  const result       = isAITab ? results[tab as Exclude<Tab, 'timeline' | 'costs' | 'files' | 'tax'>] : null
   const isLoading    = loading === tab
 
   const allTabs = [
     ...AI_TABS,
+    { key: 'tax'      as const, label: 'Duty',     icon: Calculator },
     { key: 'costs'    as const, label: 'Costs',    icon: DollarSign },
     { key: 'files'    as const, label: 'Files',    icon: Upload },
     { key: 'timeline' as const, label: 'Timeline', icon: Clock },
@@ -474,6 +576,8 @@ export default function ShipmentDrawer({
             <CostsPanel shipmentId={shipment.id} />
           ) : tab === 'files' ? (
             <FilesPanel shipmentId={shipment.id} />
+          ) : tab === 'tax' ? (
+            <DutyPanel shipment={shipment} />
           ) : isLoading ? (
             <div className="flex flex-col items-center justify-center h-48 gap-3">
               <div className="relative">
@@ -489,7 +593,7 @@ export default function ShipmentDrawer({
               </pre>
               <button
                 onClick={() => {
-                  const aiTab = tab as Exclude<Tab, 'timeline' | 'costs' | 'files'>
+                  const aiTab = tab as Exclude<Tab, 'timeline' | 'costs' | 'files' | 'tax'>
                   setResults((p) => ({ ...p, [aiTab]: undefined }))
                   generate(aiTab)
                 }}
@@ -505,7 +609,7 @@ export default function ShipmentDrawer({
                 Click to generate {currentAITab?.label.toLowerCase()} for this shipment
               </p>
               <button
-                onClick={() => generate(tab as Exclude<Tab, 'timeline' | 'costs' | 'files'>)}
+                onClick={() => generate(tab as Exclude<Tab, 'timeline' | 'costs' | 'files' | 'tax'>)}
                 className="flex items-center gap-2 px-4 py-2 bg-[#00C896]/10 text-[#00C896] border border-[#00C896]/25 rounded-lg text-sm font-semibold hover:bg-[#00C896]/20 transition-all"
               >
                 <Sparkles size={13} /> Generate
