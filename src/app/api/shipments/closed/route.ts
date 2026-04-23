@@ -23,23 +23,29 @@ export async function GET() {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  const rows = (events ?? []).map((e: any) => ({
-    event_id:           e.id,
-    closed_at:          e.created_at,
-    shipment_id:        e.shipment.id,
-    name:               e.shipment.name,
-    reference_number:   e.shipment.reference_number,
-    pvoc_deadline:      e.shipment.pvoc_deadline,
-    outcome:            e.metadata?.status          ?? '—',
-    delay_days:         e.metadata?.delay_days      ?? 0,
-    penalty_kes:        e.metadata?.penalty_amount_kes ?? 0,
-    total_duration_days: e.metadata?.total_duration_days ?? null,
-    actions_completed:  e.metadata?.actions_completed  ?? 0,
-    actions_failed:     e.metadata?.actions_failed      ?? 0,
-    actions_pending:    e.metadata?.actions_pending     ?? 0,
-    critical_missed:    e.metadata?.critical_actions_missed ?? 0,
-    cif_value_usd:      e.metadata?.cif_value_usd     ?? null,
-  }))
+  const rows = (events ?? []).map((e: any) => {
+    const actions_started = e.metadata?.actions_started ?? 0
+    return {
+      event_id:            e.id,
+      closed_at:           e.created_at,
+      shipment_id:         e.shipment.id,
+      name:                e.shipment.name,
+      reference_number:    e.shipment.reference_number,
+      pvoc_deadline:       e.shipment.pvoc_deadline,
+      outcome:             e.metadata?.status             ?? '—',
+      delay_days:          e.metadata?.delay_days         ?? 0,
+      penalty_kes:         e.metadata?.penalty_amount_kes ?? 0,
+      total_duration_days: e.metadata?.total_duration_days ?? null,
+      actions_started,
+      actions_completed:   e.metadata?.actions_completed  ?? 0,
+      actions_failed:      e.metadata?.actions_failed      ?? 0,
+      actions_pending:     e.metadata?.actions_pending     ?? 0,
+      critical_missed:     e.metadata?.critical_actions_missed ?? 0,
+      cif_value_usd:       e.metadata?.cif_value_usd      ?? null,
+      // Regime A = observable execution; Regime B = initiation failure (no system-observed start)
+      regime:              actions_started > 0 ? 'A' : 'B',
+    }
+  })
 
   return NextResponse.json({ rows })
 }

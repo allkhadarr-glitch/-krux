@@ -14,10 +14,12 @@ type ClosedRow = {
   delay_days:          number
   penalty_kes:         number
   total_duration_days: number | null
+  actions_started:     number
   actions_completed:   number
   actions_failed:      number
   actions_pending:     number
   critical_missed:     number
+  regime:              'A' | 'B'
   cif_value_usd:       number | null
 }
 
@@ -43,6 +45,18 @@ function timeAgo(iso: string) {
   if (d === 0) return 'today'
   if (d === 1) return '1d ago'
   return `${d}d ago`
+}
+
+function RegimeBadge({ regime }: { regime: 'A' | 'B' }) {
+  return regime === 'A' ? (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border bg-blue-500/10 text-blue-400 border-blue-500/30">
+      A · Execution
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border bg-red-500/10 text-red-400 border-red-500/30">
+      B · No Start
+    </span>
+  )
 }
 
 function CompletionBar({ completed, failed, pending, total }: { completed: number; failed: number; pending: number; total: number }) {
@@ -78,11 +92,13 @@ export default function ClosedShipmentsPage() {
       .finally(() => setLoading(false))
   }, [])
 
+  const cohortA         = rows.filter((r) => r.regime === 'A')
+  const cohortB         = rows.filter((r) => r.regime === 'B')
   const totalDelayDays  = rows.reduce((s, r) => s + (r.delay_days  ?? 0), 0)
   const totalPenaltyKes = rows.reduce((s, r) => s + (r.penalty_kes ?? 0), 0)
   const cleared         = rows.filter((r) => r.outcome === 'CLEARED').length
-  const avgDuration     = rows.length
-    ? Math.round(rows.reduce((s, r) => s + (r.total_duration_days ?? 0), 0) / rows.length)
+  const avgDuration     = cohortA.length
+    ? Math.round(cohortA.reduce((s, r) => s + (r.total_duration_days ?? 0), 0) / cohortA.length)
     : null
 
   if (loading) return <div className="flex items-center justify-center h-64 text-[#64748B]">Loading...</div>
@@ -97,10 +113,11 @@ export default function ClosedShipmentsPage() {
 
       {/* Summary strip */}
       {rows.length > 0 && (
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-5 gap-4">
           {[
-            { label: 'Cleared',          value: `${cleared} / ${rows.length}`,                             icon: CheckCircle2, color: 'text-emerald-400' },
-            { label: 'Avg Duration',     value: avgDuration != null ? `${avgDuration}d` : '—',             icon: Clock,        color: 'text-blue-400' },
+            { label: 'Cleared',          value: `${cleared} / ${rows.length}`,                             icon: CheckCircle2,  color: 'text-emerald-400' },
+            { label: 'Regime A (Exec)',  value: `${cohortA.length} / ${rows.length}`,                      icon: Clock,         color: 'text-blue-400' },
+            { label: 'Regime B (No Start)', value: `${cohortB.length} / ${rows.length}`,                   icon: AlertTriangle, color: cohortB.length > 0 ? 'text-red-400' : 'text-[#64748B]' },
             { label: 'Total Delay Days', value: totalDelayDays > 0 ? `${totalDelayDays}d` : '0d',          icon: AlertTriangle, color: totalDelayDays > 0 ? 'text-amber-400' : 'text-[#64748B]' },
             { label: 'Total Penalties',  value: totalPenaltyKes > 0 ? `KES ${totalPenaltyKes.toLocaleString()}` : '—', icon: Minus, color: totalPenaltyKes > 0 ? 'text-red-400' : 'text-[#64748B]' },
           ].map(({ label, value, icon: Icon, color }) => (
@@ -126,7 +143,7 @@ export default function ClosedShipmentsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-[#1E3A5F] bg-[#0F2040]">
-                {['Shipment', 'Outcome', 'Closed', 'Duration', 'Delay', 'Penalty (KES)', 'Actions', 'Critical Missed'].map((h) => (
+                {['Shipment', 'Regime', 'Outcome', 'Closed', 'Duration', 'Delay', 'Penalty (KES)', 'Actions', 'Critical Missed'].map((h) => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
@@ -143,6 +160,7 @@ export default function ClosedShipmentsPage() {
                       <div className="text-[10px] text-[#64748B]">Deadline: {formatDate(r.pvoc_deadline)}</div>
                     )}
                   </td>
+                  <td className="px-4 py-3"><RegimeBadge regime={r.regime} /></td>
                   <td className="px-4 py-3"><OutcomeBadge outcome={r.outcome} /></td>
                   <td className="px-4 py-3">
                     <div className="text-sm text-white">{timeAgo(r.closed_at)}</div>
