@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { getSessionContext } from '@/lib/session'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,7 +11,18 @@ export async function POST(req: NextRequest) {
   const { shipmentIds } = await req.json()
   if (!Array.isArray(shipmentIds) || !shipmentIds.length) return NextResponse.json({})
 
-  const keys = shipmentIds.map((id: string) => `portal_status:${id}`)
+  const { orgId } = await getSessionContext(req)
+
+  const { data: owned } = await supabaseAdmin
+    .from('shipments')
+    .select('id')
+    .in('id', shipmentIds)
+    .eq('organization_id', orgId)
+
+  const ownedIds = (owned ?? []).map((s: any) => s.id)
+  if (!ownedIds.length) return NextResponse.json({})
+
+  const keys = ownedIds.map((id: string) => `portal_status:${id}`)
   const { data } = await supabaseAdmin
     .from('ai_cache')
     .select('cache_key, output')
