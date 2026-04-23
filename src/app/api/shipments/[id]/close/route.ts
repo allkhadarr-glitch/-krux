@@ -100,6 +100,7 @@ export async function POST(
       actions_completed,
       actions_failed,
       actions_pending,
+      actions_started:                     startedActions.length,
       critical_actions_missed:             critical_missed,
       cif_value_usd:                       shipment.cif_value_usd,
       avg_days_before_deadline,
