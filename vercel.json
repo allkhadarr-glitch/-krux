@@ -7,6 +7,14 @@
     {
       "path": "/api/actions/evaluate",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/actions/at-risk",
+      "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/alerts/send",
+      "schedule": "0 6 * * *"
     }
   ]
 }

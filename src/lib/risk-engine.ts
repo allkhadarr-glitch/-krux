@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
+import { insertTimelineEvent } from './timeline'
 
 const ORG_ID = '00000000-0000-0000-0000-000000000001'
 
@@ -107,6 +108,18 @@ export async function updateShipmentRisk(
     risk_drivers:       drivers,
     last_calculated_at: new Date().toISOString(),
   }, { onConflict: 'shipment_id' })
+
+  await insertTimelineEvent(supabase, {
+    shipment_id:     shipmentId,
+    organization_id: shipment.organization_id,
+    event_type:      'RISK_RECALCULATED',
+    actor_type:      'SYSTEM',
+    actor_label:     'Risk Engine',
+    confidence:      'SYSTEM',
+    title:           `Risk updated: ${priority} — ${score}/10`,
+    detail:          drivers.join(' · ') || undefined,
+    metadata:        { score, priority, delay_probability: Math.round(delayProbability * 100), days_to_deadline: daysToDeadline },
+  })
 }
 
 // ─── Auto-create Actions for a New Shipment ──────────────────

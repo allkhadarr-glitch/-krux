@@ -48,6 +48,7 @@ export async function POST(
       event_type:      'ACTION_FAILED',
       actor_type:      'USER',
       actor_label:     'Operations',
+      confidence:      'USER',
       title:           `Failed: ${action.title}`,
       detail:          reason,
       metadata:        { action_type: action.action_type, reason },

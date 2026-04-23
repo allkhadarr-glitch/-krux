@@ -166,15 +166,17 @@ function DueLabel({ due }: { due?: string }) {
 
 function ExecStatusPill({ status }: { status?: string }) {
   if (!status || status === 'PENDING') return null
-  const config = {
-    IN_PROGRESS: 'bg-amber-400/10 text-amber-400 border-amber-400/30',
-    DONE:        'bg-[#00C896]/10 text-[#00C896] border-[#00C896]/30',
-    FAILED:      'bg-red-400/10 text-red-400 border-red-400/30',
-  }[status]
-  if (!config) return null
+  const config: Record<string, { cls: string; label: string }> = {
+    IN_PROGRESS: { cls: 'bg-amber-400/10 text-amber-400 border-amber-400/30',   label: 'In Progress' },
+    DONE:        { cls: 'bg-[#00C896]/10 text-[#00C896] border-[#00C896]/30',   label: 'Done' },
+    FAILED:      { cls: 'bg-red-400/10 text-red-400 border-red-400/30',         label: 'Failed' },
+    AT_RISK:     { cls: 'bg-red-500/20 text-red-300 border-red-500/40 animate-pulse', label: 'AT RISK' },
+  }
+  const c = config[status]
+  if (!c) return null
   return (
-    <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase border ${config}`}>
-      {status === 'IN_PROGRESS' ? 'In Progress' : status === 'DONE' ? 'Done' : 'Failed'}
+    <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase border ${c.cls}`}>
+      {c.label}
     </span>
   )
 }

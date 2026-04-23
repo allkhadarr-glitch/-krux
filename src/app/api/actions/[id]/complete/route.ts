@@ -54,6 +54,7 @@ export async function POST(
       event_type:      'ACTION_COMPLETED',
       actor_type:      'USER',
       actor_label:     'Operations',
+      confidence:      'USER',
       title:           `Completed: ${action.title}`,
       detail:          note,
       metadata: {

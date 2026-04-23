@@ -49,6 +49,7 @@ export async function POST(
       event_type:      'ACTION_STARTED',
       actor_type:      'USER',
       actor_label:     'Operations',
+      confidence:      'USER',
       title:           `Started: ${action.title}`,
       metadata:        { action_type: action.action_type },
     })

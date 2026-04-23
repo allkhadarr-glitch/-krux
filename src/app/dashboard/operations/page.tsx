@@ -7,7 +7,7 @@ import { getShipments } from '@/lib/supabase'
 import { computeAlerts } from '@/lib/alerts'
 import AlertBanner from '@/components/AlertBanner'
 import PortalStatusModal from '@/components/PortalStatusModal'
-import { AlertTriangle, Clock, Search, Globe, Plus, Bell, Loader2, ChevronDown } from 'lucide-react'
+import { AlertTriangle, Clock, Search, Globe, Plus, Bell, Loader2, ChevronDown, CheckCircle2, X } from 'lucide-react'
 import AddShipmentModal from '@/components/AddShipmentModal'
 import ShipmentDrawer from '@/components/ShipmentDrawer'
 
@@ -81,6 +81,148 @@ function PortalDots({ portals }: { portals?: ShipmentPortal[] }) {
   )
 }
 
+type CloseOutcome = 'CLEARED' | 'DELAYED' | 'PENALIZED'
+
+function CloseShipmentModal({
+  shipment,
+  onClose,
+  onClosed,
+}: {
+  shipment: Shipment
+  onClose: () => void
+  onClosed: (id: string) => void
+}) {
+  const [outcome, setOutcome]       = useState<CloseOutcome>('CLEARED')
+  const [delayDays, setDelayDays]   = useState('')
+  const [penalty, setPenalty]       = useState('')
+  const [notes, setNotes]           = useState('')
+  const [saving, setSaving]         = useState(false)
+  const [err, setErr]               = useState<string | null>(null)
+
+  async function submit() {
+    setSaving(true)
+    setErr(null)
+    try {
+      const res = await fetch(`/api/shipments/${shipment.id}/close`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status:               outcome,
+          delay_days:           delayDays ? Number(delayDays) : null,
+          penalty_amount_kes:   penalty   ? Number(penalty)   : null,
+          notes:                notes || null,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setErr(data.error ?? 'Failed'); return }
+      onClosed(shipment.id)
+    } catch {
+      setErr('Network error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const outcomeStyles: Record<CloseOutcome, string> = {
+    CLEARED:   'border-emerald-500/60 bg-emerald-500/10 text-emerald-400',
+    DELAYED:   'border-amber-500/60   bg-amber-500/10   text-amber-400',
+    PENALIZED: 'border-red-500/60     bg-red-500/10     text-red-400',
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-[#0A1628] border border-[#1E3A5F] rounded-xl w-full max-w-md p-6 shadow-2xl">
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h2 className="text-lg font-bold text-white">Close Shipment</h2>
+            <p className="text-xs text-[#64748B] mt-0.5">{shipment.name}</p>
+          </div>
+          <button onClick={onClose} className="text-[#64748B] hover:text-white transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide mb-2">Outcome</p>
+            <div className="grid grid-cols-3 gap-2">
+              {(['CLEARED', 'DELAYED', 'PENALIZED'] as CloseOutcome[]).map((o) => (
+                <button
+                  key={o}
+                  onClick={() => setOutcome(o)}
+                  className={`py-2 rounded-lg text-xs font-bold border transition-all ${
+                    outcome === o ? outcomeStyles[o] : 'border-[#1E3A5F] text-[#64748B] hover:border-[#2E4A6F]'
+                  }`}
+                >
+                  {o}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {outcome === 'DELAYED' && (
+            <div>
+              <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide block mb-1">Delay (days)</label>
+              <input
+                type="number"
+                min={0}
+                value={delayDays}
+                onChange={(e) => setDelayDays(e.target.value)}
+                placeholder="e.g. 5"
+                className="w-full px-3 py-2 bg-[#0F2040] border border-[#1E3A5F] rounded-lg text-sm text-white placeholder-[#64748B] focus:outline-none focus:border-[#00C896]"
+              />
+            </div>
+          )}
+
+          {outcome === 'PENALIZED' && (
+            <div>
+              <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide block mb-1">Penalty (KES)</label>
+              <input
+                type="number"
+                min={0}
+                value={penalty}
+                onChange={(e) => setPenalty(e.target.value)}
+                placeholder="e.g. 150000"
+                className="w-full px-3 py-2 bg-[#0F2040] border border-[#1E3A5F] rounded-lg text-sm text-white placeholder-[#64748B] focus:outline-none focus:border-[#00C896]"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide block mb-1">Notes (optional)</label>
+            <textarea
+              rows={3}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Any closure notes..."
+              className="w-full px-3 py-2 bg-[#0F2040] border border-[#1E3A5F] rounded-lg text-sm text-white placeholder-[#64748B] focus:outline-none focus:border-[#00C896] resize-none"
+            />
+          </div>
+
+          {err && <p className="text-xs text-red-400">{err}</p>}
+
+          <div className="flex gap-3 pt-1">
+            <button
+              onClick={onClose}
+              className="flex-1 py-2 border border-[#1E3A5F] text-[#64748B] rounded-lg text-sm hover:border-[#2E4A6F] hover:text-white transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={submit}
+              disabled={saving}
+              className="flex-1 py-2 bg-[#00C896] text-[#0A1628] rounded-lg text-sm font-bold hover:bg-[#00A87E] disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+            >
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+              {saving ? 'Closing...' : 'Confirm Close'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function OperationsPage() {
   const [shipments, setShipments] = useState<Shipment[]>([])
   const [search, setSearch] = useState('')
@@ -95,6 +237,7 @@ export default function OperationsPage() {
   const [eventsRunning, setEventsRunning] = useState(false)
   const [eventsResult, setEventsResult]   = useState<string | null>(null)
   const [kesRate, setKesRate]             = useState(130)
+  const [closeTarget, setCloseTarget]     = useState<Shipment | null>(null)
 
   async function runAlerts() {
     setAlertSending(true)
@@ -153,6 +296,13 @@ export default function OperationsPage() {
       return matchSearch && matchRisk
     })
     .sort((a, b) => (b.risk?.risk_score ?? 0) - (a.risk?.risk_score ?? 0))
+
+  function handleShipmentClosed(id: string) {
+    setShipments((prev) =>
+      prev.map((s) => s.id === id ? { ...s, remediation_status: 'CLOSED' } : s)
+    )
+    setCloseTarget(null)
+  }
 
   function handlePortalSaved(shipmentId: string, updatedPortals: ShipmentPortal[]) {
     setShipments((prev) =>
@@ -258,7 +408,7 @@ export default function OperationsPage() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-[#1E3A5F] bg-[#0F2040]">
-              {['Priority', 'Shipment', 'Regulator', 'PVoC Deadline', 'CIF Value', 'Landed Cost', 'Portal Status', 'Risk', 'Status'].map((h) => (
+              {['Priority', 'Shipment', 'Regulator', 'PVoC Deadline', 'CIF Value', 'Landed Cost', 'Portal Status', 'Risk', 'Status', ''].map((h) => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">
                   {h}
                 </th>
@@ -322,6 +472,17 @@ export default function OperationsPage() {
                   </td>
                   <td className="px-4 py-3"><RiskBadge risk={s.risk_flag_status} /></td>
                   <td className="px-4 py-3"><StatusBadge status={s.remediation_status} /></td>
+                  <td className="px-4 py-3">
+                    {s.remediation_status !== 'CLOSED' && (
+                      <button
+                        onClick={() => setCloseTarget(s)}
+                        className="flex items-center gap-1 px-2 py-1 border border-[#1E3A5F] text-[#64748B] rounded-md text-[10px] font-semibold hover:border-emerald-500/40 hover:text-emerald-400 transition-all"
+                      >
+                        <CheckCircle2 size={11} />
+                        Close
+                      </button>
+                    )}
+                  </td>
                 </tr>
               )
             })}
@@ -357,6 +518,14 @@ export default function OperationsPage() {
             handlePortalSaved(portalModal.id, updatedPortals)
             setPortalModal(null)
           }}
+        />
+      )}
+
+      {closeTarget && (
+        <CloseShipmentModal
+          shipment={closeTarget}
+          onClose={() => setCloseTarget(null)}
+          onClosed={handleShipmentClosed}
         />
       )}
     </div>

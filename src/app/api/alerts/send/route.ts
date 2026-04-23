@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { NextRequest, NextResponse } from 'next/server'
 import { getKesRate } from '@/lib/fx'
+import { insertTimelineEvent } from '@/lib/timeline'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -243,8 +244,20 @@ async function runAlerts() {
     const { error } = await resend.emails.send({ from: FROM_EMAIL, to: ALERT_EMAIL, subject, html })
     if (error) { results.errors.push(`Shipment ${s.name}: ${error.message}`); continue }
 
-    // WhatsApp alert — concise 160-char message for mobile
+    // Log alert to timeline (SYSTEM confidence — auto-fired)
     const levelTag = daysRemaining <= 3 ? 'CRITICAL' : daysRemaining <= 7 ? 'URGENT' : 'WARNING'
+    await insertTimelineEvent(supabaseAdmin, {
+      shipment_id:     s.id,
+      organization_id: ORG_ID,
+      event_type:      'ALERT_SENT',
+      actor_type:      'SYSTEM',
+      actor_label:     'Alert Engine',
+      confidence:      'SYSTEM',
+      title:           `${levelTag} alert sent — ${daysRemaining}d to deadline`,
+      metadata:        { tier, regulator: regulatorCode, days_remaining: daysRemaining, channel: 'EMAIL' },
+    })
+
+    // WhatsApp alert — concise 160-char message for mobile
     await sendWhatsApp(
       `[KRUXVON ${levelTag}] ${s.name} (${s.reference_number})\n` +
       `Regulator: ${regulatorCode} · Deadline: ${daysRemaining}d\n` +

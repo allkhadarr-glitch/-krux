@@ -1,5 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 
+export type TimelineConfidence = 'SYSTEM' | 'USER' | 'INFERRED'
+
 export interface TimelineEvent {
   id:           string
   shipment_id:  string
@@ -9,6 +11,7 @@ export interface TimelineEvent {
   actor_label?: string
   title:        string
   detail?:      string
+  confidence:   TimelineConfidence
   metadata:     Record<string, unknown>
   created_at:   string
 }

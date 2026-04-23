@@ -286,6 +286,7 @@ export async function generateActionsForShipment(
         event_type:      'ACTION_CREATED',
         actor_type:      'SYSTEM',
         actor_label:     'Intelligence Engine',
+        confidence:      'SYSTEM',
         title:           `Action queued: ${a.title}`,
         metadata:        { action_type: a.action_type, priority: a.priority },
       })
