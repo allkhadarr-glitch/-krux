@@ -519,7 +519,17 @@ export default function ActionsPage() {
     }
   }, [filter])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load()
+    // Realtime: refresh when actions change
+    const { supabase: sb } = require('@/lib/supabase')
+    const channel = sb
+      .channel('actions-center')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'actions' }, () => load())
+      .subscribe()
+    return () => { sb.removeChannel(channel) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [load])
 
   async function handleComplete(id: string) {
     setCompleting(id)

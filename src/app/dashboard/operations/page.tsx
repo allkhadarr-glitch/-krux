@@ -7,9 +7,12 @@ import { getShipments } from '@/lib/supabase'
 import { computeAlerts } from '@/lib/alerts'
 import AlertBanner from '@/components/AlertBanner'
 import PortalStatusModal from '@/components/PortalStatusModal'
-import { AlertTriangle, Clock, Search, Globe, Plus, Bell, Loader2, ChevronDown, CheckCircle2, X, Copy, FileDown } from 'lucide-react'
+import { AlertTriangle, Clock, Search, Globe, Plus, Bell, Loader2, ChevronDown, CheckCircle2, X, Copy, FileDown, Truck, Lock } from 'lucide-react'
+import { useRole } from '@/hooks/useRole'
 import AddShipmentModal from '@/components/AddShipmentModal'
 import ShipmentDrawer from '@/components/ShipmentDrawer'
+import { OnboardingWizard } from '@/components/OnboardingWizard'
+import { supabase } from '@/lib/supabase'
 
 const priorityColors: Record<PriorityLevel, string> = {
   CRITICAL: 'bg-red-500/15 text-red-400 border border-red-500/30',
@@ -281,6 +284,48 @@ function CloseShipmentModal({
   )
 }
 
+const STAGES = ['PRE_SHIPMENT', 'IN_TRANSIT', 'AT_PORT', 'CUSTOMS', 'CLEARED']
+const STAGE_LABELS: Record<string, string> = {
+  PRE_SHIPMENT: 'Pre-ship', IN_TRANSIT: 'Transit',
+  AT_PORT: 'At Port', CUSTOMS: 'Customs', CLEARED: 'Cleared',
+}
+const STAGE_COLORS: Record<string, string> = {
+  PRE_SHIPMENT: 'text-[#64748B]', IN_TRANSIT: 'text-blue-400',
+  AT_PORT: 'text-amber-400', CUSTOMS: 'text-purple-400', CLEARED: 'text-emerald-400',
+}
+
+function StagePill({ shipmentId, currentStage }: { shipmentId: string; currentStage: string }) {
+  const [stage, setStage] = useState(currentStage)
+  const [open, setOpen]   = useState(false)
+
+  async function updateStage(s: string) {
+    setStage(s)
+    setOpen(false)
+    await fetch(`/api/shipments/${shipmentId}/stage`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stage: s }),
+    })
+  }
+
+  return (
+    <div className="relative">
+      <button onClick={() => setOpen(!open)}
+        className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide ${STAGE_COLORS[stage] ?? 'text-[#64748B]'}`}>
+        <Truck size={10} /> {STAGE_LABELS[stage] ?? stage}
+      </button>
+      {open && (
+        <div className="absolute z-20 top-5 left-0 bg-[#0A1628] border border-[#1E3A5F] rounded-lg shadow-xl min-w-[110px] overflow-hidden">
+          {STAGES.map((s) => (
+            <button key={s} onClick={() => updateStage(s)}
+              className={`w-full text-left px-3 py-2 text-[10px] font-bold uppercase transition-colors hover:bg-[#1E3A5F] ${s === stage ? STAGE_COLORS[s] : 'text-[#64748B]'}`}>
+              {STAGE_LABELS[s]}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function OperationsPage() {
   const [shipments, setShipments] = useState<Shipment[]>([])
   const [search, setSearch] = useState('')
@@ -296,6 +341,8 @@ export default function OperationsPage() {
   const [eventsResult, setEventsResult]   = useState<string | null>(null)
   const [kesRate, setKesRate]             = useState(130)
   const [closeTarget, setCloseTarget]     = useState<Shipment | null>(null)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const { canWrite } = useRole()
 
   async function runAlerts() {
     setAlertSending(true)
@@ -337,9 +384,20 @@ export default function OperationsPage() {
       .then(([ships, fx]) => {
         setShipments(ships)
         setKesRate(fx.usd_kes ?? 130)
+        if (ships.length === 0) setShowOnboarding(true)
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
+
+    // Realtime: refresh shipments on any change
+    const channel = supabase
+      .channel('shipments-ops')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'shipments' }, () => {
+        getShipments().then(setShipments)
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [])
 
   const alerts = computeAlerts(shipments, kesRate)
@@ -382,6 +440,7 @@ export default function OperationsPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {showOnboarding && <OnboardingWizard onDismiss={() => setShowOnboarding(false)} />}
       <AlertBanner alerts={alerts} />
 
       <div className="flex items-center justify-between">
@@ -425,13 +484,15 @@ export default function OperationsPage() {
               {alertResult}
             </span>
           )}
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#00C896] text-[#0A1628] rounded-lg text-sm font-bold hover:bg-[#00A87E] transition-colors"
-          >
-            <Plus size={14} />
-            Add Shipment
-          </button>
+          {canWrite && (
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-[#00C896] text-[#0A1628] rounded-lg text-sm font-bold hover:bg-[#00A87E] transition-colors"
+            >
+              <Plus size={14} />
+              Add Shipment
+            </button>
+          )}
         </div>
       </div>
 
@@ -466,7 +527,7 @@ export default function OperationsPage() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-[#1E3A5F] bg-[#0F2040]">
-              {['Priority', 'Shipment', 'Regulator', 'PVoC Deadline', 'CIF Value', 'Landed Cost', 'Portal Status', 'Risk', 'Status', ''].map((h) => (
+              {['Priority', 'Shipment', 'Stage', 'Regulator', 'PVoC Deadline', 'CIF Value', 'Landed Cost', 'Portal Status', 'Risk', 'Status', ''].map((h) => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">
                   {h}
                 </th>
@@ -504,6 +565,9 @@ export default function OperationsPage() {
                     )}
                   </td>
                   <td className="px-4 py-3">
+                    <StagePill shipmentId={s.id} currentStage={(s as any).shipment_stage ?? 'PRE_SHIPMENT'} />
+                  </td>
+                  <td className="px-4 py-3">
                     <RegulatorBadge body={s.regulatory_body?.code ?? '—'} />
                   </td>
                   <td className="px-4 py-3">
@@ -532,33 +596,29 @@ export default function OperationsPage() {
                   <td className="px-4 py-3"><StatusBadge status={s.remediation_status} /></td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
-                      {s.remediation_status !== 'CLOSED' && (
-                        <button
-                          onClick={() => setCloseTarget(s)}
-                          className="flex items-center gap-1 px-2 py-1 border border-[#1E3A5F] text-[#64748B] rounded-md text-[10px] font-semibold hover:border-emerald-500/40 hover:text-emerald-400 transition-all"
-                        >
-                          <CheckCircle2 size={11} />
-                          Close
+                      {canWrite && s.remediation_status !== 'CLOSED' && (
+                        <button onClick={() => setCloseTarget(s)}
+                          className="flex items-center gap-1 px-2 py-1 border border-[#1E3A5F] text-[#64748B] rounded-md text-[10px] font-semibold hover:border-emerald-500/40 hover:text-emerald-400 transition-all">
+                          <CheckCircle2 size={11} /> Close
                         </button>
                       )}
-                      <button
-                        onClick={() => window.open(`/api/shipments/${s.id}/export`, '_blank')}
+                      <button onClick={() => window.open(`/api/shipments/${s.id}/export`, '_blank')}
                         className="flex items-center gap-1 px-2 py-1 border border-[#1E3A5F] text-[#64748B] rounded-md text-[10px] font-semibold hover:border-blue-500/40 hover:text-blue-400 transition-all"
-                        title="Export audit report"
-                      >
+                        title="Export audit report">
                         <FileDown size={11} />
                       </button>
-                      <button
-                        onClick={async () => {
-                          const r = await fetch(`/api/shipments/${s.id}/duplicate`, { method: 'POST' })
-                          const d = await r.json()
-                          if (d.shipment) setShipments((prev) => [d.shipment, ...prev])
-                        }}
-                        className="flex items-center gap-1 px-2 py-1 border border-[#1E3A5F] text-[#64748B] rounded-md text-[10px] font-semibold hover:border-purple-500/40 hover:text-purple-400 transition-all"
-                        title="Duplicate shipment"
-                      >
-                        <Copy size={11} />
-                      </button>
+                      {canWrite && (
+                        <button onClick={async () => {
+                            const r = await fetch(`/api/shipments/${s.id}/duplicate`, { method: 'POST' })
+                            const d = await r.json()
+                            if (d.shipment) setShipments((prev) => [d.shipment, ...prev])
+                          }}
+                          className="flex items-center gap-1 px-2 py-1 border border-[#1E3A5F] text-[#64748B] rounded-md text-[10px] font-semibold hover:border-purple-500/40 hover:text-purple-400 transition-all"
+                          title="Duplicate shipment">
+                          <Copy size={11} />
+                        </button>
+                      )}
+                      {!canWrite && <span title="Read-only access"><Lock size={10} className="text-[#1E3A5F]" /></span>}
                     </div>
                   </td>
                 </tr>

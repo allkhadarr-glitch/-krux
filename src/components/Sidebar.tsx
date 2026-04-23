@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import {
   BarChart3, Briefcase, User, Factory, Settings, Shield, LogOut,
   Zap, ShoppingCart, Archive, Smartphone, TrendingUp, Users, Calendar,
+  FileText,
 } from 'lucide-react'
 import { signOut } from '@/app/login/actions'
 import { NotificationBell } from './NotificationBell'
@@ -14,11 +15,13 @@ const nav = [
   { href: '/dashboard/closed',      label: 'Closed Shipments', icon: Archive },
   { href: '/dashboard/analytics',   label: 'Analytics',        icon: TrendingUp },
   { href: '/dashboard/compliance',  label: 'Compliance Cal.',  icon: Calendar },
-  { href: '/dashboard/contacts',    label: 'Agent Directory',  icon: Users },
+  { href: '/dashboard/licenses',    label: 'Licenses',         icon: FileText },
+  { href: '/dashboard/team',        label: 'Team',             icon: Users },
+  { href: '/dashboard/contacts',    label: 'Agent Directory',  icon: Briefcase },
   { href: '/dashboard/mobile',      label: 'Field View',       icon: Smartphone },
   { href: '/dashboard/orders',      label: 'Order Protection', icon: ShoppingCart },
   { href: '/dashboard/management',  label: 'Management',       icon: BarChart3 },
-  { href: '/dashboard/agents',      label: 'Clearing Agents',  icon: Briefcase },
+  { href: '/dashboard/agents',      label: 'AI Tax Quotes',    icon: BarChart3 },
   { href: '/dashboard/client',      label: 'Client View',      icon: User },
   { href: '/dashboard/manufacturer',label: 'Manufacturer',     icon: Factory },
 ]
