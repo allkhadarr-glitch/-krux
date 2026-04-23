@@ -4,7 +4,7 @@ import { Action, PriorityLevel } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 import {
   CheckCircle2, Clock, AlertTriangle, ChevronRight,
-  Loader2, RefreshCw, Zap, Info, Square, CheckSquare, FileText,
+  Loader2, RefreshCw, Zap, Info, Square, CheckSquare, FileText, XCircle,
 } from 'lucide-react'
 
 // ─── Document checklist per action type ──────────────────────
@@ -162,6 +162,23 @@ function DueLabel({ due }: { due?: string }) {
   return <span className="text-[#64748B] text-xs">{days}d remaining</span>
 }
 
+// ─── Execution status pill ────────────────────────────────────
+
+function ExecStatusPill({ status }: { status?: string }) {
+  if (!status || status === 'PENDING') return null
+  const config = {
+    IN_PROGRESS: 'bg-amber-400/10 text-amber-400 border-amber-400/30',
+    DONE:        'bg-[#00C896]/10 text-[#00C896] border-[#00C896]/30',
+    FAILED:      'bg-red-400/10 text-red-400 border-red-400/30',
+  }[status]
+  if (!config) return null
+  return (
+    <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase border ${config}`}>
+      {status === 'IN_PROGRESS' ? 'In Progress' : status === 'DONE' ? 'Done' : 'Failed'}
+    </span>
+  )
+}
+
 // ─── Action card ─────────────────────────────────────────────
 
 function ActionCard({
@@ -169,16 +186,44 @@ function ActionCard({
   onComplete,
   onDismiss,
   completing,
+  onRefresh,
 }: {
   action:     Action
   onComplete: (id: string) => void
   onDismiss:  (id: string) => void
   completing: string | null
+  onRefresh:  () => void
 }) {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded]   = useState(false)
+  const [acting, setActing]       = useState(false)
+  const [failNote, setFailNote]   = useState('')
+  const [showFail, setShowFail]   = useState(false)
+
   const cfg     = PRIORITY_CONFIG[action.priority]
-  const isBusy  = completing === action.id
+  const isBusy  = completing === action.id || acting
   const shipRef = (action as any).shipment
+  const execStatus: string | undefined = (action as any).execution_status
+
+  async function handleStart() {
+    setActing(true)
+    await fetch(`/api/actions/${action.id}/start`, { method: 'POST' })
+    setActing(false)
+    onRefresh()
+  }
+
+  async function handleFail() {
+    if (!failNote.trim()) return
+    setActing(true)
+    await fetch(`/api/actions/${action.id}/fail`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ reason: failNote }),
+    })
+    setActing(false)
+    setShowFail(false)
+    setFailNote('')
+    onRefresh()
+  }
 
   return (
     <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-4 hover:border-[#2A4A7F] transition-colors">
@@ -189,6 +234,7 @@ function ActionCard({
             <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${cfg.badge}`}>
               {cfg.label}
             </span>
+            <ExecStatusPill status={execStatus} />
             {shipRef && (
               <span className="text-[10px] text-[#64748B] font-medium">
                 {shipRef.name ?? shipRef.reference_number}
@@ -215,16 +261,14 @@ function ActionCard({
           </div>
 
           {/* Expand toggle */}
-          {action.description && (
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="flex items-center gap-1 text-[10px] text-[#64748B] hover:text-[#94A3B8] mt-1.5 transition-colors"
-            >
-              <Info size={10} />
-              {expanded ? 'Less' : 'Details'}
-              <ChevronRight size={10} className={`transition-transform ${expanded ? 'rotate-90' : ''}`} />
-            </button>
-          )}
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center gap-1 text-[10px] text-[#64748B] hover:text-[#94A3B8] mt-1.5 transition-colors"
+          >
+            <Info size={10} />
+            {expanded ? 'Less' : 'Details'}
+            <ChevronRight size={10} className={`transition-transform ${expanded ? 'rotate-90' : ''}`} />
+          </button>
 
           {expanded && (
             <>
@@ -234,22 +278,66 @@ function ActionCard({
                 </p>
               )}
               <DocChecklist actionId={action.id} actionType={action.action_type} />
+
+              {/* Fail input */}
+              {showFail && (
+                <div className="mt-3 flex gap-2">
+                  <input
+                    value={failNote}
+                    onChange={(e) => setFailNote(e.target.value)}
+                    placeholder="Reason for failure..."
+                    className="flex-1 text-xs bg-[#0A1628] border border-red-500/30 rounded-lg px-2 py-1.5 text-[#94A3B8] placeholder:text-[#334155] focus:outline-none focus:border-red-500/60"
+                  />
+                  <button
+                    onClick={handleFail}
+                    disabled={!failNote.trim() || acting}
+                    className="px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/25 rounded-lg text-xs font-semibold hover:bg-red-500/20 disabled:opacity-40 transition-all"
+                  >
+                    Log
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>
 
         {/* Action buttons */}
         <div className="flex flex-col gap-1.5 shrink-0">
+          {/* Start — only if PENDING */}
+          {(!execStatus || execStatus === 'PENDING') && (
+            <button
+              onClick={handleStart}
+              disabled={isBusy}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400/10 text-amber-400 border border-amber-400/25 rounded-lg text-xs font-semibold hover:bg-amber-400/20 disabled:opacity-50 transition-all"
+            >
+              {acting ? <Loader2 size={11} className="animate-spin" /> : <Clock size={11} />}
+              Start
+            </button>
+          )}
+
+          {/* Done */}
           <button
             onClick={() => onComplete(action.id)}
             disabled={isBusy}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00C896]/10 text-[#00C896] border border-[#00C896]/25 rounded-lg text-xs font-semibold hover:bg-[#00C896]/20 disabled:opacity-50 transition-all"
           >
-            {isBusy
+            {completing === action.id
               ? <Loader2 size={11} className="animate-spin" />
               : <CheckCircle2 size={11} />}
             Done
           </button>
+
+          {/* Fail toggle */}
+          <button
+            onClick={() => { setExpanded(true); setShowFail(!showFail) }}
+            disabled={isBusy}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-red-400/60 border border-[#1E3A5F] rounded-lg text-xs hover:text-red-400 hover:border-red-500/25 disabled:opacity-50 transition-colors"
+          >
+            <XCircle size={11} />
+            Fail
+          </button>
+
+          {/* Dismiss */}
           <button
             onClick={() => onDismiss(action.id)}
             disabled={isBusy}
@@ -271,12 +359,14 @@ function PriorityGroup({
   onComplete,
   onDismiss,
   completing,
+  onRefresh,
 }: {
   level:      PriorityLevel
   actions:    Action[]
   onComplete: (id: string) => void
   onDismiss:  (id: string) => void
   completing: string | null
+  onRefresh:  () => void
 }) {
   if (!actions.length) return null
   const cfg = PRIORITY_CONFIG[level]
@@ -296,6 +386,7 @@ function PriorityGroup({
             onComplete={onComplete}
             onDismiss={onDismiss}
             completing={completing}
+            onRefresh={onRefresh}
           />
         ))}
       </div>
@@ -485,6 +576,7 @@ export default function ActionsPage() {
               onComplete={handleComplete}
               onDismiss={handleDismiss}
               completing={completing}
+              onRefresh={load}
             />
           ))}
         </div>

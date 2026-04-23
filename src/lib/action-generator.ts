@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
+import { insertTimelineEvent } from './timeline'
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -273,7 +274,22 @@ export async function generateActionsForShipment(
 
   // ── Batch write ───────────────────────────────────────────
   if (toCreate.length > 0) {
-    await supabase.from('actions').insert(toCreate)
+    const { data: inserted } = await supabase.from('actions').insert(toCreate).select()
+
+    // Log each created action to the timeline
+    for (const a of inserted ?? []) {
+      if (!a.shipment_id) continue
+      await insertTimelineEvent(supabase, {
+        shipment_id:     a.shipment_id,
+        action_id:       a.id,
+        organization_id: a.organization_id,
+        event_type:      'ACTION_CREATED',
+        actor_type:      'SYSTEM',
+        actor_label:     'Intelligence Engine',
+        title:           `Action queued: ${a.title}`,
+        metadata:        { action_type: a.action_type, priority: a.priority },
+      })
+    }
   }
   if (suppressions.length > 0) {
     await supabase.from('suppressed_actions').insert(suppressions)
