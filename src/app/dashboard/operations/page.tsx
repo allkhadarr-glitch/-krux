@@ -94,6 +94,7 @@ export default function OperationsPage() {
   const [alertResult, setAlertResult]     = useState<string | null>(null)
   const [eventsRunning, setEventsRunning] = useState(false)
   const [eventsResult, setEventsResult]   = useState<string | null>(null)
+  const [kesRate, setKesRate]             = useState(130)
 
   async function runAlerts() {
     setAlertSending(true)
@@ -128,13 +129,19 @@ export default function OperationsPage() {
   }
 
   useEffect(() => {
-    getShipments()
-      .then(setShipments)
+    Promise.all([
+      getShipments(),
+      fetch('/api/fx/rate').then((r) => r.json()).catch(() => ({ usd_kes: 130 })),
+    ])
+      .then(([ships, fx]) => {
+        setShipments(ships)
+        setKesRate(fx.usd_kes ?? 130)
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
   }, [])
 
-  const alerts = computeAlerts(shipments)
+  const alerts = computeAlerts(shipments, kesRate)
 
   const filtered = shipments
     .filter((s) => {

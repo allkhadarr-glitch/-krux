@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { getKesRate } from '@/lib/fx'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,7 +19,7 @@ async function nextReferenceNumber(): Promise<string> {
   return `KRUX-${year}-${seq}`
 }
 
-function calcLandedCost(cif: number, dutyPct: number) {
+function calcLandedCost(cif: number, dutyPct: number, kesRate: number) {
   const duty      = cif * (dutyPct / 100)
   const idf       = cif * 0.02
   const rdl       = cif * 0.015
@@ -35,7 +36,7 @@ function calcLandedCost(cif: number, dutyPct: number) {
     clearing_fee_usd:       clearing,
     vat_usd:                Math.round(vat * 100) / 100,
     total_landed_cost_usd:  Math.round(totalUSD * 100) / 100,
-    total_landed_cost_kes:  Math.round(totalUSD * 129 * 100) / 100,
+    total_landed_cost_kes:  Math.round(totalUSD * kesRate * 100) / 100,
   }
 }
 
@@ -52,7 +53,8 @@ export async function POST(req: NextRequest) {
   }
 
   const reference_number = await nextReferenceNumber()
-  const costs = calcLandedCost(Number(cif_value_usd), Number(import_duty_pct ?? 25))
+  const kesRate = await getKesRate()
+  const costs = calcLandedCost(Number(cif_value_usd), Number(import_duty_pct ?? 25), kesRate)
 
   const { data, error } = await supabaseAdmin
     .from('shipments')
@@ -72,7 +74,7 @@ export async function POST(req: NextRequest) {
       remediation_status:   'OPEN',
       shipment_status:      'PENDING',
       composite_risk_score: risk_flag_status === 'RED' ? 8 : risk_flag_status === 'GREEN' ? 3 : 5,
-      exchange_rate_used:   129,
+      exchange_rate_used:   kesRate,
       destination_port:     'Mombasa',
       ...costs,
     })

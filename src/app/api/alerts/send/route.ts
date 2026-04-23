@@ -1,15 +1,38 @@
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { NextRequest, NextResponse } from 'next/server'
+import { getKesRate } from '@/lib/fx'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const ORG_ID      = '00000000-0000-0000-0000-000000000001'
-const ALERT_EMAIL = process.env.ALERT_EMAIL ?? 'mabdikadirhaji@gmail.com'
-const FROM_EMAIL  = 'KRUXVON Alerts <alerts@kruxvon.com>'
+const ORG_ID           = '00000000-0000-0000-0000-000000000001'
+const ALERT_EMAIL      = process.env.ALERT_EMAIL      ?? 'mabdikadirhaji@gmail.com'
+const ALERT_WHATSAPP   = process.env.ALERT_WHATSAPP_TO ?? ''
+const FROM_EMAIL       = 'KRUXVON Alerts <alerts@kruxvon.com>'
+
+// ─── WhatsApp via Twilio ─────────────────────────────────────
+
+async function sendWhatsApp(body: string): Promise<void> {
+  const sid   = process.env.TWILIO_ACCOUNT_SID
+  const token = process.env.TWILIO_AUTH_TOKEN
+  const from  = process.env.TWILIO_WHATSAPP_FROM   // e.g. whatsapp:+14155238886
+  const to    = ALERT_WHATSAPP ? `whatsapp:${ALERT_WHATSAPP}` : ''
+
+  if (!sid || !token || !from || !to) return  // Twilio not configured — skip silently
+
+  const params = new URLSearchParams({ From: from, To: to, Body: body })
+  await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method:  'POST',
+    headers: {
+      'Authorization': `Basic ${Buffer.from(`${sid}:${token}`).toString('base64')}`,
+      'Content-Type':  'application/x-www-form-urlencoded',
+    },
+    body: params.toString(),
+  })
+}
 
 // ─── Email Templates ────────────────────────────────────────
 
@@ -147,7 +170,7 @@ function licenseAlertEmail(l: {
 
 // ─── Alert Logic ────────────────────────────────────────────
 
-const EXCHANGE_RATE = 129
+// Exchange rate fetched live in runAlerts()
 
 function getAction(regulatorCode: string, days: number): string {
   const actions: Record<string, string> = {
@@ -173,9 +196,10 @@ async function runAlerts() {
     return { error: 'RESEND_API_KEY not configured' }
   }
 
-  const resend  = new Resend(process.env.RESEND_API_KEY)
-  const results = { shipment_alerts: 0, license_alerts: 0, errors: [] as string[] }
-  const today   = new Date()
+  const resend       = new Resend(process.env.RESEND_API_KEY)
+  const EXCHANGE_RATE = await getKesRate()
+  const results      = { shipment_alerts: 0, license_alerts: 0, errors: [] as string[] }
+  const today        = new Date()
   today.setHours(0, 0, 0, 0)
 
   // ── Shipment PVoC deadline alerts ──────────────────────────
@@ -219,6 +243,14 @@ async function runAlerts() {
     const { error } = await resend.emails.send({ from: FROM_EMAIL, to: ALERT_EMAIL, subject, html })
     if (error) { results.errors.push(`Shipment ${s.name}: ${error.message}`); continue }
 
+    // WhatsApp alert — concise 160-char message for mobile
+    const levelTag = daysRemaining <= 3 ? 'CRITICAL' : daysRemaining <= 7 ? 'URGENT' : 'WARNING'
+    await sendWhatsApp(
+      `[KRUXVON ${levelTag}] ${s.name} (${s.reference_number})\n` +
+      `Regulator: ${regulatorCode} · Deadline: ${daysRemaining}d\n` +
+      `Action: ${getAction(regulatorCode, daysRemaining).split(' — ')[1] ?? 'Check compliance portal'}`
+    )
+
     // Mark sent
     const col = tier === '3d' ? 'alert_sent_3d_at' : tier === '7d' ? 'alert_sent_7d_at' : 'alert_sent_14d_at'
     await supabaseAdmin.from('shipments').update({ [col]: new Date().toISOString() }).eq('id', s.id)
@@ -252,6 +284,14 @@ async function runAlerts() {
 
     const { error } = await resend.emails.send({ from: FROM_EMAIL, to: ALERT_EMAIL, subject, html })
     if (error) { results.errors.push(`License ${l.license_name}: ${error.message}`); continue }
+
+    // WhatsApp alert for license expiry
+    const mfr = (l.manufacturers as any)?.company_name ?? 'Manufacturer'
+    await sendWhatsApp(
+      `[KRUXVON] LICENSE EXPIRING in ${daysRemaining}d\n` +
+      `${l.license_name} · ${mfr}\n` +
+      `Issuing body: ${l.issuing_body} · Begin renewal immediately.`
+    )
 
     const col = tier === '7d' ? 'alert_7_sent_at' : tier === '30d' ? 'alert_30_sent_at' : 'alert_60_sent_at'
     await supabaseAdmin.from('manufacturer_licenses').update({ [col]: new Date().toISOString() }).eq('id', l.id)

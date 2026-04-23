@@ -14,8 +14,6 @@ export interface DeadlineAlert {
   pvocDeadline: string
 }
 
-const EXCHANGE_RATE = 129
-
 function getAction(regulatorCode: string, daysRemaining: number): string {
   const actions: Record<string, string> = {
     PPB:    'Submit PPB application form + CoA + product samples to PPB office',
@@ -33,7 +31,7 @@ function getAction(regulatorCode: string, daysRemaining: number): string {
   return `WARNING — ${base} within ${daysRemaining} days`
 }
 
-export function computeAlerts(shipments: Shipment[]): DeadlineAlert[] {
+export function computeAlerts(shipments: Shipment[], kesRate = 130): DeadlineAlert[] {
   const alerts: DeadlineAlert[] = []
 
   for (const s of shipments) {
@@ -48,7 +46,7 @@ export function computeAlerts(shipments: Shipment[]): DeadlineAlert[] {
 
     const level: AlertLevel = daysRemaining <= 3 ? 'CRITICAL' : daysRemaining <= 7 ? 'URGENT' : 'WARNING'
     const dailyUSD = s.storage_rate_per_day ?? 0
-    const dailyKES = Math.round(dailyUSD * EXCHANGE_RATE)
+    const dailyKES = Math.round(dailyUSD * kesRate)
     const missedDays = Math.max(daysRemaining <= 0 ? Math.abs(daysRemaining) : 7, 7)
     const estimatedAdditionalCostKES = Math.round(dailyKES * missedDays)
     const regCode = s.regulatory_body?.code ?? s.regulatory_body_id ?? '—'

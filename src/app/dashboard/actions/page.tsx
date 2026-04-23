@@ -4,8 +4,88 @@ import { Action, PriorityLevel } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 import {
   CheckCircle2, Clock, AlertTriangle, ChevronRight,
-  Loader2, RefreshCw, Zap, Info,
+  Loader2, RefreshCw, Zap, Info, Square, CheckSquare, FileText,
 } from 'lucide-react'
+
+// ─── Document checklist per action type ──────────────────────
+
+const DOCS_BY_TYPE: Record<string, string[]> = {
+  SUBMIT_DOCUMENTS_PPB:      ['PPB Application Form', 'Certificate of Analysis (CoA)', 'GMP Certificate', 'Product Samples (3 units)', 'Commercial Invoice'],
+  SUBMIT_DOCUMENTS_KEBS:     ['KEBS PVoC Request Form', 'Product Test Report', 'Packing List', 'Commercial Invoice', 'Bill of Lading'],
+  SUBMIT_DOCUMENTS_KEPHIS:   ['Phytosanitary Certificate (origin country)', 'KEPHIS Import Permit Application', 'Packing List', 'Commercial Invoice'],
+  SUBMIT_DOCUMENTS_PCPB:     ['PCPB Registration Documents', 'Pesticide Efficacy Data', 'Safety Data Sheet (SDS)', 'Product Label'],
+  SUBMIT_DOCUMENTS_EPRA:     ['EPRA Energy Audit Report', 'Product Compliance Certificate', 'Technical Data Sheet'],
+  SUBMIT_DOCUMENTS_NEMA:     ['NEMA Environmental Impact Assessment', 'Importation Permit Application', 'Product MSDS'],
+  SUBMIT_DOCUMENTS_KRA:      ['IDF via KRA iTax Portal', 'HS Code Classification', 'Commercial Invoice', 'Packing List'],
+  SUBMIT_DOCUMENTS_KENTRADE: ['KenTrade Import Declaration', 'Supporting Permits', 'Bill of Lading'],
+  CONTACT_AGENT:             ['Agent Contact Log', 'Confirmation of Receipt', 'Status Update Written'],
+  APPLY:                     ['Application Form Completed', 'Supporting Documents Attached', 'Payment Receipt'],
+  ESCALATE:                  ['Rejection Notice Filed', 'Response Letter Drafted', 'Corrected Documents Prepared'],
+  VERIFY:                    ['Verification Checklist', 'Document Copies Attached'],
+}
+
+function getDocsForAction(action: Action): string[] {
+  const type = action.action_type.toUpperCase()
+  if (DOCS_BY_TYPE[type]) return DOCS_BY_TYPE[type]
+  // partial match — find the closest key
+  const match = Object.keys(DOCS_BY_TYPE).find((k) => type.startsWith(k.split('_')[0]))
+  return match ? DOCS_BY_TYPE[match] : ['Required Documents', 'Supporting Evidence']
+}
+
+// ─── Document Checklist Component ────────────────────────────
+
+function DocChecklist({ actionId, actionType }: { actionId: string; actionType: string }) {
+  const storageKey = `krux_doc_${actionId}`
+  const docs = getDocsForAction({ action_type: actionType } as Action)
+
+  const [checked, setChecked] = useState<Record<string, boolean>>(() => {
+    if (typeof window === 'undefined') return {}
+    try {
+      return JSON.parse(localStorage.getItem(storageKey) ?? '{}')
+    } catch { return {} }
+  })
+
+  function toggle(doc: string) {
+    setChecked((prev) => {
+      const next = { ...prev, [doc]: !prev[doc] }
+      localStorage.setItem(storageKey, JSON.stringify(next))
+      return next
+    })
+  }
+
+  const done  = docs.filter((d) => checked[d]).length
+  const total = docs.length
+
+  return (
+    <div className="mt-3 pt-3 border-t border-[#1E3A5F]">
+      <div className="flex items-center gap-1.5 mb-2">
+        <FileText size={10} className="text-[#64748B]" />
+        <span className="text-[10px] text-[#64748B] font-semibold uppercase tracking-wide">Documents</span>
+        <span className={`text-[10px] font-bold ml-auto ${done === total ? 'text-[#00C896]' : 'text-[#64748B]'}`}>
+          {done}/{total}
+        </span>
+      </div>
+      <div className="space-y-1">
+        {docs.map((doc) => (
+          <button
+            key={doc}
+            onClick={() => toggle(doc)}
+            className="flex items-center gap-2 w-full text-left group"
+          >
+            {checked[doc]
+              ? <CheckSquare size={12} className="text-[#00C896] shrink-0" />
+              : <Square      size={12} className="text-[#334155] group-hover:text-[#64748B] shrink-0" />}
+            <span className={`text-[11px] transition-colors ${
+              checked[doc] ? 'text-[#64748B] line-through' : 'text-[#94A3B8] group-hover:text-white'
+            }`}>
+              {doc}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 // ─── Priority config ──────────────────────────────────────────
 
@@ -146,10 +226,15 @@ function ActionCard({
             </button>
           )}
 
-          {expanded && action.description && (
-            <p className="text-xs text-[#94A3B8] mt-2 pl-1 border-l border-[#1E3A5F] leading-relaxed">
-              {action.description}
-            </p>
+          {expanded && (
+            <>
+              {action.description && (
+                <p className="text-xs text-[#94A3B8] mt-2 pl-1 border-l border-[#1E3A5F] leading-relaxed">
+                  {action.description}
+                </p>
+              )}
+              <DocChecklist actionId={action.id} actionType={action.action_type} />
+            </>
           )}
         </div>
 

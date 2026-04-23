@@ -23,7 +23,13 @@ export function computeRiskScore({
   const moneyFactor = Math.min(1, Math.log10(Math.max(cifValueUsd, 1)) / 6)  // 0–1, log10(1M) = 6
   const probFactor  = Math.min(1, delayProbability)                           // 0–1
 
-  return Math.round(timeFactor * (0.4 + 0.6 * moneyFactor) * (0.3 + 0.7 * probFactor) * 100) / 10
+  const raw = Math.round(timeFactor * (0.4 + 0.6 * moneyFactor) * (0.3 + 0.7 * probFactor) * 100) / 10
+
+  // Regulatory deadlines are binary — proximity is an absolute override, not a weighted factor
+  if (d <= 0) return Math.max(raw, 9.5)
+  if (d <= 3) return Math.max(raw, 7.5)
+  if (d <= 7) return Math.max(raw, 4.0)
+  return raw
 }
 
 export function getPriorityLevel(score: number): 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' {
