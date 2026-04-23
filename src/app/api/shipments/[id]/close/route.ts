@@ -37,7 +37,7 @@ export async function POST(
   // Summarise execution at closure time — this is the context snapshot
   const { data: actions } = await supabase
     .from('actions')
-    .select('id, execution_status, priority, action_type')
+    .select('id, execution_status, priority, action_type, started_at')
     .eq('shipment_id', id)
 
   const allActions          = actions ?? []
@@ -51,6 +51,25 @@ export async function POST(
   const total_duration_days = shipment.created_at
     ? Math.ceil((Date.now() - new Date(shipment.created_at).getTime()) / 86400000)
     : null
+
+  // Timing honesty: compute start-relative-to-deadline for every action that was actually started.
+  // avg_days_before_deadline < 0 means actions were started after the deadline on average.
+  // first_action_started_after_deadline = true means nothing was touched until it was already too late.
+  const startedActions = allActions.filter((a) => a.started_at)
+  let avg_days_before_deadline: number | null = null
+  let first_action_started_after_deadline: boolean | null = null
+
+  if (shipment.pvoc_deadline && startedActions.length > 0) {
+    const deadlineMs = new Date(shipment.pvoc_deadline).getTime()
+    const daysBeforeDeadline = startedActions.map(
+      (a) => (deadlineMs - new Date(a.started_at).getTime()) / 86400000
+    )
+    avg_days_before_deadline = parseFloat(
+      (daysBeforeDeadline.reduce((s, d) => s + d, 0) / daysBeforeDeadline.length).toFixed(1)
+    )
+    const firstStartMs = Math.min(...startedActions.map((a) => new Date(a.started_at).getTime()))
+    first_action_started_after_deadline = firstStartMs > deadlineMs
+  }
 
   // Update shipment status
   await supabase
@@ -70,14 +89,16 @@ export async function POST(
     detail:          notes ?? undefined,
     metadata: {
       status,
-      delay_days:           delay_days ?? 0,
-      penalty_amount_kes:   penalty_amount_kes ?? 0,
+      delay_days:                          delay_days ?? 0,
+      penalty_amount_kes:                  penalty_amount_kes ?? 0,
       total_duration_days,
       actions_completed,
       actions_failed,
       actions_pending,
-      critical_actions_missed: critical_missed,
-      cif_value_usd:        shipment.cif_value_usd,
+      critical_actions_missed:             critical_missed,
+      cif_value_usd:                       shipment.cif_value_usd,
+      avg_days_before_deadline,
+      first_action_started_after_deadline,
     },
   })
 
