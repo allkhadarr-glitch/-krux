@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Shipment, ShipmentPortal, PriorityLevel } from '@/lib/types'
 import { formatUSD, formatDate, daysUntilDeadline } from '@/lib/utils'
 import { RiskBadge, StatusBadge, RegulatorBadge } from '@/components/RiskBadge'
@@ -83,6 +83,8 @@ function PortalDots({ portals }: { portals?: ShipmentPortal[] }) {
 
 type CloseOutcome = 'CLEARED' | 'DELAYED' | 'PENALIZED'
 
+type ActionSummary = { total: number; completed: number; failed: number; pending: number; at_risk: number; critical_incomplete: number }
+
 function CloseShipmentModal({
   shipment,
   onClose,
@@ -98,6 +100,28 @@ function CloseShipmentModal({
   const [notes, setNotes]           = useState('')
   const [saving, setSaving]         = useState(false)
   const [err, setErr]               = useState<string | null>(null)
+  const [summary, setSummary]       = useState<ActionSummary | null>(null)
+  const [confirmed, setConfirmed]   = useState(false)
+
+  useEffect(() => {
+    fetch(`/api/shipments/${shipment.id}/actions`)
+      .then((r) => r.json())
+      .then((d) => setSummary(d))
+      .catch(() => null)
+  }, [shipment.id])
+
+  const integrityWarning = summary
+    ? summary.pending > 0 && summary.pending >= Math.ceil(summary.total * 0.4)
+      ? `${summary.pending} action${summary.pending !== 1 ? 's' : ''} were never started. Does this reflect reality?`
+      : null
+    : null
+
+  const coherenceWarning = summary && outcome === 'CLEARED' && summary.critical_incomplete > 0
+    ? `${summary.critical_incomplete} CRITICAL action${summary.critical_incomplete !== 1 ? 's' : ''} not completed. Marking CLEARED may produce false learning.`
+    : null
+
+  const hasWarning = !!(integrityWarning || coherenceWarning)
+  const needsConfirm = hasWarning && !confirmed
 
   async function submit() {
     setSaving(true)
@@ -199,6 +223,40 @@ function CloseShipmentModal({
             />
           </div>
 
+          {/* Action summary strip */}
+          {summary && (
+            <div className="bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3 py-2 flex gap-4 text-[11px]">
+              <span className="text-emerald-400 font-semibold">{summary.completed} done</span>
+              {summary.failed   > 0 && <span className="text-red-400  font-semibold">{summary.failed} failed</span>}
+              {summary.at_risk  > 0 && <span className="text-red-400  font-semibold animate-pulse">{summary.at_risk} at risk</span>}
+              {summary.pending  > 0 && <span className="text-[#64748B]">{summary.pending} untouched</span>}
+              <span className="text-[#64748B] ml-auto">{summary.total} total</span>
+            </div>
+          )}
+
+          {/* Integrity / coherence warnings */}
+          {integrityWarning && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 text-xs text-amber-400">
+              <span className="font-bold">Completeness: </span>{integrityWarning}
+            </div>
+          )}
+          {coherenceWarning && (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2 text-xs text-red-400">
+              <span className="font-bold">Coherence: </span>{coherenceWarning}
+            </div>
+          )}
+          {hasWarning && (
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={confirmed}
+                onChange={(e) => setConfirmed(e.target.checked)}
+                className="mt-0.5 accent-[#00C896]"
+              />
+              <span className="text-xs text-[#94A3B8]">I understand — this reflects the actual outcome</span>
+            </label>
+          )}
+
           {err && <p className="text-xs text-red-400">{err}</p>}
 
           <div className="flex gap-3 pt-1">
@@ -210,7 +268,7 @@ function CloseShipmentModal({
             </button>
             <button
               onClick={submit}
-              disabled={saving}
+              disabled={saving || needsConfirm}
               className="flex-1 py-2 bg-[#00C896] text-[#0A1628] rounded-lg text-sm font-bold hover:bg-[#00A87E] disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
             >
               {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
