@@ -7,7 +7,7 @@ import { getShipments } from '@/lib/supabase'
 import { computeAlerts } from '@/lib/alerts'
 import AlertBanner from '@/components/AlertBanner'
 import PortalStatusModal from '@/components/PortalStatusModal'
-import { AlertTriangle, Clock, Search, Globe, Plus, Bell, Loader2, ChevronDown, CheckCircle2, X } from 'lucide-react'
+import { AlertTriangle, Clock, Search, Globe, Plus, Bell, Loader2, ChevronDown, CheckCircle2, X, Copy, FileDown } from 'lucide-react'
 import AddShipmentModal from '@/components/AddShipmentModal'
 import ShipmentDrawer from '@/components/ShipmentDrawer'
 
@@ -531,15 +531,35 @@ export default function OperationsPage() {
                   <td className="px-4 py-3"><RiskBadge risk={s.risk_flag_status} /></td>
                   <td className="px-4 py-3"><StatusBadge status={s.remediation_status} /></td>
                   <td className="px-4 py-3">
-                    {s.remediation_status !== 'CLOSED' && (
+                    <div className="flex items-center gap-1.5">
+                      {s.remediation_status !== 'CLOSED' && (
+                        <button
+                          onClick={() => setCloseTarget(s)}
+                          className="flex items-center gap-1 px-2 py-1 border border-[#1E3A5F] text-[#64748B] rounded-md text-[10px] font-semibold hover:border-emerald-500/40 hover:text-emerald-400 transition-all"
+                        >
+                          <CheckCircle2 size={11} />
+                          Close
+                        </button>
+                      )}
                       <button
-                        onClick={() => setCloseTarget(s)}
-                        className="flex items-center gap-1 px-2 py-1 border border-[#1E3A5F] text-[#64748B] rounded-md text-[10px] font-semibold hover:border-emerald-500/40 hover:text-emerald-400 transition-all"
+                        onClick={() => window.open(`/api/shipments/${s.id}/export`, '_blank')}
+                        className="flex items-center gap-1 px-2 py-1 border border-[#1E3A5F] text-[#64748B] rounded-md text-[10px] font-semibold hover:border-blue-500/40 hover:text-blue-400 transition-all"
+                        title="Export audit report"
                       >
-                        <CheckCircle2 size={11} />
-                        Close
+                        <FileDown size={11} />
                       </button>
-                    )}
+                      <button
+                        onClick={async () => {
+                          const r = await fetch(`/api/shipments/${s.id}/duplicate`, { method: 'POST' })
+                          const d = await r.json()
+                          if (d.shipment) setShipments((prev) => [d.shipment, ...prev])
+                        }}
+                        className="flex items-center gap-1 px-2 py-1 border border-[#1E3A5F] text-[#64748B] rounded-md text-[10px] font-semibold hover:border-purple-500/40 hover:text-purple-400 transition-all"
+                        title="Duplicate shipment"
+                      >
+                        <Copy size={11} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )

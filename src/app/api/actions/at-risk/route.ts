@@ -72,6 +72,16 @@ export async function GET(req: NextRequest) {
         },
       })
     }
+
+    // Emit in-app notification
+    await supabase.from('notifications').insert({
+      organization_id: a.organization_id,
+      title:           `AT RISK: ${a.title}`,
+      body:            `Action on "${(a as any).shipment?.name}" not started — ${daysToDeadline}d to deadline`,
+      type:            'WARNING',
+      action_url:      `/dashboard/actions`,
+      metadata:        { action_id: a.id, shipment_id: a.shipment_id, days_to_deadline: daysToDeadline },
+    })
   }
 
   return NextResponse.json({

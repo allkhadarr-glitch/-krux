@@ -1,14 +1,14 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getSessionContext } from '@/lib/session'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-const ORG_ID = '00000000-0000-0000-0000-000000000001'
-
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const { orgId } = await getSessionContext(req)
   // Fetch closed shipments joined with their SHIPMENT_CLOSED timeline event
   const { data: events, error } = await supabase
     .from('execution_timeline')
@@ -17,7 +17,7 @@ export async function GET() {
       shipment:shipments!inner(id, name, reference_number, pvoc_deadline, organization_id)
     `)
     .eq('event_type', 'SHIPMENT_CLOSED')
-    .eq('organization_id', ORG_ID)
+    .eq('organization_id', orgId)
     .gte('created_at', new Date(Date.now() - 30 * 86400_000).toISOString())
     .order('created_at', { ascending: false })
 

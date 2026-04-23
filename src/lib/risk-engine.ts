@@ -3,6 +3,20 @@ import { insertTimelineEvent } from './timeline'
 
 const ORG_ID = '00000000-0000-0000-0000-000000000001'
 
+// ─── Regulator SLA benchmarks (minimum processing days) ──────
+// Used as a risk driver: if days_to_deadline < SLA, the shipment
+// cannot realistically clear on time even if submitted today.
+export const REGULATOR_SLA: Record<string, number> = {
+  KEBS:     14,
+  PPB:      45,
+  KEPHIS:    7,
+  PCPB:     21,
+  EPRA:     14,
+  NEMA:     30,
+  KRA:       3,
+  KENTRADE:  2,
+}
+
 // ─── Risk Calculation ────────────────────────────────────────
 // Score: 0–10. Three factors, none dominates.
 //
@@ -48,7 +62,7 @@ export async function updateShipmentRisk(
 ): Promise<void> {
   const { data: shipment } = await supabase
     .from('shipments')
-    .select('id, organization_id, cif_value_usd, pvoc_deadline, regulatory_body_id')
+    .select('id, organization_id, cif_value_usd, pvoc_deadline, regulatory_body_id, regulatory_body:regulatory_bodies(code)')
     .eq('id', shipmentId)
     .single()
 
@@ -89,10 +103,17 @@ export async function updateShipmentRisk(
   })
   const priority = getPriorityLevel(score)
 
+  // SLA feasibility check — if deadline < regulator's minimum processing time, flag it
+  const regulatorCode = (shipment as any).regulatory_body?.code as string | undefined
+  const slaMinDays    = regulatorCode ? (REGULATOR_SLA[regulatorCode] ?? 0) : 0
+
   // Build human-readable risk drivers
   const drivers: string[] = []
   if (daysToDeadline <= 3)  drivers.push(`Deadline in ${daysToDeadline} day${daysToDeadline !== 1 ? 's' : ''}`)
   else if (daysToDeadline <= 7) drivers.push(`${daysToDeadline} days to PVoC deadline`)
+  if (slaMinDays > 0 && daysToDeadline < slaMinDays) {
+    drivers.push(`${regulatorCode} requires ≥${slaMinDays}d to process — physically impossible to clear on time`)
+  }
   if (pendingPortals.length > 0) drivers.push(`${pendingPortals.join(', ')} pending clearance`)
   if (shipment.cif_value_usd >= 50000) drivers.push(`High-value shipment (USD ${shipment.cif_value_usd.toLocaleString()})`)
   if (delayProbability > 0.4) drivers.push(`${Math.round(delayProbability * 100)}% compound delay probability`)

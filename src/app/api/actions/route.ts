@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getSessionContext } from '@/lib/session'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-const ORG_ID       = '00000000-0000-0000-0000-000000000001'
 const MIN_ORG_SAMPLES = 20
 
 // Strips regulator suffix to get the base action type for model lookup
@@ -23,6 +23,7 @@ function extractRegulator(actionType: string): string {
 }
 
 export async function GET(req: NextRequest) {
+  const { orgId } = await getSessionContext(req)
   const { searchParams } = req.nextUrl
   const status     = searchParams.get('status')
   const priority   = searchParams.get('priority')
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from('actions')
     .select(`*, shipment:shipments(id, name, reference_number, pvoc_deadline, risk_flag_status)`)
-    .eq('organization_id', ORG_ID)
+    .eq('organization_id', orgId)
     .order('created_at', { ascending: false })
 
   if (status && status !== 'all') {
@@ -53,7 +54,7 @@ export async function GET(req: NextRequest) {
   const { data: models } = await supabase
     .from('action_effectiveness_model')
     .select('organization_id, action_type, regulator, avg_effectiveness, sample_size')
-    .or(`organization_id.eq.${ORG_ID},organization_id.is.null`)
+    .or(`organization_id.eq.${orgId},organization_id.is.null`)
     .in('action_type', uniqueBases)
 
   // Build lookup: `${orgOrGlobal}|${action_type}|${regulator}` → model row
@@ -69,7 +70,7 @@ export async function GET(req: NextRequest) {
     const base = baseType(action.action_type)
     const reg  = extractRegulator(action.action_type)
 
-    const orgKey    = `${ORG_ID}|${base}|${reg}`
+    const orgKey    = `${orgId}|${base}|${reg}`
     const globalKey = `GLOBAL|${base}|${reg}`
     const globalAny = `GLOBAL|${base}|`
 
@@ -80,7 +81,7 @@ export async function GET(req: NextRequest) {
     let effectiveness_tier: 'org' | 'global' | null = null
     let effectiveness_sample_size = 0
 
-    if (orgModel && orgModel.sample_size >= MIN_ORG_SAMPLES) {
+    if (orgModel && (orgModel.sample_size ?? 0) >= MIN_ORG_SAMPLES) {
       // Org-specific data with enough signal — show as trusted
       predicted_effectiveness    = orgModel.avg_effectiveness
       effectiveness_tier         = 'org'
@@ -106,11 +107,12 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const { orgId } = await getSessionContext(req)
   const body = await req.json()
   const { data, error } = await supabase
     .from('actions')
     .insert({
-      organization_id: ORG_ID,
+      organization_id: orgId,
       action_type:     body.action_type,
       priority:        body.priority ?? 'MEDIUM',
       title:           body.title,

@@ -1,13 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { getKesRate } from '@/lib/fx'
+import { getSessionContext } from '@/lib/session'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-
-const ORG_ID = '00000000-0000-0000-0000-000000000001'
 
 async function nextReferenceNumber(): Promise<string> {
   const year = new Date().getFullYear()
@@ -41,6 +40,7 @@ function calcLandedCost(cif: number, dutyPct: number, kesRate: number) {
 }
 
 export async function POST(req: NextRequest) {
+  const { orgId } = await getSessionContext(req)
   const body = await req.json()
   const {
     name, origin_port, origin_country, hs_code, product_description,
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
   const { data, error } = await supabaseAdmin
     .from('shipments')
     .insert({
-      organization_id:      ORG_ID,
+      organization_id:      orgId,
       reference_number,
       name,
       origin_port,
