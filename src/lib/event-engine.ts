@@ -9,7 +9,6 @@ import {
   createEscalationAction,
 } from './action-generator'
 
-const ORG_ID       = '00000000-0000-0000-0000-000000000001'
 const ALERT_EMAIL  = process.env.ALERT_EMAIL ?? 'mabdikadirhaji@gmail.com'
 const FROM_EMAIL   = 'KRUXVON Alerts <alerts@kruxvon.com>'
 const EXCHANGE_RATE = 129
@@ -41,10 +40,11 @@ async function logAlert(
     licenseId?: string
     manufacturerId?: string
     errorMessage?: string
+    organizationId?: string
   }
 ) {
   await supabase.from('alert_logs').insert({
-    organization_id: ORG_ID,
+    organization_id: opts.organizationId ?? null,
     shipment_id:     opts.shipmentId     ?? null,
     license_id:      opts.licenseId      ?? null,
     manufacturer_id: opts.manufacturerId ?? null,
@@ -194,8 +194,7 @@ export async function emitDeadlineEvents(supabase: SupabaseClient): Promise<numb
 
   const { data: shipments } = await supabase
     .from('shipments')
-    .select('id, name, reference_number, pvoc_deadline, storage_rate_per_day, regulatory_body_id, alert_sent_14d_at, alert_sent_7d_at, alert_sent_3d_at')
-    .eq('organization_id', ORG_ID)
+    .select('id, organization_id, name, reference_number, pvoc_deadline, storage_rate_per_day, regulatory_body_id, alert_sent_14d_at, alert_sent_7d_at, alert_sent_3d_at')
     .is('deleted_at', null)
     .not('pvoc_deadline', 'is', null)
     .neq('remediation_status', 'CLOSED')
@@ -237,7 +236,7 @@ export async function emitDeadlineEvents(supabase: SupabaseClient): Promise<numb
     })()
 
     await supabase.from('events').insert({
-      organization_id: ORG_ID,
+      organization_id: s.organization_id,
       event_type:  'DEADLINE_APPROACHING',
       entity_type: 'shipment',
       entity_id:   s.id,

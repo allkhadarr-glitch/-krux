@@ -1,7 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { insertTimelineEvent } from './timeline'
 
-const ORG_ID = '00000000-0000-0000-0000-000000000001'
 
 // ─── Regulator SLA benchmarks (minimum processing days) ──────
 // Used as a risk driver: if days_to_deadline < SLA, the shipment
@@ -292,7 +291,6 @@ export async function recalculateAllRisk(supabase: SupabaseClient): Promise<numb
   const { data: shipments } = await supabase
     .from('shipments')
     .select('id')
-    .eq('organization_id', ORG_ID)
     .is('deleted_at', null)
     .neq('remediation_status', 'CLOSED')
     .not('pvoc_deadline', 'is', null)
