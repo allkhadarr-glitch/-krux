@@ -1,8 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
 import {
-  CheckCircle2, Circle, ArrowRight, Shield, Factory,
-  Users, Bot, Zap, Loader2, X,
+  CheckCircle2, ArrowRight, Shield, Factory,
+  Users, Bot, Zap, Loader2, X, Sparkles,
 } from 'lucide-react'
 
 type StepStatus = 'done' | 'pending' | 'loading'
@@ -65,7 +65,9 @@ export default function OnboardingPage() {
       status: 'pending',
     },
   ])
-  const [dismissed, setDismissed] = useState(false)
+  const [dismissed, setDismissed]   = useState(false)
+  const [seeding, setSeeding]       = useState(false)
+  const [seedDone, setSeedDone]     = useState(false)
 
   useEffect(() => {
     if (typeof window !== 'undefined' && localStorage.getItem('krux_onboarding_dismissed') === '1') {
@@ -103,6 +105,20 @@ export default function OnboardingPage() {
     }
   }
 
+  async function loadDemoData() {
+    setSeeding(true)
+    try {
+      const r = await fetch('/api/seed-demo', { method: 'POST' })
+      const d = await r.json()
+      if (d.ok) {
+        setSeedDone(true)
+        await loadProgress()
+      }
+    } finally {
+      setSeeding(false)
+    }
+  }
+
   function dismiss() {
     if (typeof window !== 'undefined') localStorage.setItem('krux_onboarding_dismissed', '1')
     setDismissed(true)
@@ -136,6 +152,35 @@ export default function OnboardingPage() {
           </button>
         )}
       </div>
+
+      {/* Demo data banner */}
+      {!seedDone && steps.filter(s => s.status === 'pending').length >= 3 && (
+        <div className="bg-[#1E3A5F]/40 border border-[#1E3A5F] rounded-xl p-5 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-[#00C896]/10 border border-[#00C896]/20 flex items-center justify-center flex-shrink-0">
+            <Sparkles size={18} className="text-[#00C896]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-white mb-0.5">Load demo data</p>
+            <p className="text-xs text-[#64748B]">Populate your account with 4 realistic Kenya import shipments, 2 manufacturers, and sample actions to explore the platform.</p>
+          </div>
+          <button
+            onClick={loadDemoData}
+            disabled={seeding}
+            className="flex items-center gap-2 px-4 py-2 bg-[#00C896] text-[#0A1628] rounded-lg text-xs font-bold hover:bg-[#00C896]/90 transition-colors disabled:opacity-60 flex-shrink-0"
+          >
+            {seeding ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+            {seeding ? 'Loading…' : 'Load demo data'}
+          </button>
+        </div>
+      )}
+
+      {seedDone && (
+        <div className="bg-[#00C896]/10 border border-[#00C896]/30 rounded-xl px-5 py-3 flex items-center gap-3">
+          <CheckCircle2 size={15} className="text-[#00C896]" />
+          <p className="text-sm text-[#00C896]">Demo data loaded — 4 shipments, 2 manufacturers, and sample actions added.</p>
+          <a href="/dashboard/operations" className="ml-auto text-xs text-[#00C896] underline flex-shrink-0">View shipments →</a>
+        </div>
+      )}
 
       {/* Progress bar */}
       <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-5">
