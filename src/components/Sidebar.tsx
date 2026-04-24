@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import {
   BarChart3, Briefcase, User, Factory, Settings, Shield, LogOut,
   Zap, ShoppingCart, Archive, Smartphone, TrendingUp, Users, Calendar,
-  FileText,
+  FileText, Bell, Bot, Compass,
 } from 'lucide-react'
 import { signOut } from '@/app/login/actions'
 import { NotificationBell } from './NotificationBell'
@@ -12,6 +12,8 @@ import { NotificationBell } from './NotificationBell'
 const nav = [
   { href: '/dashboard/actions',     label: 'Action Center',    icon: Zap },
   { href: '/dashboard/operations',  label: 'Operations',       icon: Shield },
+  { href: '/dashboard/ai',          label: 'KRUX AI',          icon: Bot },
+  { href: '/dashboard/alerts',      label: 'Alerts',           icon: Bell },
   { href: '/dashboard/closed',      label: 'Closed Shipments', icon: Archive },
   { href: '/dashboard/analytics',   label: 'Analytics',        icon: TrendingUp },
   { href: '/dashboard/compliance',  label: 'Compliance Cal.',  icon: Calendar },
@@ -24,6 +26,7 @@ const nav = [
   { href: '/dashboard/agents',      label: 'AI Tax Quotes',    icon: BarChart3 },
   { href: '/dashboard/client',      label: 'Client View',      icon: User },
   { href: '/dashboard/manufacturer',label: 'Manufacturer',     icon: Factory },
+  { href: '/dashboard/onboarding',  label: 'Getting Started',  icon: Compass },
 ]
 
 export function Sidebar({ userEmail }: { userEmail: string }) {
