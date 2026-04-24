@@ -28,7 +28,7 @@ export async function GET(
     supabase.from('actions').select('*').eq('shipment_id', id).order('created_at'),
     supabase.from('execution_timeline').select('*').eq('shipment_id', id).order('created_at'),
     supabase.from('shipment_costs').select('*').eq('shipment_id', id).order('recorded_at'),
-    supabase.from('shipment_documents').select('file_name, document_type, uploaded_at').eq('shipment_id', id),
+    supabase.from('shipment_documents').select('document_name, document_type, uploaded_at').eq('shipment_id', id),
   ])
 
   if (!shipment) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -143,7 +143,7 @@ ${(docs ?? []).length > 0 ? `
   <thead><tr><th>Document Type</th><th>File Name</th><th>Uploaded</th></tr></thead>
   <tbody>
     ${(docs ?? []).map((d: any) => `
-    <tr><td>${d.document_type}</td><td>${d.file_name}</td><td>${fmt(d.uploaded_at)}</td></tr>`).join('')}
+    <tr><td>${d.document_type}</td><td>${d.document_name}</td><td>${fmt(d.uploaded_at)}</td></tr>`).join('')}
   </tbody>
 </table>` : ''}
 
