@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { X, Loader2, Plus, TrendingUp, Sparkles, CheckCircle2 } from 'lucide-react'
+import { X, Loader2, Plus, TrendingUp, Sparkles, CheckCircle2, Upload, FileText } from 'lucide-react'
 import { Shipment } from '@/lib/types'
 
 const EXCHANGE_RATE = 129
@@ -93,12 +93,15 @@ export default function AddShipmentModal({
   onClose: () => void
   onAdded: (s: Shipment) => void
 }) {
-  const [bodies, setBodies]         = useState<RegulatoryBody[]>([])
-  const [saving, setSaving]         = useState(false)
-  const [suggesting, setSuggesting] = useState(false)
-  const [suggested, setSuggested]   = useState(false)
-  const [error, setError]           = useState<string | null>(null)
-  const [createdId, setCreatedId]   = useState<string | null>(null)
+  const [bodies, setBodies]           = useState<RegulatoryBody[]>([])
+  const [saving, setSaving]           = useState(false)
+  const [suggesting, setSuggesting]   = useState(false)
+  const [suggested, setSuggested]     = useState(false)
+  const [error, setError]             = useState<string | null>(null)
+  const [createdId, setCreatedId]     = useState<string | null>(null)
+  const [extracting, setExtracting]   = useState(false)
+  const [extracted, setExtracted]     = useState<string | null>(null)
+  const extractRef                    = useRef<HTMLInputElement>(null)
 
   const [form, setForm] = useState({
     name: '', origin_port: '', origin_country: '', hs_code: '',
@@ -150,6 +153,33 @@ export default function AddShipmentModal({
     } catch (e: any) {
       setError(e.message)
       setSaving(false)
+    }
+  }
+
+  async function extractFromDocument(file: File) {
+    setExtracting(true)
+    setExtracted(null)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const r = await fetch('/api/documents/extract', { method: 'POST', body: fd })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error ?? 'Extraction failed')
+      const e = d.extracted
+      setForm((f) => ({
+        ...f,
+        name:                e.name              ?? f.name,
+        origin_port:         e.origin_port       ?? f.origin_port,
+        origin_country:      e.origin_country    ?? f.origin_country,
+        hs_code:             e.hs_code           ?? f.hs_code,
+        product_description: e.product_description ?? f.product_description,
+        cif_value_usd:       e.cif_value_usd != null ? String(e.cif_value_usd) : f.cif_value_usd,
+      }))
+      setExtracted(file.name)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setExtracting(false)
     }
   }
 
@@ -213,6 +243,39 @@ export default function AddShipmentModal({
         </div>
 
         <form onSubmit={submit} className="p-6 space-y-6">
+          {/* Document extraction */}
+          <div
+            onClick={() => extractRef.current?.click()}
+            className={`border border-dashed rounded-xl p-4 flex items-center gap-4 cursor-pointer transition-all ${
+              extracting ? 'border-[#00C896]/40 bg-[#00C896]/5' : extracted ? 'border-[#00C896]/40 bg-[#00C896]/5' : 'border-[#1E3A5F] hover:border-[#00C896]/40 hover:bg-[#00C896]/5'
+            }`}
+          >
+            <input
+              ref={extractRef}
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) extractFromDocument(f) }}
+            />
+            <div className="w-9 h-9 rounded-lg bg-[#00C896]/10 border border-[#00C896]/20 flex items-center justify-center flex-shrink-0">
+              {extracting ? <Loader2 size={16} className="animate-spin text-[#00C896]" /> : extracted ? <CheckCircle2 size={16} className="text-[#00C896]" /> : <Upload size={16} className="text-[#00C896]" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white">
+                {extracting ? 'Reading document…' : extracted ? 'Document extracted' : 'Import from document'}
+              </p>
+              <p className="text-xs text-[#64748B] truncate">
+                {extracting ? 'Claude is extracting fields from your document' : extracted ? `${extracted} — fields pre-filled below` : 'Upload a Bill of Lading, Invoice, or Packing List to auto-fill fields'}
+              </p>
+            </div>
+            {!extracting && !extracted && (
+              <div className="flex items-center gap-1.5 text-xs text-[#00C896] font-medium flex-shrink-0">
+                <FileText size={12} />
+                PDF / Image
+              </div>
+            )}
+          </div>
+
           {/* Shipment Identity */}
           <div className="space-y-3">
             <h3 className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">Shipment Details</h3>

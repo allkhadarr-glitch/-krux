@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import {
   BarChart3, Briefcase, User, Factory, Settings, Shield, LogOut,
   Zap, ShoppingCart, Archive, Smartphone, TrendingUp, Users, Calendar,
-  FileText, Bell, Bot, Compass,
+  FileText, Bell, Bot, Compass, CreditCard,
 } from 'lucide-react'
 import { signOut } from '@/app/login/actions'
 import { NotificationBell } from './NotificationBell'
@@ -27,6 +27,7 @@ const nav = [
   { href: '/dashboard/client',      label: 'Client View',      icon: User },
   { href: '/dashboard/manufacturer',label: 'Manufacturer',     icon: Factory },
   { href: '/dashboard/onboarding',  label: 'Getting Started',  icon: Compass },
+  { href: '/dashboard/billing',     label: 'Billing',          icon: CreditCard },
 ]
 
 export function Sidebar({ userEmail }: { userEmail: string }) {

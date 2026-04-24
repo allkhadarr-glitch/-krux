@@ -471,6 +471,9 @@ export default function ShipmentDrawer({
   const [tab, setTab]         = useState<Tab>('brief')
   const [results, setResults] = useState<Partial<Record<Exclude<Tab, 'timeline' | 'costs' | 'files' | 'tax'>, string>>>({})
   const [loading, setLoading] = useState<Tab | null>(null)
+  const [closing, setClosing] = useState(false)
+  const [closed, setClosed]   = useState(shipment.remediation_status === 'CLOSED')
+  const [confirmClose, setConfirmClose] = useState(false)
 
   const payload = {
     name:             shipment.name,
@@ -504,6 +507,21 @@ export default function ShipmentDrawer({
   function switchTab(t: Tab) {
     setTab(t)
     if (t !== 'timeline' && t !== 'costs' && t !== 'files' && t !== 'tax') generate(t)
+  }
+
+  async function markCleared() {
+    setClosing(true)
+    try {
+      await fetch(`/api/shipments/${shipment.id}/close`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CLEARED' }),
+      })
+      setClosed(true)
+      setConfirmClose(false)
+    } finally {
+      setClosing(false)
+    }
   }
 
   // Auto-load brief on open
@@ -544,9 +562,39 @@ export default function ShipmentDrawer({
                 {shipment.pvoc_deadline && ` · Deadline ${formatDate(shipment.pvoc_deadline)}`}
               </p>
             </div>
-            <button onClick={onClose} className="text-[#64748B] hover:text-white transition-colors mt-1">
-              <X size={18} />
-            </button>
+            <div className="flex items-center gap-2">
+              {!closed && !confirmClose && (
+                <button
+                  onClick={() => setConfirmClose(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00C896]/10 border border-[#00C896]/25 text-[#00C896] rounded-lg text-xs font-semibold hover:bg-[#00C896]/20 transition-colors"
+                >
+                  <CheckCircle2 size={12} /> Mark Cleared
+                </button>
+              )}
+              {confirmClose && !closed && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-[#94A3B8]">Confirm?</span>
+                  <button
+                    onClick={markCleared}
+                    disabled={closing}
+                    className="flex items-center gap-1 px-2.5 py-1 bg-[#00C896] text-[#0A1628] rounded text-xs font-bold disabled:opacity-60"
+                  >
+                    {closing ? <Loader2 size={10} className="animate-spin" /> : 'Yes'}
+                  </button>
+                  <button onClick={() => setConfirmClose(false)} className="px-2.5 py-1 border border-[#1E3A5F] text-[#64748B] rounded text-xs hover:text-white">
+                    No
+                  </button>
+                </div>
+              )}
+              {closed && (
+                <span className="flex items-center gap-1.5 text-xs text-[#00C896] font-semibold">
+                  <CheckCircle2 size={12} /> Cleared
+                </span>
+              )}
+              <button onClick={onClose} className="text-[#64748B] hover:text-white transition-colors">
+                <X size={18} />
+              </button>
+            </div>
           </div>
         </div>
 

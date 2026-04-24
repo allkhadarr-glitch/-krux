@@ -418,6 +418,8 @@ export default function Home() {
           <span className="text-[#64748B]">KRUXVON Supply Chain Intelligence</span>
         </div>
         <div className="flex items-center gap-6">
+          <Link href="/terms" className="hover:text-[#94A3B8] transition-colors">Terms</Link>
+          <Link href="/privacy" className="hover:text-[#94A3B8] transition-colors">Privacy</Link>
           <Link href="/login" className="hover:text-[#94A3B8] transition-colors">Sign in</Link>
           <span>Kenya · {new Date().getFullYear()}</span>
         </div>

@@ -43,9 +43,11 @@ export async function POST(
       shipment_id:     id,
       organization_id: shipment.organization_id,
       document_type:   docType,
+      document_name:   file.name,
       file_name:       file.name,
       file_size:       file.size,
       storage_path:    storagePath,
+      uploaded_at:     new Date().toISOString(),
     })
     .select()
     .single()
