@@ -77,7 +77,7 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
         risk_flag_status:       'RED',
         remediation_status:     'IN_PROGRESS',
         shipment_status:        'AT_PORT',
-        composite_risk_score:   87,
+        composite_risk_score:   9,
         open_action_count:      3,
       },
       {
@@ -109,7 +109,7 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
         risk_flag_status:       'AMBER',
         remediation_status:     'OPEN',
         shipment_status:        'IN_TRANSIT',
-        composite_risk_score:   54,
+        composite_risk_score:   5,
         open_action_count:      2,
       },
       {
@@ -141,7 +141,7 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
         risk_flag_status:       'GREEN',
         remediation_status:     'OPEN',
         shipment_status:        'IN_TRANSIT',
-        composite_risk_score:   22,
+        composite_risk_score:   2,
         open_action_count:      1,
       },
       {
@@ -173,7 +173,7 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
         risk_flag_status:       'RED',
         remediation_status:     'ESCALATED',
         shipment_status:        'AT_PORT',
-        composite_risk_score:   95,
+        composite_risk_score:   10,
         open_action_count:      4,
       },
       {
@@ -205,7 +205,7 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
         risk_flag_status:       'RED',
         remediation_status:     'IN_PROGRESS',
         shipment_status:        'IN_TRANSIT',
-        composite_risk_score:   91,
+        composite_risk_score:   9,
         open_action_count:      3,
       },
     ])

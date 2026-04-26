@@ -26,7 +26,7 @@ const priorityColors: Record<PriorityLevel, string> = {
 }
 
 function PriorityBadge({ level, score, compositeScore }: { level?: PriorityLevel; score?: number; compositeScore?: number }) {
-  const display = compositeScore ?? (score != null ? Math.round(score * 10) : null)
+  const display = compositeScore != null ? compositeScore * 10 : (score != null ? Math.round(score * 10) : null)
   const color   = display != null
     ? display >= 80 ? 'text-red-400'
     : display >= 50 ? 'text-amber-400'
