@@ -642,16 +642,32 @@ export default function ShipmentDrawer({
     setLoading(t)
     try {
       const endpoint = AI_TABS.find((x) => x.key === t)!.endpoint
-      const res  = await fetch(endpoint, {
+      const res = await fetch(endpoint, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(buildPayload()),
       })
-      const data = await res.json()
-      setResults((p) => ({ ...p, [t]: data.result ?? data.error ?? 'No response' }))
+
+      // Brief endpoint streams plain text; all others return JSON
+      if (t === 'brief' && res.headers.get('content-type')?.includes('text/plain')) {
+        const reader = res.body?.getReader()
+        const decoder = new TextDecoder()
+        if (!reader) throw new Error('No stream')
+        setResults((p) => ({ ...p, brief: '' }))
+        setLoading(null)
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          const chunk = decoder.decode(value, { stream: true })
+          setResults((p) => ({ ...p, brief: (p.brief ?? '') + chunk }))
+        }
+      } else {
+        const data = await res.json()
+        setResults((p) => ({ ...p, [t]: data.result ?? data.error ?? 'No response' }))
+        setLoading(null)
+      }
     } catch {
       setResults((p) => ({ ...p, [t]: 'Failed to generate — check ANTHROPIC_API_KEY' }))
-    } finally {
       setLoading(null)
     }
   }
@@ -833,10 +849,10 @@ export default function ShipmentDrawer({
               </div>
               <p className="text-[#64748B] text-sm">Generating {currentAITab?.label.toLowerCase()}...</p>
             </div>
-          ) : result ? (
+          ) : result !== undefined && result !== null ? (
             <div className="prose prose-invert max-w-none">
               <pre className="whitespace-pre-wrap text-[13px] text-[#94A3B8] leading-relaxed font-sans bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-4">
-                {result}
+                {result || <span className="text-[#334155] animate-pulse">Generating brief…</span>}
               </pre>
               <div className="mt-3 flex items-center gap-4">
                 <button

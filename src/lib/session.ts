@@ -3,7 +3,10 @@ import { cookies } from 'next/headers'
 import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+// Sentinel — means "no org found for this user". API routes that see this
+// should return 401; pages should redirect to /dashboard/onboarding.
 const FALLBACK_ORG_ID = '00000000-0000-0000-0000-000000000001'
+export const NO_ORG_SENTINEL = FALLBACK_ORG_ID
 
 const serviceSupabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

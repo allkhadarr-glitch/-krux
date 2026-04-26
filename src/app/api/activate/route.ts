@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 
     const { data: org, error: orgErr } = await supabase
       .from('organizations')
-      .insert({ name: `${orgLabel} Imports`, plan: 'free', is_active: true })
+      .insert({ name: `${orgLabel} Imports`, type: 'clearing_agent_firm', subscription_tier: 'free', is_active: true })
       .select('id')
       .single()
 

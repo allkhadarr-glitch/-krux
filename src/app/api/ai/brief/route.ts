@@ -421,14 +421,35 @@ KRUX RISK ASSESSMENT
   [One probability statement: likelihood of on-time clearance if action taken today]
   [One sentence on what would change the trajectory]`
 
-    const message = await client.messages.create({
+    const stream = await client.messages.stream({
       model:      'claude-sonnet-4-6',
       max_tokens: 2500,
       system:     systemPrompt,
       messages:   [{ role: 'user', content: userMessage }],
     })
 
-    return NextResponse.json({ result: (message.content[0] as { text: string }).text })
+    const encoder = new TextEncoder()
+    const readable = new ReadableStream({
+      async start(controller) {
+        for await (const chunk of stream) {
+          if (
+            chunk.type === 'content_block_delta' &&
+            chunk.delta.type === 'text_delta'
+          ) {
+            controller.enqueue(encoder.encode(chunk.delta.text))
+          }
+        }
+        controller.close()
+      },
+    })
+
+    return new Response(readable, {
+      headers: {
+        'Content-Type':  'text/plain; charset=utf-8',
+        'X-Content-Type-Options': 'nosniff',
+        'Cache-Control': 'no-cache',
+      },
+    })
   } catch {
     return NextResponse.json({ error: 'Failed to generate brief' }, { status: 500 })
   }
