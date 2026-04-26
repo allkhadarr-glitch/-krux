@@ -58,9 +58,10 @@ async function resetDemo() {
   const seedRes = await fetch(`${base}/api/seed-demo`, {
     method:  'POST',
     headers: {
-      'Content-Type': 'application/json',
-      // Pass org_id directly so seed-demo can use it without an auth session
-      'x-demo-org-id': orgId,
+      'Content-Type':   'application/json',
+      'x-demo-org-id':  orgId,
+      'x-cron-secret':  process.env.CRON_SECRET ?? '',
+      'x-force-reseed': 'true',
     },
   })
 
