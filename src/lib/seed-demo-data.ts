@@ -51,6 +51,7 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
       {
         organization_id:        orgId,
         name:                   'Amoxicillin 500mg — Batch K23B',
+        reference_number:       'KX-PHARMA-2024-001',
         manufacturer_id:        mfr1?.id ?? null,
         regulatory_body_id:     bodyMap['PPB'] ?? null,
         origin_port:            'Shanghai',
@@ -83,6 +84,7 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
       {
         organization_id:        orgId,
         name:                   'NPK Fertilizer 20-10-10 — 50MT',
+        reference_number:       'KX-AGRO-2024-001',
         manufacturer_id:        mfr2?.id ?? null,
         regulatory_body_id:     bodyMap['PCPB'] ?? null,
         origin_port:            'Mundra',
@@ -115,6 +117,7 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
       {
         organization_id:        orgId,
         name:                   'LED Panel Lighting Kit — CR2024',
+        reference_number:       'KX-ELECT-2024-001',
         manufacturer_id:        null,
         regulatory_body_id:     bodyMap['KEBS'] ?? null,
         origin_port:            'Shenzhen',
@@ -147,6 +150,7 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
       {
         organization_id:        orgId,
         name:                   'Pyrethroid Pesticide — Lot P2024',
+        reference_number:       'KX-PEST-2024-001',
         manufacturer_id:        mfr2?.id ?? null,
         regulatory_body_id:     bodyMap['KEPHIS'] ?? null,
         origin_port:            'Chennai',
@@ -179,6 +183,7 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
       {
         organization_id:        orgId,
         name:                   'Jet A-1 Aviation Fuel — 500KL',
+        reference_number:       'KX-PETRO-2024-001',
         manufacturer_id:        null,
         regulatory_body_id:     bodyMap['EPRA'] ?? null,
         origin_port:            'Jebel Ali',
