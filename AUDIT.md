@@ -1,9 +1,10 @@
 # KRUX Platform — Full Build Audit
-**Last updated:** 2026-04-24 (Session 2)  
+**Last updated:** 2026-04-26 (Session 4)  
 **Production URL:** https://krux-xi.vercel.app  
 **Billing test:** 7 / 7 passed  
 **GitHub:** github.com/allkhadarr-glitch/-krux · branch: master  
-**Latest deployment:** `dpl_FGcgB5pRMQQtssuRMrsPy4jw7km7` — READY
+**Latest deployment:** `dpl_pt4Qak1zNifzeUuqg2HA3HPBLmkn` — READY  
+**Latest commit:** `65eda90` — fix: resolve signup/activate failures and onboarding false-progress
 
 ---
 
@@ -90,14 +91,32 @@ Kenya importers miss PVoC deadlines because they have no single system that trac
 | `NEXT_PUBLIC_APP_URL` | `https://krux-xi.vercel.app` |
 | `VERCEL_TOKEN` | `vcp_5YWVwswZ...` — LOCAL ONLY, never pushed |
 
-### Vercel production (pushed via `push-vercel-env.js`)
-All variables above except `ANTHROPIC_API_KEY` (placeholder) and `VERCEL_TOKEN` (local-only) are live in Vercel production.
+### Vercel production — confirmed SET (as of 2026-04-26)
 
-> **PENDING:** Once Anthropic account activates, add `ANTHROPIC_API_KEY` to `.env.local` and re-run `node scripts/push-vercel-env.js` — this unlocks ALL AI features.
+| Variable | Status |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | SET |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | SET |
+| `SUPABASE_SERVICE_ROLE_KEY` | SET |
+| `ANTHROPIC_API_KEY` | **SET — AI features fully live** |
+| `RESEND_API_KEY` | SET |
+| `ALERT_EMAIL` | SET (`mabdikadirhaji@gmail.com`) |
+| `CRON_SECRET` | SET |
+| `STRIPE_SECRET_KEY` | SET (TEST mode) |
+| `STRIPE_WEBHOOK_SECRET` | SET |
+| `STRIPE_PRICE_BASIC` | SET |
+| `STRIPE_PRICE_PRO` | SET |
+| `STRIPE_PRICE_ENTERPRISE` | SET |
+| `NEXT_PUBLIC_APP_URL` | SET (`https://krux-xi.vercel.app`) |
+| `DEMO_USER_EMAIL` | SET (demo account email) |
+| `TWILIO_ACCOUNT_SID` | **NOT SET — WhatsApp alerts disabled** |
+| `TWILIO_AUTH_TOKEN` | **NOT SET** |
+| `TWILIO_WHATSAPP_FROM` | **NOT SET** |
+| `ALERT_WHATSAPP_TO` | **NOT SET** |
 
 ---
 
-## PART 5 — DATABASE (23 migrations, all applied to production)
+## PART 5 — DATABASE (25 migrations, all applied to production)
 
 ### Schema overview
 
@@ -167,6 +186,8 @@ All variables above except `ANTHROPIC_API_KEY` (placeholder) and `VERCEL_TOKEN` 
 | `20260424000020_missing_tables.sql` | `notifications`, `org_documents`, `contacts` |
 | `20260424000021_column_fixes.sql` | Column additions and type fixes across multiple tables |
 | `20260424000022_stripe.sql` | Adds `stripe_customer_id`, `stripe_subscription_id`, `stripe_price_id` to `organizations` |
+| `20260426000023_shared_briefs.sql` | `shared_briefs` table — token, brief_text, shipment_name, regulator, expires_at (7-day TTL). Public read, org-isolated write |
+| `20260426000024_fix_risk_score_scale.sql` | Risk score display scale fix |
 
 ---
 
@@ -261,6 +282,12 @@ All variables above except `ANTHROPIC_API_KEY` (placeholder) and `VERCEL_TOKEN` 
 | `/api/profile` | GET/PATCH | User profile + org data |
 | `/api/org-documents` | GET/POST | Org-level document store |
 | `/api/org-documents/[id]` | DELETE | Remove org document |
+
+### Growth & Activation
+| Route | Method | What it does |
+|---|---|---|
+| `/api/activate` | POST | One-click account creation from demo. Takes `{ email }`, creates Supabase auth user with random temp password, creates org (`subscription_tier: 'trial'`), seeds demo data, returns temp password for auto-sign-in. On "already exists" error: resets their password and returns new one. |
+| `/api/shipments/clear-demo` | DELETE | Authenticated. Deletes all shipments where `reference_number LIKE 'KRUX-2026-[A-Z]%'` (demo pattern) for the user's org. Returns `{ cleared: N }` |
 
 ### Utility
 | Route | Method | What it does |
@@ -371,7 +398,17 @@ Accepts PDF or image file (max 10MB). Sends base64 to Claude Sonnet 4.6 with Ken
 | Privacy Policy | `/privacy` | Data processor table (Supabase, Anthropic, Stripe, Resend), user rights, Kenya Data Protection Act, GDPR mention |
 | Invite accept | `/invite/[token]` | Validates invite token, org name display, accept flow |
 
-### Part 9A — Landing Page (`/`) — rebuilt 2026-04-24
+### Part 9A — Additional Public Pages (added Sessions 3–4)
+
+| Page | Path | Content |
+|---|---|---|
+| Signup | `/signup` | Dedicated signup page with email + password form. Server Action creates user, org, seeds demo data, sends welcome email via Resend, auto-signs in, redirects to `/dashboard/operations` |
+| Forgot Password | `/forgot-password` | Sends Supabase password reset email |
+| Update Password | `/auth/update-password` | Authenticated password reset form (Supabase magic link lands here) |
+| Shared Brief | `/brief/[token]` | Public read-only compliance brief page. Full OG metadata for WhatsApp/Twitter previews. Share buttons (copy, WhatsApp, Twitter). "Get KRUX free →" CTA with `?ref=brief` referral tracking. Brief expires after 7 days. |
+| Demo | `/demo` | Auto-logs in as demo user (no signup required) |
+
+### Part 9B — Landing Page (`/`) — rebuilt 2026-04-24
 
 **Purpose:** Self-sells the product to prospects without requiring a human to explain it.
 
@@ -434,6 +471,9 @@ Accepts PDF or image file (max 10MB). Sends base64 to Claude Sonnet 4.6 with Ken
 | `NotificationBell` | In-app notification bell with unread count |
 | `OnboardingWizard` | First-use guide shown when org has 0 shipments |
 | `Sidebar` | Navigation: Operations, Closed, Actions, Analytics, Alerts, Compliance, Contacts, Licenses, Team, Settings, Billing |
+| `DemoGateModal` | Shown when demo user attempts a write action (add shipment, etc.). Captures email, calls `/api/activate`, auto-signs in with returned temp password. On failure: "Something went wrong. Try again." |
+| `ShareButtons` | Copy link + WhatsApp share + Twitter share buttons for `/brief/[token]` page |
+| `ScoreBreakdown` | Hover tooltip on risk score badge in Operations table. Shows 3 coloured bar charts: Urgency (time), Value (CIF), Probability. Formula: `urgency × (0.4 + 0.6 × value) × (0.3 + 0.7 × probability)` |
 
 ---
 
@@ -531,6 +571,21 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 - [x] Notification bell (in-app)
 - [x] Analytics dashboard
 - [x] HS code autocomplete with duty rates
+- [x] **AI features fully live** — Anthropic API key confirmed set in Vercel production
+- [x] Signup flow — `/signup` page with Server Action, welcome email, auto-sign-in
+- [x] One-click demo-to-account conversion — `DemoGateModal` → `/api/activate`
+- [x] Shared compliance briefs — `/brief/[token]` with OG metadata, 7-day TTL, WhatsApp/Twitter share
+- [x] Welcome email on signup — Resend HTML email with demo workspace summary
+- [x] Clear demo data — button in Settings, `DELETE /api/shipments/clear-demo`
+- [x] Demo data banner — dismissable banner in Operations for auto-seeded users
+- [x] Risk score breakdown tooltip — 3-bar chart (urgency, value, probability) on hover
+- [x] Regulatory "last verified" chip — "verified April 2026" shown in Shipment Drawer for all 8 regulators
+- [x] Alert emails decoupled from WhatsApp — alerts send via Resend regardless of Twilio config
+- [x] KRUXVON → KRUX — all email subjects, WhatsApp messages, and HTML footers updated
+- [x] Morning brief URL — uses `NEXT_PUBLIC_APP_URL` env var, not hardcoded
+- [x] Referral tracking — shared brief signup links include `?ref=brief`
+- [x] Onboarding progress — no longer falsely shows 60–80% due to demo data; filters demo shipments by reference number pattern and known demo manufacturer names
+- [x] Forgot password + update password flows
 
 ---
 
@@ -538,14 +593,11 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 
 | Feature | Blocked by | Action to unblock |
 |---|---|---|
-| AI document extraction | `ANTHROPIC_API_KEY` placeholder | Add real key → run `push-vercel-env.js` |
-| AI compliance brief | Same | Same |
-| AI document checklist | Same | Same |
-| AI tax narrative | Same | Same |
-| AI remediation steps | Same | Same |
-| AI chat assistant | Same | Same |
-| AI action suggestions | Same | Same |
-| Stripe LIVE mode | Using test keys | Rotate keys, get Stripe live key, re-run setup-stripe.js for live products |
+| WhatsApp morning brief | Twilio env vars not set | Add `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM`, `ALERT_WHATSAPP_TO` to Vercel env vars |
+| WhatsApp deadline alerts | Same | Same |
+| Stripe LIVE mode | Using test keys | Rotate to live Stripe key, re-run `setup-stripe.js` against live, register new webhook |
+| Welcome email from real domain | Resend `from:` is `welcome@krux-xi.vercel.app` — unverified sender → likely spam | Set up custom domain (e.g. `hello@krux.co.ke`), verify with Resend |
+| EPRA SLA accuracy | Unverified — currently 25d in code | Verify against epra.go.ke before KRA demo |
 
 ---
 
@@ -553,13 +605,15 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 
 | Feature | Notes |
 |---|---|
-| WhatsApp alerts | Infrastructure types exist, no provider wired (Twilio or WhatsApp Business API needed) |
+| WhatsApp alerts | Code exists, Twilio not wired. 4 env vars needed. This is the core product promise — must ship. |
 | Real-time portal scraping | Manual status entry only — would need KenTrade/KEBS API or scheduled browser scraping |
 | API access tier | Planned for Enterprise — no API key management built |
 | Revenue share module | For audit agencies — referenced in types, not built |
-| Cron automation | `CRON_SECRET` set but no Vercel cron jobs configured — `Run Events` and `Run Alerts` are manual buttons |
+| Cron automation | Vercel cron jobs configured in `vercel.json` (4 jobs). Must verify they fire correctly with `CRON_SECRET`. |
 | Mobile native app | Mobile-optimized web view exists at `/dashboard/mobile` |
 | Multi-entity support | Listed in Enterprise features on billing page, not implemented |
+| Custom domain | Still on `krux-xi.vercel.app` — needs `.co.ke` or `.io` for enterprise credibility |
+| Resend verified sender domain | Welcome/alert emails come from unverified domain — likely spam-filtered |
 
 ---
 
@@ -601,25 +655,86 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 | Git push to GitHub (master) | Commit `6e891e5` |
 | Vercel deployment triggered via REST API | `dpl_FGcgB5pRMQQtssuRMrsPy4jw7km7` — READY in ~26s |
 
+### Session 3 (growth layer + world-class tier)
+| Step | Result |
+|---|---|
+| KRUXVON → KRUX in all alert emails | Fixed 6 occurrences in `alerts/send/route.ts` |
+| Resend decoupled from WhatsApp alerts | WhatsApp fires regardless of Resend config |
+| Morning brief hardcoded URL fixed | Uses `NEXT_PUBLIC_APP_URL` env var |
+| `last_verified: 'April 2026'` added to all 8 regulators | Shown as chip in ShipmentDrawer |
+| Risk score breakdown tooltip | 3-bar chart (urgency, value, probability) in Operations |
+| Demo banner in Operations | Dismissable banner for auto-seeded users |
+| Clear demo data | `DELETE /api/shipments/clear-demo` + button in Settings |
+| Welcome email on signup | Resend HTML email after seedDemoData |
+| Shared compliance briefs | `/brief/[token]` with OG metadata + share buttons |
+| Referral tracking | `?ref=brief` on shared brief signup CTAs |
+| Signup page | `/signup` with Server Action, welcome email, auto-sign-in |
+| Forgot password + update password | Full reset flow |
+| One-click demo-to-account | `DemoGateModal` → `/api/activate` |
+| Git push to GitHub (master) | Commit `c201989` |
+| Vercel deployed via `npx vercel --prod` | READY |
+
+### Session 4 (critical signup fix)
+| Step | Result |
+|---|---|
+| **ROOT CAUSE FOUND: `subscription_tier: 'free'`** | DB enum is `('trial','basic','pro','enterprise')` — every org insert was failing with PostgreSQL enum violation since launch |
+| Fixed in `/api/activate/route.ts` | `'free'` → `'trial'` |
+| Fixed in `/signup/actions.ts` | `'free'` → `'trial'` |
+| Onboarding false-progress fixed | Filters demo shipments by ref pattern, known demo manufacturer names |
+| Operations page: auto-set `krux_auto_seeded` flag | Detects server-seeded demo data on first load |
+| Git push to GitHub (master) | Commit `65eda90` |
+| Vercel deployed via `npx vercel --prod` | `dpl_pt4Qak1zNifzeUuqg2HA3HPBLmkn` — READY |
+| **Two real leads lost to the bug** | `HQ@ELEMENT72VITALITY.COM` (Element72 Vitality), `haaji1242@gmail.com` — must reach out |
+
 ---
 
 ## PART 19 — NEXT STEPS (prioritized)
 
-### Done
-- [x] Landing page rebuilt — dashboard mockup, cost calculator, fixed pricing, deployed
+### Done (Sessions 1–4)
+- [x] Full platform built and deployed
+- [x] Landing page — dashboard mockup, cost calculator, pricing
+- [x] AI features live (Anthropic API key confirmed)
+- [x] Signup flow, forgot password, update password
+- [x] Demo account (`/demo`) with pre-seeded shipments
+- [x] One-click demo-to-account conversion (DemoGateModal)
+- [x] Shared compliance briefs with social sharing
+- [x] Welcome email on signup
+- [x] Clear demo data (Settings button)
+- [x] Risk score breakdown tooltip
+- [x] Regulatory "verified April 2026" stamps
+- [x] Alert emails KRUXVON→KRUX + decoupled from WhatsApp
+- [x] Onboarding progress fixed (no more false 80%)
+- [x] **Critical signup bug fixed** — `subscription_tier: 'free'` → `'trial'`
 
-### Remaining (in order)
+### Immediate (this week)
+1. **Reach out to two lost leads** — `HQ@ELEMENT72VITALITY.COM` and `haaji1242@gmail.com`. Their accounts were cleaned up. One message: "We fixed the signup bug that hit you. Your workspace is ready in 3 seconds — [link]." This is the fastest revenue action available.
+2. **Wire Twilio WhatsApp** — add 4 env vars to Vercel (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM`, `ALERT_WHATSAPP_TO`). Morning brief + deadline alerts are already built — they just need a live channel.
+3. **Verify EPRA 25-day SLA** against epra.go.ke — must be correct before any enterprise demo.
 
-1. **Demo account** — pre-seeded org with realistic Kenya shipments that any prospect can log into without signing up. A "Try Demo" button on the landing page. This is the next build task.
-2. **Activate Anthropic account** → add `ANTHROPIC_API_KEY` → run `push-vercel-env.js` → all AI features unlock
-3. **Rotate Stripe keys** before going live — verify old exposed test keys are revoked in Stripe dashboard
-4. **Switch to Stripe LIVE mode** — get live secret key, run `setup-stripe.js` against live, new webhook
-5. **Configure Vercel cron jobs** — automate `Run Events` and `Run Alerts` on schedule (daily at 08:00 EAT)
-6. **First customer outreach** — contact a clearing agent or mid-size importer. The landing page now does the initial explaining. The demo account closes it.
-7. **Wire WhatsApp alerts** — Twilio or WhatsApp Business API for Pro+ plans
-8. **Build API access tier** — API key management for Enterprise
+### Before first enterprise demo
+4. **Custom domain** — `krux-xi.vercel.app` looks like a prototype. `.co.ke` or `.io` closes deals faster.
+5. **Resend verified sender domain** — welcome emails and alerts are likely going to spam from `krux-xi.vercel.app`. Set up `hello@yourdomain.com` in Resend.
+6. **Run `/demo` in production** — verify the demo account is seeded and accessible.
+7. **Verify Vercel cron jobs fire** — 4 crons configured (`vercel.json`). Check they execute with `CRON_SECRET` header.
+
+### After product-market fit confirmed
+8. **Stripe LIVE mode** — rotate keys, re-run `setup-stripe.js` against live, register new webhook
+9. **WhatsApp Business API** (when volume justifies) — move off Twilio sandbox to official BSP
+10. **API access tier** — API key management for Enterprise
 
 ---
 
-*Full audit generated by Claude Code — 2026-04-24*  
-*All sections derived from live code, not assumptions.*
+## PART 20 — CRITICAL BUGS FIXED (log)
+
+| Bug | Impact | Root Cause | Fix | Session |
+|---|---|---|---|---|
+| `subscription_tier: 'free'` | **Every single real user signup failed since launch** — returned "Account setup failed" or "Something went wrong" | `organizations` table uses PostgreSQL enum `('trial','basic','pro','enterprise')`. Code inserted `'free'` which doesn't exist. PostgreSQL rejected with enum violation. | Changed to `'trial'` in both `/api/activate` and `/signup/actions.ts` | 4 |
+| `seedDemoData` not in try/catch | `/api/activate` returned 500 if demo seeding threw, even though account was created | Exception from `seedDemoData` propagated to outer catch block | Wrapped in try/catch (non-fatal) | 3 |
+| "Already exists" on retry → locked out | Demo user who retried got `{ exists: true }` → redirected to login — but their password was an unknown random string | No recovery path for partial activation | On "already exists": find user via `admin.listUsers`, reset password, return new temp password | 3 |
+| Onboarding shows 60–80% on fresh signup | New users feel they've already done setup — misleading | Demo data (seeded server-side on signup) satisfied the shipment + manufacturer completion checks | Filter demo shipments by ref pattern (`KRUX-YYYY-LETTERS-` = demo), filter known demo manufacturer names | 4 |
+| Hardcoded URL in morning brief | Morning brief WhatsApp message linked to wrong URL in some environments | `briefText.slice(0, 1450) + '\n\n[Full brief at https://krux-xi.vercel.app/dashboard]'` | Uses `NEXT_PUBLIC_APP_URL` env var | 3 |
+
+---
+
+*Full audit maintained by Claude Code — sessions 1–4*  
+*All sections derived from live code and confirmed production state.*
