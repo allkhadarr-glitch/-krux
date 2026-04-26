@@ -920,7 +920,11 @@ export default function ShipmentDrawer({
           <div className="border-t border-[#1E3A5F] px-6 py-3 flex items-center gap-4">
             <div className="text-center">
               <p className="text-[10px] text-[#64748B]">Risk Score</p>
-              <p className="text-sm font-bold text-white">{shipment.risk.risk_score}/10</p>
+              <p className="text-sm font-bold text-white">
+                {shipment.composite_risk_score != null
+                  ? `${shipment.composite_risk_score * 10}/100`
+                  : `${Math.round((shipment.risk.risk_score ?? 0) * 10)}/100`}
+              </p>
             </div>
             <div className="text-center">
               <p className="text-[10px] text-[#64748B]">Delay Prob</p>
