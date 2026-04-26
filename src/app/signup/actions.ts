@@ -50,7 +50,7 @@ export async function signUp(_: unknown, formData: FormData) {
       return { error: 'An account with this email already exists. Sign in instead.' }
     }
     console.error('[signUp] createUser error:', createErr.message)
-    return { error: `DEBUG AUTH: ${createErr.message}` }
+    return { error: 'Account creation failed. Please try again.' }
   }
 
   const userId   = created.user.id
@@ -71,7 +71,7 @@ export async function signUp(_: unknown, formData: FormData) {
   if (orgErr || !org) {
     await serviceSupabase.auth.admin.deleteUser(userId)
     console.error('[signUp] org insert error:', orgErr?.message)
-    return { error: `DEBUG: ${orgErr?.message ?? orgErr?.code ?? 'no org returned'}` }
+    return { error: 'Account setup failed. Please try again.' }
   }
 
   await serviceSupabase.from('user_profiles').insert({
