@@ -338,8 +338,8 @@ export default function OrdersPage() {
       fetch('/api/orders').then((r) => r.json()),
       fetch('/api/manufacturers').then((r) => r.json()),
     ]).then(([ords, mfrs]) => {
-      setOrders(ords)
-      setManufacturers(mfrs)
+      setOrders(Array.isArray(ords) ? ords : [])
+      setManufacturers(Array.isArray(mfrs) ? mfrs : [])
     }).finally(() => setLoading(false))
   }, [])
 

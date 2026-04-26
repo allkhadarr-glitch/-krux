@@ -12,7 +12,11 @@ import AddShipmentModal from '@/components/AddShipmentModal'
 import EditShipmentModal from '@/components/EditShipmentModal'
 import ShipmentDrawer from '@/components/ShipmentDrawer'
 import { OnboardingWizard } from '@/components/OnboardingWizard'
+import { DemoGateModal } from '@/components/DemoGateModal'
+import { useDemo } from '@/context/demo'
+import { trackDemo } from '@/lib/demo-analytics'
 import { supabase } from '@/lib/supabase'
+import { getRegulator } from '@/lib/regulatory-intelligence'
 
 const priorityColors: Record<PriorityLevel, string> = {
   CRITICAL: 'bg-red-500/15 text-red-400 border border-red-500/30',
@@ -21,16 +25,40 @@ const priorityColors: Record<PriorityLevel, string> = {
   LOW:      'bg-[#1E3A5F] text-[#64748B] border border-[#1E3A5F]',
 }
 
-function PriorityBadge({ level, score }: { level?: PriorityLevel; score?: number }) {
-  if (!level) return <span className="text-xs text-[#64748B]">—</span>
+function PriorityBadge({ level, score, compositeScore }: { level?: PriorityLevel; score?: number; compositeScore?: number }) {
+  const display = compositeScore ?? (score != null ? Math.round(score * 10) : null)
+  const color   = display != null
+    ? display >= 80 ? 'text-red-400'
+    : display >= 50 ? 'text-amber-400'
+    : 'text-[#64748B]'
+    : 'text-[#64748B]'
+
   return (
     <div className="flex flex-col gap-0.5">
-      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${priorityColors[level]}`}>
-        {level}
-      </span>
-      {score != null && (
-        <span className="text-[10px] text-[#64748B]">{score.toFixed(1)} / 10</span>
+      {level && (
+        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${priorityColors[level]}`}>
+          {level}
+        </span>
       )}
+      {display != null && (
+        <span className={`text-sm font-black tabular-nums ${color}`}>
+          {display}<span className="text-[10px] font-normal text-[#64748B]">/100</span>
+        </span>
+      )}
+    </div>
+  )
+}
+
+function ImpossibleWindowBadge({ regCode, daysLeft }: { regCode?: string; daysLeft: number }) {
+  if (!regCode || daysLeft <= 0) return null
+  const profile = getRegulator('KE', regCode)
+  if (!profile) return null
+  const sla = profile.sla_actual_days
+  if (sla === 0 || daysLeft >= sla) return null
+  return (
+    <div className="flex items-center gap-1 mt-1 text-[10px] font-semibold text-red-400 whitespace-nowrap">
+      <AlertTriangle size={9} className="flex-shrink-0" />
+      {regCode} needs {sla}d — {daysLeft} left
     </div>
   )
 }
@@ -343,7 +371,20 @@ export default function OperationsPage() {
   const [closeTarget, setCloseTarget]     = useState<Shipment | null>(null)
   const [editTarget, setEditTarget]       = useState<Shipment | null>(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showDemoGate, setShowDemoGate]       = useState(false)
+  const [demoGatePassed, setDemoGatePassed]   = useState(false)
+  const [tooltipDismissed, setTooltipDismissed] = useState(false)
   const { canWrite } = useRole()
+  const isDemo = useDemo()
+
+  // Auto-open gate modal when ?gate=1 is in the URL (e.g. from DemoBanner CTA)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('gate') === '1') {
+      setShowDemoGate(true)
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
 
   async function runAlerts() {
     setAlertSending(true)
@@ -378,13 +419,32 @@ export default function OperationsPage() {
   }
 
   useEffect(() => {
+    if (isDemo) trackDemo('demo_opened')
+  }, [isDemo])
+
+  useEffect(() => {
     Promise.all([
       fetch('/api/shipments').then((r) => r.json()),
       fetch('/api/fx/rate').then((r) => r.json()).catch(() => ({ usd_kes: 130 })),
     ])
-      .then(([ships, fx]) => {
-        setShipments(ships)
+      .then(async ([shipsRaw, fx]) => {
         setKesRate(fx.usd_kes ?? 130)
+        const ships = Array.isArray(shipsRaw) ? shipsRaw : []
+
+        // Auto-seed demo data for brand-new orgs (non-demo users only)
+        if (!isDemo && ships.length === 0 && !localStorage.getItem('krux_auto_seeded')) {
+          try {
+            await fetch('/api/seed-demo', { method: 'POST' })
+            localStorage.setItem('krux_auto_seeded', '1')
+            const refreshed = await fetch('/api/shipments').then((r) => r.json())
+            setShipments(Array.isArray(refreshed) ? refreshed : [])
+          } catch {
+            setShipments(ships)
+          }
+        } else {
+          setShipments(ships)
+        }
+
         if (ships.length === 0) setShowOnboarding(true)
       })
       .catch((e) => setError(e.message))
@@ -487,7 +547,14 @@ export default function OperationsPage() {
           )}
           {canWrite && (
             <button
-              onClick={() => setShowAddModal(true)}
+              onClick={() => {
+                if (isDemo) {
+                  trackDemo('gate_triggered', { trigger: 'add_shipment' })
+                  setShowDemoGate(true)
+                } else {
+                  setShowAddModal(true)
+                }
+              }}
               className="flex items-center gap-2 px-4 py-2 bg-[#00C896] text-[#0A1628] rounded-lg text-sm font-bold hover:bg-[#00A87E] transition-colors"
             >
               <Plus size={14} />
@@ -536,24 +603,42 @@ export default function OperationsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-[#1E3A5F]">
-            {filtered.map((s) => {
+            {filtered.map((s, idx) => {
               const days = daysUntilDeadline(s.pvoc_deadline!)
               const alert = alerts.find((a) => a.shipmentId === s.id)
-              const rowBg = alert?.level === 'CRITICAL'
+              const isCriticalRow = alert?.level === 'CRITICAL'
+              const rowBg = isCriticalRow
                 ? 'bg-red-500/5'
                 : alert?.level === 'URGENT'
                 ? 'bg-amber-500/5'
                 : ''
+              // Tooltip shows on the first CRITICAL row only, in demo mode, until dismissed
+              const showTooltip = isDemo && !tooltipDismissed && isCriticalRow && idx === filtered.findIndex((x) => alerts.find((a) => a.shipmentId === x.id)?.level === 'CRITICAL')
 
               return (
-                <tr key={s.id} className={`hover:bg-[#0F2040]/50 transition-colors ${rowBg}`}>
+                <tr
+                  key={s.id}
+                  className={`hover:bg-[#0F2040]/50 transition-colors relative ${rowBg} ${showTooltip ? 'ring-1 ring-red-500/40' : ''}`}
+                >
                   <td className="px-4 py-3">
-                    <PriorityBadge level={s.risk?.priority_level} score={s.risk?.risk_score} />
+                    <PriorityBadge level={s.risk?.priority_level} score={s.risk?.risk_score} compositeScore={s.composite_risk_score} />
                     <RiskDriversTooltip drivers={s.risk?.risk_drivers} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 relative">
+                    {showTooltip && (
+                      <div className="absolute -top-8 left-0 z-20 flex items-center gap-1.5 bg-red-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-lg whitespace-nowrap pointer-events-none">
+                        <AlertTriangle size={10} />
+                        Click this shipment — it's critical
+                      </div>
+                    )}
                     <button
-                      onClick={() => setDrawerShipment(s)}
+                      onClick={() => {
+                        if (isDemo) {
+                          trackDemo('shipment_clicked', { name: s.name })
+                          setTooltipDismissed(true)
+                        }
+                        setDrawerShipment(s)
+                      }}
                       className="text-sm font-medium text-white hover:text-[#00C896] transition-colors text-left"
                     >
                       {s.name}
@@ -578,9 +663,23 @@ export default function OperationsPage() {
                       <Clock size={10} />
                       {days > 0 ? `${days}d remaining` : `${Math.abs(days)}d overdue`}
                     </div>
+                    <ImpossibleWindowBadge regCode={s.regulatory_body?.code} daysLeft={days} />
                   </td>
                   <td className="px-4 py-3 text-sm text-white">{formatUSD(s.cif_value_usd)}</td>
-                  <td className="px-4 py-3 text-sm font-semibold text-[#00C896]">{formatUSD(s.total_landed_cost_usd!)}</td>
+                  <td className="px-4 py-3">
+                    {s.total_landed_cost_kes ? (
+                      <>
+                        <div className="text-sm font-bold text-[#00C896]">
+                          KES {s.total_landed_cost_kes >= 1_000_000
+                            ? `${(s.total_landed_cost_kes / 1_000_000).toFixed(1)}M`
+                            : s.total_landed_cost_kes.toLocaleString()}
+                        </div>
+                        <div className="text-[10px] text-[#64748B]">{formatUSD(s.total_landed_cost_usd!)}</div>
+                      </>
+                    ) : (
+                      <span className="text-sm font-semibold text-[#00C896]">{formatUSD(s.total_landed_cost_usd!)}</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <PortalDots portals={s.portals} />
@@ -653,6 +752,22 @@ export default function OperationsPage() {
         <ShipmentDrawer
           shipment={drawerShipment}
           onClose={() => setDrawerShipment(null)}
+          isDemo={isDemo}
+          gatePassed={demoGatePassed}
+          onDemoGate={() => {
+            trackDemo('gate_triggered', { trigger: 'drawer_tab' })
+            setShowDemoGate(true)
+          }}
+        />
+      )}
+
+      {showDemoGate && (
+        <DemoGateModal
+          onClose={() => setShowDemoGate(false)}
+          onSubmitted={() => {
+            setShowDemoGate(false)
+            setDemoGatePassed(true)
+          }}
         />
       )}
 
