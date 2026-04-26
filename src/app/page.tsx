@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Shield, Bot, Bell, FileText, Factory, TrendingUp,
   CheckCircle2, ArrowRight, AlertTriangle, Users, Globe,
@@ -99,32 +99,50 @@ const REGULATORS = ['PPB', 'KEBS', 'PCPB', 'KEPHIS', 'EPRA', 'NEMA', 'KRA', 'WHO
 // ── Cost Calculator ──────────────────────────────────────────
 
 function CostCalculator() {
-  const [cif, setCif]     = useState('')
-  const [days, setDays]   = useState('')
-  const [rate, setRate]   = useState('50')
+  const [cif, setCif]         = useState('')
+  const [days, setDays]       = useState('')
+  const [dutyRate, setDutyRate] = useState('25')
+  const [storageDay, setStorageDay] = useState('50')
+  const [kesRate, setKesRate] = useState(130)
+  const [leadEmail, setLeadEmail] = useState('')
+  const [leadSent, setLeadSent]   = useState(false)
+  const [leadSending, setLeadSending] = useState(false)
 
-  const cifNum  = parseFloat(cif)  || 0
-  const daysNum = parseFloat(days) || 0
-  const rateNum = parseFloat(rate) || 50
+  useEffect(() => {
+    fetch('/api/fx/rate').then(r => r.json()).then(d => {
+      if (d.usd_kes) setKesRate(d.usd_kes)
+    }).catch(() => { /* use fallback 130 */ })
+  }, [])
 
-  const storagePerDay = cifNum * 0.005
-  const totalStorage  = storagePerDay * daysNum
-  const duties        = cifNum * (rateNum / 100)
-  const penalties     = daysNum > 7 ? cifNum * 0.02 * Math.max(0, daysNum - 7) : 0
-  const totalUSD      = totalStorage + penalties
-  const totalKES      = totalUSD * 130
+  const cifNum     = parseFloat(cif)        || 0
+  const daysNum    = parseFloat(days)       || 0
+  const dutyNum    = parseFloat(dutyRate)   || 25
+  const storageNum = parseFloat(storageDay) || 50
+
+  // Real costs: storage accumulates daily, KRA imposes 2% late surcharge after 7 free days
+  const storage    = storageNum * daysNum
+  const duty       = cifNum * (dutyNum / 100)
+  const vat        = (cifNum + duty) * 0.16
+  const idf        = cifNum * 0.02
+  const rdl        = cifNum * 0.015
+  const surcharge  = daysNum > 7 ? (duty + vat) * 0.02 : 0   // KRA 2% late surcharge
+  const totalUSD   = storage + duty + vat + idf + rdl + surcharge
+  const totalKES   = totalUSD * kesRate
 
   const hasResult = cifNum > 0 && daysNum > 0
 
   return (
     <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-6 max-w-lg mx-auto">
-      <div className="flex items-center gap-2 mb-5">
-        <DollarSign size={16} className="text-[#00C896]" />
-        <h3 className="text-white font-bold text-sm">Missed Deadline Cost Calculator</h3>
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <DollarSign size={16} className="text-[#00C896]" />
+          <h3 className="text-white font-bold text-sm">Missed Deadline Cost Calculator</h3>
+        </div>
+        <span className="text-[10px] text-[#64748B]">1 USD = KES {kesRate}</span>
       </div>
-      <div className="space-y-3 mb-5">
-        <div>
-          <label className="text-[10px] text-[#64748B] uppercase tracking-wide block mb-1.5">Shipment CIF Value (USD)</label>
+      <div className="grid grid-cols-2 gap-3 mb-5">
+        <div className="col-span-2">
+          <label className="text-[10px] text-[#64748B] uppercase tracking-wide block mb-1.5">CIF Value (USD)</label>
           <input
             type="number"
             value={cif}
@@ -134,44 +152,110 @@ function CostCalculator() {
           />
         </div>
         <div>
-          <label className="text-[10px] text-[#64748B] uppercase tracking-wide block mb-1.5">Days past PVoC deadline</label>
+          <label className="text-[10px] text-[#64748B] uppercase tracking-wide block mb-1.5">Days at port</label>
           <input
             type="number"
             value={days}
             onChange={e => setDays(e.target.value)}
-            placeholder="e.g. 14"
+            placeholder="e.g. 21"
             className="w-full bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#334155] focus:outline-none focus:border-[#00C896]/50"
           />
         </div>
         <div>
+          <label className="text-[10px] text-[#64748B] uppercase tracking-wide block mb-1.5">Storage rate (USD/day)</label>
+          <input
+            type="number"
+            value={storageDay}
+            onChange={e => setStorageDay(e.target.value)}
+            placeholder="50"
+            className="w-full bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#334155] focus:outline-none focus:border-[#00C896]/50"
+          />
+        </div>
+        <div className="col-span-2">
           <label className="text-[10px] text-[#64748B] uppercase tracking-wide block mb-1.5">Import Duty Rate (%)</label>
           <input
             type="number"
-            value={rate}
-            onChange={e => setRate(e.target.value)}
-            placeholder="e.g. 25"
+            value={dutyRate}
+            onChange={e => setDutyRate(e.target.value)}
+            placeholder="25"
             className="w-full bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#334155] focus:outline-none focus:border-[#00C896]/50"
           />
         </div>
       </div>
 
       {hasResult ? (
-        <div className="bg-[#0A1628] border border-red-500/20 rounded-xl p-4 space-y-2">
-          <div className="flex justify-between text-xs">
-            <span className="text-[#64748B]">Storage charges</span>
-            <span className="text-white">USD {totalStorage.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-          </div>
-          {penalties > 0 && (
-            <div className="flex justify-between text-xs">
-              <span className="text-[#64748B]">Late penalties (&gt;7d)</span>
-              <span className="text-red-400">USD {penalties.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+        <div className="bg-[#0A1628] border border-red-500/20 rounded-xl p-4 space-y-1.5">
+          {[
+            { label: `Port storage (${daysNum}d × $${storageNum}/day)`, value: storage, red: true },
+            { label: `Import duty (${dutyNum}%)`, value: duty },
+            { label: 'VAT (16%)', value: vat },
+            { label: 'IDF levy (2%)', value: idf },
+            { label: 'RDL levy (1.5%)', value: rdl },
+            ...(surcharge > 0 ? [{ label: 'KRA late surcharge (2%)', value: surcharge, red: true }] : []),
+          ].map(row => (
+            <div key={row.label} className="flex justify-between text-xs">
+              <span className="text-[#64748B]">{row.label}</span>
+              <span className={row.red ? 'text-red-400' : 'text-white'}>
+                USD {Math.round(row.value).toLocaleString()}
+              </span>
             </div>
-          )}
+          ))}
           <div className="flex justify-between text-xs border-t border-[#1E3A5F] pt-2 mt-2">
-            <span className="text-[#64748B] font-semibold">Estimated total loss</span>
+            <span className="text-[#94A3B8] font-semibold">Total at risk</span>
             <span className="text-red-400 font-bold">KES {Math.round(totalKES).toLocaleString()}</span>
           </div>
-          <p className="text-[10px] text-[#334155] mt-1">KRUX Basic ($299/mo) would have prevented this entire cost.</p>
+          <p className="text-[10px] text-[#334155] mt-1">KRUX Basic ($299/mo) would have flagged this weeks before it cost you anything.</p>
+
+          {/* Lead capture */}
+          {!leadSent ? (
+            <div className="mt-4 pt-4 border-t border-[#1E3A5F]">
+              <p className="text-[11px] text-[#94A3B8] mb-2">See a live brief for a shipment like this — no signup form, just the demo.</p>
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault()
+                  if (!leadEmail) return
+                  setLeadSending(true)
+                  try {
+                    await fetch('/api/waitlist', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email: leadEmail, company: 'Calculator lead' }),
+                    })
+                  } finally {
+                    setLeadSent(true)
+                    setLeadSending(false)
+                  }
+                }}
+                className="flex gap-2"
+              >
+                <input
+                  type="email"
+                  required
+                  value={leadEmail}
+                  onChange={e => setLeadEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className="flex-1 bg-[#0D1F35] border border-[#1E3A5F] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#334155] focus:outline-none focus:border-[#00C896]/50"
+                />
+                <button
+                  type="submit"
+                  disabled={leadSending}
+                  className="px-3 py-2 bg-[#00C896] text-[#0A1628] text-xs font-bold rounded-lg hover:bg-[#00C896]/90 transition-colors disabled:opacity-50 whitespace-nowrap"
+                >
+                  {leadSending ? '…' : 'See demo →'}
+                </button>
+              </form>
+            </div>
+          ) : (
+            <div className="mt-4 pt-4 border-t border-[#1E3A5F] text-center">
+              <p className="text-[11px] text-[#00C896] mb-2">Got it. Open the live demo now →</p>
+              <a
+                href="/demo"
+                className="inline-block px-4 py-2 bg-[#00C896]/10 text-[#00C896] border border-[#00C896]/30 rounded-lg text-xs font-semibold hover:bg-[#00C896]/20 transition-colors"
+              >
+                Open KRUX Demo
+              </a>
+            </div>
+          )}
         </div>
       ) : (
         <div className="bg-[#0A1628] border border-dashed border-[#1E3A5F] rounded-xl p-4 text-center">
@@ -329,8 +413,8 @@ export default function Home() {
           <Link href="/login" className="text-sm text-[#94A3B8] hover:text-white transition-colors hidden sm:block">
             Sign in
           </Link>
-          <a href="#waitlist" className="px-4 py-2 bg-[#00C896] text-[#0A1628] rounded-lg text-sm font-bold hover:bg-[#00C896]/90 transition-colors">
-            Request Access
+          <a href="/demo" className="px-4 py-2 bg-[#00C896] text-[#0A1628] rounded-lg text-sm font-bold hover:bg-[#00C896]/90 transition-colors">
+            Open Demo Dashboard
           </a>
         </div>
       </nav>
@@ -360,20 +444,21 @@ export default function Home() {
           Calculate what your last missed deadline actually cost →
         </button>
 
-        <div className="flex flex-col sm:flex-row gap-3 justify-center mb-16">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center mb-3">
           <a
-            href="#waitlist"
+            href="/demo"
             className="flex items-center justify-center gap-2 px-7 py-3.5 bg-[#00C896] text-[#0A1628] rounded-xl font-bold text-sm hover:bg-[#00C896]/90 transition-colors"
           >
-            Request Early Access <ArrowRight size={15} />
+            Open Demo Dashboard <ArrowRight size={15} />
           </a>
-          <Link
-            href="/login"
+          <a
+            href="#waitlist"
             className="flex items-center justify-center gap-2 px-7 py-3.5 border border-[#1E3A5F] text-[#94A3B8] rounded-xl text-sm hover:border-[#00C896]/40 hover:text-white transition-colors"
           >
-            Sign in to dashboard
-          </Link>
+            Request Early Access
+          </a>
         </div>
+        <p className="text-[11px] text-[#334155] text-center mb-10">No signup required · Pre-loaded with real Kenya shipments</p>
 
         {/* Stats strip */}
         <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
@@ -573,15 +658,18 @@ export default function Home() {
                   ))}
                 </div>
                 <a
-                  href="#waitlist"
+                  href={plan.name === 'Enterprise' ? '#waitlist' : '/demo'}
                   className={`block text-center py-3 rounded-xl text-sm font-bold transition-colors ${
                     plan.highlight
                       ? 'bg-[#00C896] text-[#0A1628] hover:bg-[#00C896]/90'
                       : 'border border-[#1E3A5F] text-white hover:border-[#00C896]/40'
                   }`}
                 >
-                  {plan.cta}
+                  {plan.name === 'Enterprise' ? plan.cta : 'Try free demo'}
                 </a>
+                {plan.name !== 'Enterprise' && (
+                  <p className="text-[10px] text-[#334155] text-center mt-2">No signup required</p>
+                )}
               </div>
             ))}
           </div>

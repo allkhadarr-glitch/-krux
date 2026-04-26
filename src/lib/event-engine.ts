@@ -10,7 +10,7 @@ import {
 } from './action-generator'
 
 const ALERT_EMAIL  = process.env.ALERT_EMAIL ?? 'mabdikadirhaji@gmail.com'
-const FROM_EMAIL   = 'KRUXVON Alerts <alerts@kruxvon.com>'
+const FROM_EMAIL   = 'KRUX Alerts <alerts@krux-xi.vercel.app>'
 const EXCHANGE_RATE = 129
 
 export type EventType = 'SHIPMENT_CREATED' | 'PORTAL_STATUS_CHANGED' | 'DEADLINE_APPROACHING'

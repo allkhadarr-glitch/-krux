@@ -7,7 +7,9 @@ import {
   X, Sparkles, Loader2, FileText, Wrench, List, Calculator,
   Clock, CheckCircle2, XCircle, AlertTriangle, Zap, Bell,
   MessageSquare, User, DollarSign, Upload, Trash2, ExternalLink,
+  ClipboardList, Printer, Copy, Share2,
 } from 'lucide-react'
+import { getRegulator } from '@/lib/regulatory-intelligence'
 
 // ─── Tabs ────────────────────────────────────────────────────
 
@@ -46,6 +48,47 @@ function timeAgo(iso: string) {
   if (s < 3600) return `${Math.floor(s / 60)}m ago`
   if (s < 86400) return `${Math.floor(s / 3600)}h ago`
   return `${Math.floor(s / 86400)}d ago`
+}
+
+function printBrief(text: string, shipmentName: string) {
+  const w = window.open('', '_blank', 'width=800,height=1000')
+  if (!w) return
+  w.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>KRUX Brief — ${shipmentName}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Courier New', monospace; background: #fff; color: #111; padding: 48px 56px; max-width: 820px; margin: 0 auto; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #111; padding-bottom: 16px; margin-bottom: 24px; }
+  .logo { font-size: 22px; font-weight: 900; letter-spacing: 0.15em; }
+  .logo span { color: #00C896; }
+  .meta { text-align: right; font-size: 11px; color: #555; line-height: 1.6; }
+  pre { white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 12.5px; line-height: 1.75; color: #111; }
+  .footer { margin-top: 32px; padding-top: 12px; border-top: 1px solid #ccc; font-size: 10px; color: #888; display: flex; justify-content: space-between; }
+  @media print { body { padding: 24px 32px; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">K<span>R</span>UX</div>
+  <div class="meta">
+    Kenya Import Compliance Intelligence<br>
+    Generated: ${new Date().toLocaleString('en-KE', { dateStyle: 'full', timeStyle: 'short' })}<br>
+    krux-xi.vercel.app
+  </div>
+</div>
+<pre>${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+<div class="footer">
+  <span>KRUX — AI-Generated Compliance Brief</span>
+  <span>Verify all figures with KRA iTax and relevant regulatory portals before acting</span>
+</div>
+</body>
+</html>`)
+  w.document.close()
+  w.focus()
+  setTimeout(() => { w.print() }, 400)
 }
 
 // ─── Timeline panel ───────────────────────────────────────────
@@ -359,12 +402,25 @@ function CostsPanel({ shipmentId }: { shipmentId: string }) {
 
 const DOC_TYPES = ['PVoC Certificate', 'KEBS Inspection Report', 'KRA Entry', 'Commercial Invoice', 'Bill of Lading', 'Packing List', 'Phytosanitary Certificate', 'PPB Registration', 'Other'] as const
 
-function FilesPanel({ shipmentId }: { shipmentId: string }) {
-  const [docs, setDocs]         = useState<any[]>([])
-  const [loading, setLoading]   = useState(true)
-  const [uploading, setUploading] = useState(false)
-  const [docType, setDocType]   = useState<string>(DOC_TYPES[0])
-  const [error, setError]       = useState<string | null>(null)
+const DOC_STATUS_CYCLE = ['NOT_STARTED', 'REQUESTED', 'RECEIVED', 'UPLOADED'] as const
+type DocStatus = typeof DOC_STATUS_CYCLE[number]
+
+const DOC_STATUS_CONFIG: Record<DocStatus, { icon: string; label: string; color: string }> = {
+  NOT_STARTED: { icon: '✗', label: 'Not started',           color: 'text-[#64748B]' },
+  REQUESTED:   { icon: '⟳', label: 'Requested from supplier', color: 'text-amber-400' },
+  RECEIVED:    { icon: '↓', label: 'Received, not uploaded', color: 'text-blue-400'  },
+  UPLOADED:    { icon: '✓', label: 'Uploaded',               color: 'text-[#00C896]' },
+}
+
+function FilesPanel({ shipmentId, regulatorCode }: { shipmentId: string; regulatorCode?: string }) {
+  const [docs, setDocs]               = useState<any[]>([])
+  const [loading, setLoading]         = useState(true)
+  const [uploading, setUploading]     = useState(false)
+  const [docType, setDocType]         = useState<string>(DOC_TYPES[0])
+  const [error, setError]             = useState<string | null>(null)
+  const [docStatuses, setDocStatuses] = useState<Record<string, DocStatus>>({})
+
+  const storageKey = `doc_checklist_${shipmentId}`
 
   function load() {
     fetch(`/api/shipments/${shipmentId}/documents`)
@@ -373,7 +429,24 @@ function FilesPanel({ shipmentId }: { shipmentId: string }) {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [shipmentId])
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey)
+      if (saved) setDocStatuses(JSON.parse(saved))
+    } catch { /* ignore */ }
+    load()
+  }, [shipmentId])
+
+  function cycleStatus(docName: string) {
+    const current = docStatuses[docName] ?? 'NOT_STARTED'
+    const idx  = DOC_STATUS_CYCLE.indexOf(current)
+    const next = DOC_STATUS_CYCLE[(idx + 1) % DOC_STATUS_CYCLE.length]
+    const updated = { ...docStatuses, [docName]: next }
+    setDocStatuses(updated)
+    try { localStorage.setItem(storageKey, JSON.stringify(updated)) } catch { /* ignore */ }
+  }
+
+  const regDocs = regulatorCode ? (getRegulator('KE', regulatorCode)?.documents ?? []) : []
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -410,7 +483,46 @@ function FilesPanel({ shipmentId }: { shipmentId: string }) {
   if (loading) return <div className="flex items-center justify-center h-32 text-[#64748B]"><Loader2 size={16} className="animate-spin" /></div>
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {/* Document Status Checklist */}
+      {regDocs.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <ClipboardList size={11} className="text-[#64748B]" />
+              <p className="text-[10px] text-[#64748B] font-semibold uppercase tracking-wide">
+                {regulatorCode} Required Documents
+              </p>
+            </div>
+            <p className="text-[10px] text-[#334155]">Tap to cycle status</p>
+          </div>
+          <div className="space-y-1">
+            {regDocs.map((doc) => {
+              const status = docStatuses[doc.name] ?? 'NOT_STARTED'
+              const cfg    = DOC_STATUS_CONFIG[status]
+              return (
+                <button
+                  key={doc.name}
+                  onClick={() => cycleStatus(doc.name)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#0F2040] border border-[#1E3A5F] hover:border-[#2E4A6F] transition-all text-left"
+                >
+                  <span className={`text-sm font-bold shrink-0 w-4 text-center ${cfg.color}`}>{cfg.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-white truncate">{doc.name}</p>
+                    {!doc.mandatory && <p className="text-[10px] text-[#64748B]">Conditional</p>}
+                  </div>
+                  <span className={`text-[10px] font-medium shrink-0 ${cfg.color}`}>{cfg.label}</span>
+                </button>
+              )
+            })}
+          </div>
+          <p className="text-[10px] text-[#334155] mt-2 flex items-center gap-1">
+            <Sparkles size={9} />
+            AI Brief uses these statuses for accurate ✓ / ✗ — regenerate after updating
+          </p>
+        </div>
+      )}
+
       {/* Upload */}
       <div className="border border-[#1E3A5F] rounded-xl p-3 space-y-2 bg-[#0F2040]">
         <p className="text-[10px] text-[#64748B] font-semibold uppercase tracking-wide">Upload Document</p>
@@ -464,9 +576,15 @@ function FilesPanel({ shipmentId }: { shipmentId: string }) {
 export default function ShipmentDrawer({
   shipment,
   onClose,
+  isDemo     = false,
+  gatePassed = false,
+  onDemoGate,
 }: {
-  shipment: Shipment
-  onClose:  () => void
+  shipment:    Shipment
+  onClose:     () => void
+  isDemo?:     boolean
+  gatePassed?: boolean
+  onDemoGate?: () => void
 }) {
   const [tab, setTab]         = useState<Tab>('brief')
   const [results, setResults] = useState<Partial<Record<Exclude<Tab, 'timeline' | 'costs' | 'files' | 'tax'>, string>>>({})
@@ -474,15 +592,49 @@ export default function ShipmentDrawer({
   const [closing, setClosing] = useState(false)
   const [closed, setClosed]   = useState(shipment.remediation_status === 'CLOSED')
   const [confirmClose, setConfirmClose] = useState(false)
+  const [pendingGateTab, setPendingGateTab] = useState<Tab | null>(null)
+  const [docChecklist, setDocChecklist] = useState<Record<string, string> | null>(null)
+  const [copied, setCopied]     = useState(false)
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
+  const [sharing, setSharing]   = useState(false)
 
-  const payload = {
-    name:             shipment.name,
-    regulatory_body:  shipment.regulatory_body?.code ?? '—',
-    cif_value_usd:    shipment.cif_value_usd,
-    pvoc_deadline:    shipment.pvoc_deadline,
-    risk_flag_status: shipment.risk_flag_status,
-    origin_port:      shipment.origin_port,
-    hs_code:          shipment.hs_code,
+  // Load document checklist from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`doc_checklist_${shipment.id}`)
+      if (saved) setDocChecklist(JSON.parse(saved))
+    } catch { /* ignore */ }
+  }, [shipment.id])
+
+  // Listen for checklist updates from FilesPanel (via storage events)
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      if (e.key === `doc_checklist_${shipment.id}` && e.newValue) {
+        try { setDocChecklist(JSON.parse(e.newValue)) } catch { /* ignore */ }
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [shipment.id])
+
+  function buildPayload() {
+    // Re-read from localStorage at call time to get the freshest statuses
+    let checklist: Record<string, string> | null = docChecklist
+    try {
+      const saved = localStorage.getItem(`doc_checklist_${shipment.id}`)
+      if (saved) checklist = JSON.parse(saved)
+    } catch { /* ignore */ }
+
+    return {
+      name:                shipment.name,
+      regulatory_body:     shipment.regulatory_body?.code ?? '—',
+      cif_value_usd:       shipment.cif_value_usd,
+      pvoc_deadline:       shipment.pvoc_deadline,
+      risk_flag_status:    shipment.risk_flag_status,
+      origin_port:         shipment.origin_port,
+      hs_code:             shipment.hs_code,
+      document_checklist:  checklist,
+    }
   }
 
   async function generate(t: Exclude<Tab, 'timeline' | 'costs' | 'files' | 'tax'>) {
@@ -493,7 +645,7 @@ export default function ShipmentDrawer({
       const res  = await fetch(endpoint, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(payload),
+        body:    JSON.stringify(buildPayload()),
       })
       const data = await res.json()
       setResults((p) => ({ ...p, [t]: data.result ?? data.error ?? 'No response' }))
@@ -505,9 +657,23 @@ export default function ShipmentDrawer({
   }
 
   function switchTab(t: Tab) {
+    const isGated = isDemo && !gatePassed && (t === 'checklist' || t === 'remediation')
+    if (isGated) {
+      setTab(t)
+      setPendingGateTab(t)
+      onDemoGate?.()
+      return
+    }
     setTab(t)
     if (t !== 'timeline' && t !== 'costs' && t !== 'files' && t !== 'tax') generate(t)
   }
+
+  useEffect(() => {
+    if (gatePassed && pendingGateTab && pendingGateTab !== 'timeline' && pendingGateTab !== 'costs' && pendingGateTab !== 'files' && pendingGateTab !== 'tax') {
+      generate(pendingGateTab as Exclude<Tab, 'timeline' | 'costs' | 'files' | 'tax'>)
+      setPendingGateTab(null)
+    }
+  }, [gatePassed])
 
   async function markCleared() {
     setClosing(true)
@@ -525,12 +691,26 @@ export default function ShipmentDrawer({
   }
 
   // Auto-load brief on open
-  useState(() => { generate('brief') })
+  useEffect(() => {
+    generate('brief')
+    if (isDemo) {
+      import('@/lib/demo-analytics').then(({ trackDemo }) => trackDemo('brief_viewed', { shipment: shipment.name }))
+    }
+  }, [])
 
   const currentAITab = AI_TABS.find((t) => t.key === tab)
   const isAITab      = tab !== 'timeline' && tab !== 'costs' && tab !== 'files' && tab !== 'tax'
   const result       = isAITab ? results[tab as Exclude<Tab, 'timeline' | 'costs' | 'files' | 'tax'>] : null
   const isLoading    = loading === tab
+
+  // Impossible clearance window detection
+  const regProfile    = shipment.regulatory_body?.code ? getRegulator('KE', shipment.regulatory_body.code) : null
+  const slaActual     = regProfile?.sla_actual_days ?? 0
+  const deadlineDays  = shipment.pvoc_deadline
+    ? Math.ceil((new Date(shipment.pvoc_deadline).getTime() - Date.now()) / 86400000)
+    : null
+  const windowClosed  = slaActual > 0 && deadlineDays != null && deadlineDays > 0 && deadlineDays < slaActual
+  const daysShort     = windowClosed ? slaActual - deadlineDays! : 0
 
   const allTabs = [
     ...AI_TABS,
@@ -598,8 +778,27 @@ export default function ShipmentDrawer({
           </div>
         </div>
 
+        {/* Clearance Impossible Banner */}
+        {windowClosed && (
+          <div className="mx-4 mt-3 mb-1 rounded-xl border border-red-500/50 bg-red-500/10 p-3.5">
+            <div className="flex items-center gap-2 mb-1.5">
+              <AlertTriangle size={14} className="text-red-400 flex-shrink-0" />
+              <span className="text-sm font-black text-red-400 uppercase tracking-wide">Clearance Window Closed</span>
+            </div>
+            <p className="text-xs text-red-300/90 leading-relaxed">
+              <span className="font-bold">{shipment.regulatory_body?.code ?? 'Regulator'}</span> requires{' '}
+              <span className="font-bold">{slaActual} days</span> to process.
+              Only <span className="font-bold">{deadlineDays} days</span> remain.{' '}
+              You needed to start <span className="font-bold">{daysShort} days ago.</span>
+            </p>
+            <p className="text-[10px] text-red-400/70 mt-1.5">
+              File immediately to create a record and reduce penalty exposure. The brief below shows you how.
+            </p>
+          </div>
+        )}
+
         {/* Tabs */}
-        <div className="flex border-b border-[#1E3A5F] overflow-x-auto">
+        <div className="flex border-b border-[#1E3A5F] overflow-x-auto mt-2">
           {allTabs.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
@@ -623,7 +822,7 @@ export default function ShipmentDrawer({
           ) : tab === 'costs' ? (
             <CostsPanel shipmentId={shipment.id} />
           ) : tab === 'files' ? (
-            <FilesPanel shipmentId={shipment.id} />
+            <FilesPanel shipmentId={shipment.id} regulatorCode={shipment.regulatory_body?.code} />
           ) : tab === 'tax' ? (
             <DutyPanel shipment={shipment} />
           ) : isLoading ? (
@@ -639,16 +838,66 @@ export default function ShipmentDrawer({
               <pre className="whitespace-pre-wrap text-[13px] text-[#94A3B8] leading-relaxed font-sans bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-4">
                 {result}
               </pre>
-              <button
-                onClick={() => {
-                  const aiTab = tab as Exclude<Tab, 'timeline' | 'costs' | 'files' | 'tax'>
-                  setResults((p) => ({ ...p, [aiTab]: undefined }))
-                  generate(aiTab)
-                }}
-                className="mt-3 flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#00C896] transition-colors"
-              >
-                <Sparkles size={11} /> Regenerate
-              </button>
+              <div className="mt-3 flex items-center gap-4">
+                <button
+                  onClick={() => {
+                    const aiTab = tab as Exclude<Tab, 'timeline' | 'costs' | 'files' | 'tax'>
+                    setResults((p) => ({ ...p, [aiTab]: undefined }))
+                    generate(aiTab)
+                  }}
+                  className="flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#00C896] transition-colors"
+                >
+                  <Sparkles size={11} /> Regenerate
+                </button>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(result).then(() => {
+                      setCopied(true)
+                      setTimeout(() => setCopied(false), 2000)
+                    })
+                  }}
+                  className="flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#00C896] transition-colors"
+                >
+                  <Copy size={11} /> {copied ? 'Copied!' : 'Copy brief'}
+                </button>
+                <button
+                  onClick={() => printBrief(result, shipment.name)}
+                  className="flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#00C896] transition-colors"
+                >
+                  <Printer size={11} /> Print brief
+                </button>
+                <button
+                  onClick={async () => {
+                    if (shareUrl) {
+                      navigator.clipboard.writeText(shareUrl)
+                      return
+                    }
+                    setSharing(true)
+                    try {
+                      const res = await fetch('/api/brief/share', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          brief_text: result,
+                          shipment_name: shipment.name,
+                          regulator: shipment.regulatory_body ?? '',
+                        }),
+                      })
+                      const data = await res.json()
+                      if (data.url) {
+                        setShareUrl(data.url)
+                        navigator.clipboard.writeText(data.url)
+                      }
+                    } finally {
+                      setSharing(false)
+                    }
+                  }}
+                  className="flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#00C896] transition-colors"
+                >
+                  <Share2 size={11} />
+                  {sharing ? 'Creating link…' : shareUrl ? 'Link copied!' : 'Share brief'}
+                </button>
+              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-48 gap-3">
