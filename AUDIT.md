@@ -1,10 +1,10 @@
 # KRUX Platform — Full Build Audit
-**Last updated:** 2026-04-26 (Session 4)  
+**Last updated:** 2026-04-26 (Session 5)  
 **Production URL:** https://krux-xi.vercel.app  
 **Billing test:** 7 / 7 passed  
 **GitHub:** github.com/allkhadarr-glitch/-krux · branch: master  
-**Latest deployment:** `dpl_pt4Qak1zNifzeUuqg2HA3HPBLmkn` — READY  
-**Latest commit:** `65eda90` — fix: resolve signup/activate failures and onboarding false-progress
+**Latest deployment:** `krux-k1ebfcm3x-krux1.vercel.app` — READY  
+**Latest commit:** `c4a3645` — fix: mobile responsiveness
 
 ---
 
@@ -586,6 +586,9 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 - [x] Referral tracking — shared brief signup links include `?ref=brief`
 - [x] Onboarding progress — no longer falsely shows 60–80% due to demo data; filters demo shipments by reference number pattern and known demo manufacturer names
 - [x] Forgot password + update password flows
+- [x] Mobile responsive dashboard — hamburger sidebar, layout padding, operations table horizontal scroll
+- [x] Email sender domain — all emails now send from `@kruxvon.com` (verified in Resend)
+- [x] Welcome email working — `kruxvon.com` DNS verified, welcome email delivered to real users
 
 ---
 
@@ -673,6 +676,20 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 | One-click demo-to-account | `DemoGateModal` → `/api/activate` |
 | Git push to GitHub (master) | Commit `c201989` |
 | Vercel deployed via `npx vercel --prod` | READY |
+
+### Session 5 (mobile + email fixes)
+| Step | Result |
+|---|---|
+| Sidebar hamburger menu | `Sidebar.tsx` rewritten — `translate-x-[-100%]` on mobile, hamburger button top-left, backdrop overlay, closes on nav click |
+| Layout `ml-60` fix | Changed to `lg:ml-60` + `pt-14 lg:pt-0` so content clears hamburger on all dashboard pages |
+| Operations table | Wrapped in `overflow-x-auto` with `min-w-[900px]` — horizontal scroll on mobile |
+| Operations toolbar | Changed to `flex-wrap` with smaller buttons on mobile |
+| Operations search/filter | Stacks vertically on mobile, filter buttons expand to fill row |
+| Email sender domain | All 4 `from:` addresses updated to `@kruxvon.com` (welcome, alerts, event-engine, invites) |
+| `kruxvon.com` verified in Resend | DNS records added (DKIM, MX, SPF TXT). Emails now land in inbox |
+| Welcome email resent | `haaji1242@gmail.com` received welcome email (Resend ID `69d8b52a`) |
+| Git push to GitHub (master) | Commit `c4a3645` |
+| Vercel deployed | `krux-k1ebfcm3x-krux1.vercel.app` — READY |
 
 ### Session 4 (critical signup fix)
 | Step | Result |
