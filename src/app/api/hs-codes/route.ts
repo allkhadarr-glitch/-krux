@@ -48,6 +48,9 @@ const HS_CODES = [
   { code: '9019.10', description: 'Mechanotherapy appliances', duty: 0, category: 'Medical', regulator: 'PPB' },
   { code: '9020.00', description: 'Breathing appliances', duty: 0, category: 'Medical', regulator: 'PPB' },
   // Petroleum / Energy
+  { code: '2710.19.11', description: 'Kerosene-type jet fuel (Jet A-1)', duty: 0, category: 'Energy', regulator: 'EPRA' },
+  { code: '2710.19.19', description: 'Other kerosene, light petroleum distillates', duty: 0, category: 'Energy', regulator: 'EPRA' },
+  { code: '2710.19.90', description: 'Other petroleum oils — medium/heavy', duty: 25, category: 'Energy', regulator: 'EPRA' },
   { code: '2710.19', description: 'Petroleum oils — not crude, light oils', duty: 0, category: 'Energy', regulator: 'EPRA' },
   { code: '2711.19', description: 'Petroleum gases — liquefied, other', duty: 0, category: 'Energy', regulator: 'EPRA' },
   { code: '8541.40', description: 'Solar cells, photovoltaic', duty: 0, category: 'Energy', regulator: 'EPRA' },
