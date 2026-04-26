@@ -553,7 +553,7 @@ export default function OperationsPage() {
   if (error) return <div className="flex items-center justify-center h-64 text-red-400">Error: {error}</div>
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 lg:p-6 space-y-4 lg:space-y-6">
       {showOnboarding && <OnboardingWizard onDismiss={() => setShowOnboarding(false)} />}
       <AlertBanner alerts={alerts} />
 
@@ -588,27 +588,27 @@ export default function OperationsPage() {
         </div>
       )}
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Operations Dashboard</h1>
+          <h1 className="text-xl lg:text-2xl font-bold text-white">Operations Dashboard</h1>
           <p className="text-[#64748B] text-sm mt-1">
-            {filtered.length} shipments tracked · Kenya Import Compliance
+            {filtered.length} shipments · Kenya Import Compliance
             {alerts.length > 0 && (
               <span className="ml-2 text-red-400 font-semibold">· {alerts.filter(a => a.level === 'CRITICAL').length} critical</span>
             )}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-xs text-[#64748B]">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
             <div className="w-2 h-2 rounded-full bg-[#00C896] animate-pulse" />
             Live
           </div>
           <button
             onClick={runEvents}
             disabled={eventsRunning}
-            className="flex items-center gap-2 px-3 py-2 border border-[#1E3A5F] text-[#94A3B8] rounded-lg text-sm font-medium hover:border-[#00C896]/40 hover:text-[#00C896] disabled:opacity-50 transition-all"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 border border-[#1E3A5F] text-[#94A3B8] rounded-lg text-xs font-medium hover:border-[#00C896]/40 hover:text-[#00C896] disabled:opacity-50 transition-all"
           >
-            {eventsRunning ? <Loader2 size={14} className="animate-spin" /> : <Bell size={14} />}
+            {eventsRunning ? <Loader2 size={12} className="animate-spin" /> : <Bell size={12} />}
             {eventsRunning ? 'Processing...' : 'Run Events'}
           </button>
           {eventsResult && (
@@ -619,9 +619,9 @@ export default function OperationsPage() {
           <button
             onClick={runAlerts}
             disabled={alertSending}
-            className="flex items-center gap-2 px-3 py-2 border border-[#1E3A5F] text-[#94A3B8] rounded-lg text-sm font-medium hover:border-[#00C896]/40 hover:text-[#00C896] disabled:opacity-50 transition-all"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 border border-[#1E3A5F] text-[#94A3B8] rounded-lg text-xs font-medium hover:border-[#00C896]/40 hover:text-[#00C896] disabled:opacity-50 transition-all"
           >
-            {alertSending ? <Loader2 size={14} className="animate-spin" /> : <Bell size={14} />}
+            {alertSending ? <Loader2 size={12} className="animate-spin" /> : <Bell size={12} />}
             {alertSending ? 'Sending...' : 'Run Alerts'}
           </button>
           {alertResult && (
@@ -639,16 +639,16 @@ export default function OperationsPage() {
                   setShowAddModal(true)
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-[#00C896] text-[#0A1628] rounded-lg text-sm font-bold hover:bg-[#00A87E] transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00C896] text-[#0A1628] rounded-lg text-xs font-bold hover:bg-[#00A87E] transition-colors"
             >
-              <Plus size={14} />
+              <Plus size={13} />
               Add Shipment
             </button>
           )}
         </div>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-2">
         <div className="flex-1 relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]" />
           <input
@@ -658,12 +658,12 @@ export default function OperationsPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5">
           {['ALL', 'RED', 'AMBER', 'GREEN'].map((r) => (
             <button
               key={r}
               onClick={() => setFilterRisk(r)}
-              className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-all ${
+              className={`flex-1 sm:flex-none px-3 py-2 rounded-lg text-xs font-semibold border transition-all ${
                 filterRisk === r
                   ? 'bg-[#00C896]/10 text-[#00C896] border-[#00C896]/30'
                   : 'text-[#64748B] border-[#1E3A5F] hover:border-[#00C896]/30'
@@ -676,7 +676,8 @@ export default function OperationsPage() {
       </div>
 
       <div className="rounded-xl border border-[#1E3A5F] overflow-hidden">
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[900px]">
           <thead>
             <tr className="border-b border-[#1E3A5F] bg-[#0F2040]">
               {['Priority', 'Shipment', 'Stage', 'Regulator', 'PVoC Deadline', 'CIF Value', 'Landed Cost', 'Portal Status', 'Risk', 'Status', ''].map((h) => (
@@ -838,6 +839,7 @@ export default function OperationsPage() {
             })}
           </tbody>
         </table>
+        </div>
         {filtered.length === 0 && (
           <div className="text-center py-12 text-[#64748B] text-sm">No shipments match your filter.</div>
         )}

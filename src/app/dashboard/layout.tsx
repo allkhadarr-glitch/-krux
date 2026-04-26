@@ -39,7 +39,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         {!isDemo && <ActivationBanner />}
         <div className="flex flex-1 overflow-hidden">
           <Sidebar userEmail={user.email ?? ''} />
-          <main className="flex-1 ml-60 overflow-y-auto bg-[#0A1628]">
+          <main className="flex-1 lg:ml-60 overflow-y-auto bg-[#0A1628] pt-14 lg:pt-0">
             {children}
           </main>
         </div>
