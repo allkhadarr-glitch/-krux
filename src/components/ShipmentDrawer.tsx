@@ -81,8 +81,8 @@ function printBrief(text: string, shipmentName: string) {
 </div>
 <pre>${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
 <div class="footer">
-  <span>KRUX — AI-Generated Compliance Brief</span>
-  <span>Verify all figures with KRA iTax and relevant regulatory portals before acting</span>
+  <span>KRUX · Kenya Import Compliance · krux-xi.vercel.app</span>
+  <span>Verify all figures with KRA iTax and regulatory portals before acting</span>
 </div>
 </body>
 </html>`)
@@ -751,6 +751,11 @@ export default function ShipmentDrawer({
               <div className="flex items-center gap-2 mb-1">
                 <RiskBadge risk={shipment.risk_flag_status} />
                 <span className="text-[#64748B] text-xs">{shipment.regulatory_body?.code ?? '—'}</span>
+                {regProfile?.last_verified && (
+                  <span className="text-[9px] text-[#334155] border border-[#1E3A5F] rounded px-1.5 py-0.5">
+                    verified {regProfile.last_verified}
+                  </span>
+                )}
               </div>
               <h2 className="text-lg font-bold text-white truncate">{shipment.name}</h2>
               <p className="text-[#64748B] text-xs mt-0.5">
@@ -882,37 +887,49 @@ export default function ShipmentDrawer({
                 >
                   <Printer size={11} /> Print brief
                 </button>
-                <button
-                  onClick={async () => {
-                    if (shareUrl) {
-                      navigator.clipboard.writeText(shareUrl)
-                      return
-                    }
-                    setSharing(true)
-                    try {
-                      const res = await fetch('/api/brief/share', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          brief_text: result,
-                          shipment_name: shipment.name,
-                          regulator: shipment.regulatory_body ?? '',
-                        }),
-                      })
-                      const data = await res.json()
-                      if (data.url) {
-                        setShareUrl(data.url)
-                        navigator.clipboard.writeText(data.url)
+                {!shareUrl ? (
+                  <button
+                    onClick={async () => {
+                      setSharing(true)
+                      try {
+                        const res = await fetch('/api/brief/share', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            brief_text: result,
+                            shipment_name: shipment.name,
+                            regulator: shipment.regulatory_body ?? '',
+                          }),
+                        })
+                        const data = await res.json()
+                        if (data.url) setShareUrl(data.url)
+                      } finally {
+                        setSharing(false)
                       }
-                    } finally {
-                      setSharing(false)
-                    }
-                  }}
-                  className="flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#00C896] transition-colors"
-                >
-                  <Share2 size={11} />
-                  {sharing ? 'Creating link…' : shareUrl ? 'Link copied!' : 'Share brief'}
-                </button>
+                    }}
+                    className="flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#00C896] transition-colors"
+                  >
+                    <Share2 size={11} />
+                    {sharing ? 'Creating link…' : 'Share with client'}
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => navigator.clipboard.writeText(shareUrl)}
+                      className="flex items-center gap-1.5 text-xs text-[#00C896] hover:text-[#00C896]/80 transition-colors"
+                    >
+                      <Copy size={11} /> Copy link
+                    </button>
+                    <a
+                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`KRUX Compliance Brief — ${shipment.name}\n\n${shareUrl}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs text-[#25D366] hover:text-[#25D366]/80 transition-colors"
+                    >
+                      <Share2 size={11} /> WhatsApp
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
           ) : (

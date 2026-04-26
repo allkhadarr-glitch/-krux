@@ -3,12 +3,12 @@ import { useState, useEffect, useRef } from 'react'
 import { X, Loader2, Plus, TrendingUp, Sparkles, CheckCircle2, Upload, FileText } from 'lucide-react'
 import { Shipment } from '@/lib/types'
 
-const EXCHANGE_RATE = 129
+const EXCHANGE_RATE_FALLBACK = 129
 
 interface RegulatoryBody { id: string; code: string; name: string }
 interface HsCode { code: string; description: string; duty: number; category: string; regulator: string }
 
-function calcPreview(cif: number, dutyPct: number) {
+function calcPreview(cif: number, dutyPct: number, kesRate: number) {
   if (!cif) return null
   const duty     = cif * (dutyPct / 100)
   const idf      = cif * 0.02
@@ -20,7 +20,7 @@ function calcPreview(cif: number, dutyPct: number) {
   return {
     duty: Math.round(duty), idf: Math.round(idf), rdl: Math.round(rdl),
     vat: Math.round(vat), pvoc, clearing, total: Math.round(total),
-    totalKES: Math.round(total * EXCHANGE_RATE),
+    totalKES: Math.round(total * kesRate),
   }
 }
 
@@ -101,6 +101,7 @@ export default function AddShipmentModal({
   const [createdId, setCreatedId]     = useState<string | null>(null)
   const [extracting, setExtracting]   = useState(false)
   const [extracted, setExtracted]     = useState<string | null>(null)
+  const [kesRate, setKesRate]         = useState(EXCHANGE_RATE_FALLBACK)
   const extractRef                    = useRef<HTMLInputElement>(null)
 
   const [form, setForm] = useState({
@@ -112,10 +113,11 @@ export default function AddShipmentModal({
 
   useEffect(() => {
     fetch('/api/regulatory-bodies').then((r) => r.json()).then(setBodies)
+    fetch('/api/fx/rate').then(r => r.json()).then(d => { if (d.usd_kes) setKesRate(d.usd_kes) }).catch(() => {})
   }, [])
 
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }))
-  const preview = calcPreview(Number(form.cif_value_usd), Number(form.import_duty_pct))
+  const preview = calcPreview(Number(form.cif_value_usd), Number(form.import_duty_pct), kesRate)
 
   function onHsSelect(hs: HsCode) {
     setForm((f) => ({
@@ -367,9 +369,12 @@ export default function AddShipmentModal({
 
             {preview && (
               <div className="bg-[#0F2040] border border-[#00C896]/20 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <TrendingUp size={14} className="text-[#00C896]" />
-                  <span className="text-xs font-semibold text-[#00C896] uppercase tracking-wide">Live Landed Cost Estimate</span>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp size={14} className="text-[#00C896]" />
+                    <span className="text-xs font-semibold text-[#00C896] uppercase tracking-wide">Live Landed Cost Estimate</span>
+                  </div>
+                  <span className="text-[10px] text-[#64748B]">1 USD = KES {kesRate}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-xs mb-3">
                   {[

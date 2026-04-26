@@ -1,8 +1,9 @@
 # KRUX Platform — Full Build Audit
-**Date:** 2026-04-24  
+**Last updated:** 2026-04-24 (Session 2)  
 **Production URL:** https://krux-xi.vercel.app  
-**Billing test:** 7 / 7 passed (verified this session)  
-**GitHub:** github.com/allkhadarr-glitch/-krux · branch: master
+**Billing test:** 7 / 7 passed  
+**GitHub:** github.com/allkhadarr-glitch/-krux · branch: master  
+**Latest deployment:** `dpl_FGcgB5pRMQQtssuRMrsPy4jw7km7` — READY
 
 ---
 
@@ -364,10 +365,59 @@ Accepts PDF or image file (max 10MB). Sends base64 to Claude Sonnet 4.6 with Ken
 
 | Page | Path | Content |
 |---|---|---|
+| Landing | `/` | Full marketing page — see Part 9A below |
 | Login | `/login` | Supabase Auth |
 | Terms of Service | `/terms` | 10 sections. Kenya governing law, Nairobi courts, liability capped at 3-month fees, AI processing disclosure, PVoC disclaimer |
 | Privacy Policy | `/privacy` | Data processor table (Supabase, Anthropic, Stripe, Resend), user rights, Kenya Data Protection Act, GDPR mention |
 | Invite accept | `/invite/[token]` | Validates invite token, org name display, accept flow |
+
+### Part 9A — Landing Page (`/`) — rebuilt 2026-04-24
+
+**Purpose:** Self-sells the product to prospects without requiring a human to explain it.
+
+**Sections in order:**
+
+1. **Nav** — KRUX logo, "Sign in" link, "Request Access" CTA (anchors to waitlist)
+
+2. **Hero**
+   - Headline: "Stop losing money to missed PVoC deadlines"
+   - Subheadline explains 8 regulators + AI alerts + cost consequences
+   - Link: "Calculate what your last missed deadline actually cost →" (opens cost calculator modal)
+   - Two CTAs: "Request Early Access" + "Sign in to dashboard"
+   - Three stat cards: KES 546K+ (cost of missing PPB deadline on $50K shipment), 8 bodies, 45 days (PPB minimum SLA)
+
+3. **Dashboard Mockup** — CSS replica of the live operations dashboard showing:
+   - 4 realistic Kenya shipments with RED/AMBER/GREEN risk badges
+   - Risk scores (9.2, 6.1, 3.8, 1.4), priority labels (CRITICAL/HIGH/MEDIUM/LOW)
+   - Alert banner: "CRITICAL: Pharmaceutical APIs — PPB deadline in 3 days. Est. loss if missed: KES 546,300"
+   - Landed costs in USD, regulator badges, days remaining column
+   - Browser chrome (fake URL bar showing the actual dashboard URL)
+
+4. **Problem → Solution** — X marks vs checkmarks
+   - Left (Without KRUX): 5 pain points with red X
+   - Right (With KRUX): 5 solutions with green checkmarks
+
+5. **Regulators** — All 8 regulators in pill grid with SLA context: "KRUX knows PPB needs 45 days. It tells you when a deadline is physically impossible to meet."
+
+6. **Features** — 6-card grid (Compliance Tracking, AI Assistant, Alerts, Manufacturer Vault, Landed Cost, Action Intelligence)
+
+7. **Who it's for** — 3 cards: Clearing Agents (tagged "Best fit"), SME Importers, Supply Chain Managers
+
+8. **Pricing** — 3 plans matching live billing page exactly:
+   - Basic $299/mo — 25 shipments (fixed from previous incorrect "10")
+   - Pro $499/mo — 100 shipments (Most Popular)
+   - Enterprise $1,500/mo — Unlimited
+
+9. **Waitlist form** — Email + company name, submits to `/api/waitlist`, success state shows 24h response time
+
+10. **Footer** — Terms, Privacy, Sign in links
+
+**Cost Calculator Modal** (triggered from hero link):
+- Inputs: CIF value (USD), days past deadline, import duty rate (%)
+- Calculates: storage charges (0.5% CIF/day), late penalties (2% CIF/day after day 7)
+- Output: line-by-line breakdown → total in KES
+- Closing line: "KRUX Basic ($299/mo) would have prevented this entire cost."
+- Closes on backdrop click or X button
 
 ---
 
@@ -530,8 +580,9 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 
 ---
 
-## PART 18 — DEPLOYMENT HISTORY (this session)
+## PART 18 — DEPLOYMENT HISTORY
 
+### Session 1 (initial build)
 | Step | Result |
 |---|---|
 | Stripe products created | `setup-stripe.js` — 3 products, 3 prices |
@@ -539,21 +590,34 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 | Supabase migration `20260424000022_stripe.sql` pushed | Done |
 | Vercel env vars pushed via API | Done (8 keys) |
 | Git push to GitHub (master) | Done — pushed all new features |
-| Vercel deployment triggered via REST API | `dpl_78J8ziw27nhwDCtmLwhweeX72KA2` |
-| Deployment status | READY in ~17 seconds |
+| Vercel deployment triggered via REST API | `dpl_78J8ziw27nhwDCtmLwhweeX72KA2` — READY in ~17s |
 | Billing test (`test-billing.js`) | **7 / 7 passed** |
+
+### Session 2 (landing page + audit)
+| Step | Result |
+|---|---|
+| Full `AUDIT.md` created | Documents entire platform in 19 parts |
+| Landing page rebuilt (`src/app/page.tsx`) | Dashboard mockup, cost calculator, fixed pricing, stronger copy |
+| Git push to GitHub (master) | Commit `6e891e5` |
+| Vercel deployment triggered via REST API | `dpl_FGcgB5pRMQQtssuRMrsPy4jw7km7` — READY in ~26s |
 
 ---
 
 ## PART 19 — NEXT STEPS (prioritized)
 
-1. **Activate Anthropic account** → add `ANTHROPIC_API_KEY` → run `push-vercel-env.js` → all AI features unlock
-2. **Rotate Stripe keys** before going live — verify old exposed test keys are revoked in Stripe dashboard
-3. **Switch to Stripe LIVE mode** — get live secret key, run `setup-stripe.js` against live, new webhook
-4. **Configure Vercel cron jobs** — automate `Run Events` and `Run Alerts` on schedule (daily at 08:00 EAT)
-5. **First customer outreach** — contact a clearing agent or mid-size importer directly. This is the real bottleneck.
-6. **Wire WhatsApp alerts** — Twilio or WhatsApp Business API for Pro+ plans
-7. **Build API access tier** — API key management for Enterprise
+### Done
+- [x] Landing page rebuilt — dashboard mockup, cost calculator, fixed pricing, deployed
+
+### Remaining (in order)
+
+1. **Demo account** — pre-seeded org with realistic Kenya shipments that any prospect can log into without signing up. A "Try Demo" button on the landing page. This is the next build task.
+2. **Activate Anthropic account** → add `ANTHROPIC_API_KEY` → run `push-vercel-env.js` → all AI features unlock
+3. **Rotate Stripe keys** before going live — verify old exposed test keys are revoked in Stripe dashboard
+4. **Switch to Stripe LIVE mode** — get live secret key, run `setup-stripe.js` against live, new webhook
+5. **Configure Vercel cron jobs** — automate `Run Events` and `Run Alerts` on schedule (daily at 08:00 EAT)
+6. **First customer outreach** — contact a clearing agent or mid-size importer. The landing page now does the initial explaining. The demo account closes it.
+7. **Wire WhatsApp alerts** — Twilio or WhatsApp Business API for Pro+ plans
+8. **Build API access tier** — API key management for Enterprise
 
 ---
 

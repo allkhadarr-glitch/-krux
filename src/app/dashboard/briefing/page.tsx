@@ -1,6 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Loader2, Sparkles, RefreshCw, Copy, Printer, Bell } from 'lucide-react'
+import { Loader2, Sparkles, RefreshCw, Copy, Printer, Bell, Share2, ExternalLink } from 'lucide-react'
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://krux-xi.vercel.app'
 
 function printBriefing(text: string, date: string) {
   const w = window.open('', '_blank', 'width=800,height=1000')
@@ -44,11 +46,13 @@ function printBriefing(text: string, date: string) {
 }
 
 export default function BriefingPage() {
-  const [brief, setBrief]       = useState<string | null>(null)
-  const [loading, setLoading]   = useState(false)
-  const [copied, setCopied]     = useState(false)
-  const [error, setError]       = useState<string | null>(null)
+  const [brief, setBrief]         = useState<string | null>(null)
+  const [loading, setLoading]     = useState(false)
+  const [copied, setCopied]       = useState(false)
+  const [error, setError]         = useState<string | null>(null)
   const [shipCount, setShipCount] = useState(0)
+  const [shareUrl, setShareUrl]   = useState<string | null>(null)
+  const [sharing, setSharing]     = useState(false)
 
   const dateStr = new Date().toLocaleDateString('en-KE', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -121,7 +125,7 @@ export default function BriefingPage() {
             <span className="text-sm font-semibold text-white">AI-Generated Compliance Brief</span>
           </div>
           {brief && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(brief).then(() => {
@@ -139,6 +143,46 @@ export default function BriefingPage() {
               >
                 <Printer size={11} /> Print
               </button>
+              {!shareUrl ? (
+                <button
+                  onClick={async () => {
+                    setSharing(true)
+                    try {
+                      const res  = await fetch('/api/brief/share', {
+                        method:  'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body:    JSON.stringify({ brief_text: brief, shipment_name: `Morning Brief — ${dateStr}`, regulator: '' }),
+                      })
+                      const data = await res.json()
+                      if (data.url) setShareUrl(data.url)
+                    } finally {
+                      setSharing(false)
+                    }
+                  }}
+                  disabled={sharing}
+                  className="flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#00C896] transition-colors disabled:opacity-40"
+                >
+                  <Share2 size={11} className={sharing ? 'animate-pulse' : ''} />
+                  {sharing ? 'Creating link…' : 'Share as link'}
+                </button>
+              ) : (
+                <>
+                  <a
+                    href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`KRUX Morning Brief — ${dateStr}\n\n${shareUrl}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-xs text-[#25D366] border border-[#25D366]/30 px-2 py-1 rounded-lg hover:bg-[#25D366]/10 transition-colors"
+                  >
+                    <Share2 size={11} /> Send via WhatsApp
+                  </a>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(shareUrl)}
+                    className="flex items-center gap-1.5 text-xs text-[#00C896] hover:text-[#00C896]/80 transition-colors"
+                  >
+                    <ExternalLink size={11} /> Copy link
+                  </button>
+                </>
+              )}
               <button
                 onClick={generate}
                 disabled={loading}

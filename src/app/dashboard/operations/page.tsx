@@ -90,6 +90,49 @@ function RiskDriversTooltip({ drivers }: { drivers?: string[] }) {
   )
 }
 
+function ScoreBreakdown({ daysLeft, cifUsd, delayProb }: { daysLeft?: number; cifUsd?: number; delayProb?: number }) {
+  const [open, setOpen] = useState(false)
+  if (daysLeft == null && cifUsd == null) return null
+  const d = Math.max(0, daysLeft ?? 30)
+  const timePct  = Math.round(Math.exp(-d / 7) * 100)
+  const valuePct = Math.round(Math.min(1, Math.log10(Math.max(cifUsd ?? 1, 1)) / 6) * 100)
+  const probPct  = Math.round(Math.min(1, delayProb ?? 0) * 100)
+  const bars: { label: string; pct: number; color: string }[] = [
+    { label: 'Deadline urgency',    pct: timePct,  color: timePct  >= 70 ? '#EF4444' : timePct  >= 40 ? '#F59E0B' : '#00C896' },
+    { label: 'Shipment value',      pct: valuePct, color: valuePct >= 70 ? '#EF4444' : valuePct >= 40 ? '#F59E0B' : '#00C896' },
+    { label: 'Delay probability',   pct: probPct,  color: probPct  >= 70 ? '#EF4444' : probPct  >= 40 ? '#F59E0B' : '#00C896' },
+  ]
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-0.5 text-[10px] text-[#334155] hover:text-[#64748B] transition-colors"
+      >
+        breakdown <ChevronDown size={9} />
+      </button>
+      {open && (
+        <div className="absolute z-10 top-5 left-0 bg-[#0A1628] border border-[#1E3A5F] rounded-lg p-3 shadow-xl w-[210px]">
+          <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wide mb-2.5">Score breakdown</p>
+          <div className="space-y-2">
+            {bars.map(b => (
+              <div key={b.label}>
+                <div className="flex justify-between mb-0.5">
+                  <span className="text-[10px] text-[#94A3B8]">{b.label}</span>
+                  <span className="text-[10px] font-bold" style={{ color: b.color }}>{b.pct}%</span>
+                </div>
+                <div className="h-1 bg-[#1E3A5F] rounded-full overflow-hidden">
+                  <div className="h-full rounded-full transition-all" style={{ width: `${b.pct}%`, background: b.color }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-[9px] text-[#334155] mt-2.5 leading-relaxed">Weighted composite: urgency × (0.4 + 0.6 × value) × (0.3 + 0.7 × probability)</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 const portalStatusColors: Record<string, string> = {
   APPROVED:    'text-emerald-400',
   SUBMITTED:   'text-amber-400',
@@ -374,6 +417,7 @@ export default function OperationsPage() {
   const [showDemoGate, setShowDemoGate]       = useState(false)
   const [demoGatePassed, setDemoGatePassed]   = useState(false)
   const [tooltipDismissed, setTooltipDismissed] = useState(false)
+  const [demoBannerDismissed, setDemoBannerDismissed] = useState(true)
   const { canWrite } = useRole()
   const isDemo = useDemo()
 
@@ -384,7 +428,11 @@ export default function OperationsPage() {
       setShowDemoGate(true)
       window.history.replaceState({}, '', window.location.pathname)
     }
-  }, [])
+    // Show demo-data banner only for real (non-demo) users who were auto-seeded
+    if (!isDemo && localStorage.getItem('krux_auto_seeded') === '1' && localStorage.getItem('krux_demo_banner_dismissed') !== '1') {
+      setDemoBannerDismissed(false)
+    }
+  }, [isDemo])
 
   async function runAlerts() {
     setAlertSending(true)
@@ -442,6 +490,11 @@ export default function OperationsPage() {
             setShipments(ships)
           }
         } else {
+          // Mark as auto-seeded if all shipments are demo entries (server-seeded during signup)
+          if (!isDemo && ships.length > 0 && !localStorage.getItem('krux_auto_seeded')) {
+            const allDemo = ships.every((s: any) => /^KRUX-\d{4}-[A-Z]{2,}-/.test(s.reference_number ?? ''))
+            if (allDemo) localStorage.setItem('krux_auto_seeded', '1')
+          }
           setShipments(ships)
         }
 
@@ -503,6 +556,37 @@ export default function OperationsPage() {
     <div className="p-6 space-y-6">
       {showOnboarding && <OnboardingWizard onDismiss={() => setShowOnboarding(false)} />}
       <AlertBanner alerts={alerts} />
+
+      {!demoBannerDismissed && (
+        <div className="flex items-center justify-between gap-4 bg-[#0F2040] border border-[#00C896]/25 rounded-xl px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-[#00C896] flex-shrink-0" />
+            <p className="text-sm text-[#94A3B8]">
+              Your workspace has <span className="text-white font-semibold">5 pre-loaded demo shipments</span>. Add your first real import when you're ready — or clear the demo data in{' '}
+              <a href="/dashboard/settings" className="text-[#00C896] hover:underline">Settings</a>.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {canWrite && (
+              <button
+                onClick={() => { setShowAddModal(true) }}
+                className="px-3 py-1.5 bg-[#00C896] text-[#0A1628] rounded-lg text-xs font-bold hover:bg-[#00A87E] transition-colors"
+              >
+                + Add real shipment
+              </button>
+            )}
+            <button
+              onClick={() => {
+                localStorage.setItem('krux_demo_banner_dismissed', '1')
+                setDemoBannerDismissed(true)
+              }}
+              className="text-[#334155] hover:text-[#64748B] transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center justify-between">
         <div>
@@ -603,6 +687,26 @@ export default function OperationsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-[#1E3A5F]">
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={11} className="px-6 py-16 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-[#0F2040] border border-[#1E3A5F] flex items-center justify-center">
+                      <Plus size={20} className="text-[#334155]" />
+                    </div>
+                    <p className="text-[#64748B] text-sm">No shipments yet</p>
+                    {canWrite && !isDemo && (
+                      <button
+                        onClick={() => setShowAddModal(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-[#00C896] text-[#0A1628] rounded-lg text-sm font-bold hover:bg-[#00A87E] transition-colors"
+                      >
+                        <Plus size={13} /> Add your first shipment
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            )}
             {filtered.map((s, idx) => {
               const days = daysUntilDeadline(s.pvoc_deadline!)
               const alert = alerts.find((a) => a.shipmentId === s.id)
@@ -623,6 +727,7 @@ export default function OperationsPage() {
                   <td className="px-4 py-3">
                     <PriorityBadge level={s.risk?.priority_level} score={s.risk?.risk_score} compositeScore={s.composite_risk_score} />
                     <RiskDriversTooltip drivers={s.risk?.risk_drivers} />
+                    <ScoreBreakdown daysLeft={s.risk?.days_to_deadline} cifUsd={s.cif_value_usd} delayProb={s.risk?.delay_probability} />
                   </td>
                   <td className="px-4 py-3 relative">
                     {showTooltip && (

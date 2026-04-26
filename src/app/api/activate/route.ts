@@ -16,12 +16,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Valid email required' }, { status: 400 })
     }
 
-    // Block re-use of the demo email
     if (email === process.env.DEMO_USER_EMAIL?.toLowerCase()) {
       return NextResponse.json({ exists: true })
     }
 
-    // Generate a one-time password — returned to client once, over HTTPS only
     const tempPassword = randomBytes(24).toString('base64url')
 
     const { data: created, error: createErr } = await supabase.auth.admin.createUser({
@@ -31,19 +29,30 @@ export async function POST(req: NextRequest) {
     })
 
     if (createErr) {
-      // User already has an account — tell the client to redirect to login
+      // User already exists — find them and issue a fresh temp password so they can auto sign-in.
+      // This handles the case where a previous activation partially failed (account created, error returned).
+      const newPwd = randomBytes(24).toString('base64url')
+      const { data: listData } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 })
+      const existing = (listData?.users ?? []).find((u: any) => u.email?.toLowerCase() === email)
+      if (existing?.id) {
+        await supabase.auth.admin.updateUserById(existing.id, { password: newPwd })
+        return NextResponse.json({ password: newPwd })
+      }
       return NextResponse.json({ exists: true })
     }
 
-    const userId = created.user.id
-
-    // Derive a friendly org name from the email domain
+    const userId   = created.user.id
     const domain   = email.split('@')[1]?.split('.')[0] ?? 'My'
     const orgLabel = domain.charAt(0).toUpperCase() + domain.slice(1)
 
     const { data: org, error: orgErr } = await supabase
       .from('organizations')
-      .insert({ name: `${orgLabel} Imports`, type: 'clearing_agent_firm', subscription_tier: 'free', is_active: true })
+      .insert({
+        name:              `${orgLabel} Imports`,
+        type:              'clearing_agent_firm',
+        subscription_tier: 'trial',
+        is_active:         true,
+      })
       .select('id')
       .single()
 
@@ -58,8 +67,12 @@ export async function POST(req: NextRequest) {
       role:            'admin',
     })
 
-    // Seed sample shipments so the workspace isn't empty
-    await seedDemoData(supabase, org.id)
+    // Seed demo data — non-fatal, account is valid regardless
+    try {
+      await seedDemoData(supabase, org.id)
+    } catch (e) {
+      console.error('[activate] seedDemoData error (non-fatal):', e)
+    }
 
     return NextResponse.json({ password: tempPassword })
   } catch {

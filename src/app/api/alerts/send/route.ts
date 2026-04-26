@@ -51,7 +51,7 @@ function shipmentAlertEmail(s: {
   const deadline   = new Date(s.pvoc_deadline).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })
 
   return {
-    subject: `[${levelLabel}] ${s.name} — PVoC deadline in ${s.daysRemaining}d · KRUXVON`,
+    subject: `[${levelLabel}] ${s.name} — PVoC deadline in ${s.daysRemaining}d · KRUX`,
     html: `
 <!DOCTYPE html>
 <html>
@@ -59,7 +59,7 @@ function shipmentAlertEmail(s: {
   <div style="max-width:600px;margin:0 auto;padding:32px 24px;">
     <div style="margin-bottom:24px;">
       <div style="display:inline-block;background:#00C896;color:#0A1628;font-weight:900;font-size:18px;padding:6px 12px;border-radius:8px;">K</div>
-      <span style="color:#94A3B8;font-size:13px;margin-left:10px;">KRUXVON · Kenya Import Compliance</span>
+      <span style="color:#94A3B8;font-size:13px;margin-left:10px;">KRUX · Kenya Import Compliance</span>
     </div>
 
     <div style="background:#0F2040;border:1px solid #1E3A5F;border-radius:16px;padding:28px;margin-bottom:20px;">
@@ -95,7 +95,7 @@ function shipmentAlertEmail(s: {
     </div>
 
     <p style="color:#334155;font-size:11px;text-align:center;margin:0;">
-      KRUXVON · Kenya Import Compliance Intelligence · You are receiving this because your shipment has a compliance deadline within 14 days.
+      KRUX · Kenya Import Compliance Intelligence · You are receiving this because your shipment has a compliance deadline within 14 days.
     </p>
   </div>
 </body>
@@ -118,7 +118,7 @@ function licenseAlertEmail(l: {
   const expiry     = new Date(l.expiry_date).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })
 
   return {
-    subject: `[${levelLabel}] License Expiring: ${l.license_name} — ${l.manufacturerName} · KRUXVON`,
+    subject: `[${levelLabel}] License Expiring: ${l.license_name} — ${l.manufacturerName} · KRUX`,
     html: `
 <!DOCTYPE html>
 <html>
@@ -126,7 +126,7 @@ function licenseAlertEmail(l: {
   <div style="max-width:600px;margin:0 auto;padding:32px 24px;">
     <div style="margin-bottom:24px;">
       <div style="display:inline-block;background:#00C896;color:#0A1628;font-weight:900;font-size:18px;padding:6px 12px;border-radius:8px;">K</div>
-      <span style="color:#94A3B8;font-size:13px;margin-left:10px;">KRUXVON · Manufacturer Vault</span>
+      <span style="color:#94A3B8;font-size:13px;margin-left:10px;">KRUX · Manufacturer Vault</span>
     </div>
 
     <div style="background:#0F2040;border:1px solid #1E3A5F;border-radius:16px;padding:28px;">
@@ -160,7 +160,7 @@ function licenseAlertEmail(l: {
     </div>
 
     <p style="color:#334155;font-size:11px;text-align:center;margin:16px 0 0 0;">
-      KRUXVON · Manufacturer Vault · License Monitoring
+      KRUX · Manufacturer Vault · License Monitoring
     </p>
   </div>
 </body>
@@ -192,11 +192,7 @@ function getAction(regulatorCode: string, days: number): string {
 // ─── Shared runner ───────────────────────────────────────────
 
 async function runAlerts() {
-  if (!process.env.RESEND_API_KEY) {
-    return { error: 'RESEND_API_KEY not configured' }
-  }
-
-  const resend       = new Resend(process.env.RESEND_API_KEY)
+  const resend       = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
   const EXCHANGE_RATE = await getKesRate()
   const results      = { shipment_alerts: 0, license_alerts: 0, errors: [] as string[] }
   const today        = new Date()
@@ -239,8 +235,10 @@ async function runAlerts() {
       storageDailyCostKES: dailyKES, estimatedAdditionalCostKES: estCost,
     })
 
-    const { error } = await resend.emails.send({ from: FROM_EMAIL, to: ALERT_EMAIL, subject, html })
-    if (error) { results.errors.push(`Shipment ${s.name}: ${error.message}`); continue }
+    if (resend) {
+      const { error } = await resend.emails.send({ from: FROM_EMAIL, to: ALERT_EMAIL, subject, html })
+      if (error) results.errors.push(`Shipment ${s.name}: ${error.message}`)
+    }
 
     // Log alert to timeline (SYSTEM confidence — auto-fired)
     const levelTag = daysRemaining <= 3 ? 'CRITICAL' : daysRemaining <= 7 ? 'URGENT' : 'WARNING'
@@ -257,7 +255,7 @@ async function runAlerts() {
 
     // WhatsApp alert — concise 160-char message for mobile
     await sendWhatsApp(
-      `[KRUXVON ${levelTag}] ${s.name} (${s.reference_number})\n` +
+      `[KRUX ${levelTag}] ${s.name} (${s.reference_number})\n` +
       `Regulator: ${regulatorCode} · Deadline: ${daysRemaining}d\n` +
       `Action: ${getAction(regulatorCode, daysRemaining).split(' — ')[1] ?? 'Check compliance portal'}`
     )
@@ -292,13 +290,15 @@ async function runAlerts() {
       manufacturerName: (l.manufacturers as any)?.company_name ?? 'Unknown',
     })
 
-    const { error } = await resend.emails.send({ from: FROM_EMAIL, to: ALERT_EMAIL, subject, html })
-    if (error) { results.errors.push(`License ${l.license_name}: ${error.message}`); continue }
+    if (resend) {
+      const { error } = await resend.emails.send({ from: FROM_EMAIL, to: ALERT_EMAIL, subject, html })
+      if (error) results.errors.push(`License ${l.license_name}: ${error.message}`)
+    }
 
     // WhatsApp alert for license expiry
     const mfr = (l.manufacturers as any)?.company_name ?? 'Manufacturer'
     await sendWhatsApp(
-      `[KRUXVON] LICENSE EXPIRING in ${daysRemaining}d\n` +
+      `[KRUX] LICENSE EXPIRING in ${daysRemaining}d\n` +
       `${l.license_name} · ${mfr}\n` +
       `Issuing body: ${l.issuing_body} · Begin renewal immediately.`
     )

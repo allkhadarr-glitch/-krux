@@ -2,6 +2,9 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { Sidebar } from '@/components/Sidebar'
+import { DemoProvider } from '@/context/demo'
+import { DemoBanner } from '@/components/DemoBanner'
+import { ActivationBanner } from '@/components/ActivationBanner'
 
 async function getUser() {
   const cookieStore = await cookies()
@@ -27,12 +30,20 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const user = await getUser()
   if (!user) redirect('/login')
 
+  const isDemo = user.email === process.env.DEMO_USER_EMAIL
+
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar userEmail={user.email ?? ''} />
-      <main className="flex-1 ml-60 overflow-y-auto bg-[#0A1628]">
-        {children}
-      </main>
-    </div>
+    <DemoProvider isDemo={isDemo}>
+      <div className="flex flex-col h-screen overflow-hidden">
+        {isDemo && <DemoBanner />}
+        {!isDemo && <ActivationBanner />}
+        <div className="flex flex-1 overflow-hidden">
+          <Sidebar userEmail={user.email ?? ''} />
+          <main className="flex-1 ml-60 overflow-y-auto bg-[#0A1628]">
+            {children}
+          </main>
+        </div>
+      </div>
+    </DemoProvider>
   )
 }

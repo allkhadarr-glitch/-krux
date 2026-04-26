@@ -373,29 +373,7 @@ function DashboardMockup() {
 // ── Main Page ────────────────────────────────────────────────
 
 export default function Home() {
-  const [email, setEmail]         = useState('')
-  const [company, setCompany]     = useState('')
-  const [submitted, setSubmitted] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [calcOpen, setCalcOpen]   = useState(false)
-
-  async function joinWaitlist(e: React.FormEvent) {
-    e.preventDefault()
-    if (!email.trim()) return
-    setSubmitting(true)
-    try {
-      await fetch('/api/waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), company: company.trim() }),
-      })
-      setSubmitted(true)
-    } catch {
-      setSubmitted(true)
-    } finally {
-      setSubmitting(false)
-    }
-  }
+  const [calcOpen, setCalcOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-[#0A1628] text-white">
@@ -446,19 +424,19 @@ export default function Home() {
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center mb-3">
           <a
-            href="/demo"
+            href="/signup"
             className="flex items-center justify-center gap-2 px-7 py-3.5 bg-[#00C896] text-[#0A1628] rounded-xl font-bold text-sm hover:bg-[#00C896]/90 transition-colors"
           >
-            Open Demo Dashboard <ArrowRight size={15} />
+            Create free account <ArrowRight size={15} />
           </a>
           <a
-            href="#waitlist"
+            href="/demo"
             className="flex items-center justify-center gap-2 px-7 py-3.5 border border-[#1E3A5F] text-[#94A3B8] rounded-xl text-sm hover:border-[#00C896]/40 hover:text-white transition-colors"
           >
-            Request Early Access
+            Open Demo Dashboard
           </a>
         </div>
-        <p className="text-[11px] text-[#334155] text-center mb-10">No signup required · Pre-loaded with real Kenya shipments</p>
+        <p className="text-[11px] text-[#334155] text-center mb-10">No credit card · 5 demo shipments pre-loaded · Full access immediately</p>
 
         {/* Stats strip */}
         <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
@@ -658,17 +636,17 @@ export default function Home() {
                   ))}
                 </div>
                 <a
-                  href={plan.name === 'Enterprise' ? '#waitlist' : '/demo'}
+                  href={plan.name === 'Enterprise' ? 'mailto:hello@kruxvon.com' : '/signup'}
                   className={`block text-center py-3 rounded-xl text-sm font-bold transition-colors ${
                     plan.highlight
                       ? 'bg-[#00C896] text-[#0A1628] hover:bg-[#00C896]/90'
                       : 'border border-[#1E3A5F] text-white hover:border-[#00C896]/40'
                   }`}
                 >
-                  {plan.name === 'Enterprise' ? plan.cta : 'Try free demo'}
+                  {plan.name === 'Enterprise' ? plan.cta : 'Get started free'}
                 </a>
                 {plan.name !== 'Enterprise' && (
-                  <p className="text-[10px] text-[#334155] text-center mt-2">No signup required</p>
+                  <p className="text-[10px] text-[#334155] text-center mt-2">Free account · No credit card</p>
                 )}
               </div>
             ))}
@@ -676,58 +654,35 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Waitlist */}
+      {/* Signup CTA */}
       <section id="waitlist" className="px-6 sm:px-10 py-24">
         <div className="max-w-lg mx-auto text-center">
           <div className="w-12 h-12 rounded-2xl bg-[#00C896] flex items-center justify-center mx-auto mb-6">
             <span className="text-[#0A1628] font-black text-xl">K</span>
           </div>
-          <h2 className="text-3xl font-black text-white mb-3">Get Early Access</h2>
+          <h2 className="text-3xl font-black text-white mb-3">Start using KRUX today</h2>
           <p className="text-[#64748B] text-sm mb-10 leading-relaxed">
-            KRUX is in early access for Kenya importers and clearing agents.
-            Submit your details and we'll set up your account within 24 hours.
+            Create your free account in 30 seconds. Your workspace comes pre-loaded
+            with 5 realistic Kenya import shipments so you can see the platform immediately.
+            No credit card required.
           </p>
-
-          {submitted ? (
-            <div className="bg-[#00C896]/10 border border-[#00C896]/30 rounded-2xl p-8">
-              <CheckCircle2 size={32} className="text-[#00C896] mx-auto mb-3" />
-              <h3 className="text-white font-bold text-base mb-2">You're on the list</h3>
-              <p className="text-[#64748B] text-sm">We'll be in touch within 24 hours to get you set up.</p>
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-2 mt-6 px-5 py-2.5 bg-[#00C896] text-[#0A1628] rounded-xl text-sm font-bold hover:bg-[#00C896]/90 transition-colors"
-              >
-                Already have an account? Sign in <ArrowRight size={14} />
-              </Link>
-            </div>
-          ) : (
-            <form onSubmit={joinWaitlist} className="space-y-3 text-left">
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="Work email address"
-                className="w-full bg-[#0F2040] border border-[#1E3A5F] rounded-xl px-4 py-3.5 text-white placeholder:text-[#334155] focus:outline-none focus:border-[#00C896]/50 text-sm"
-              />
-              <input
-                type="text"
-                value={company}
-                onChange={e => setCompany(e.target.value)}
-                placeholder="Company name (optional)"
-                className="w-full bg-[#0F2040] border border-[#1E3A5F] rounded-xl px-4 py-3.5 text-white placeholder:text-[#334155] focus:outline-none focus:border-[#00C896]/50 text-sm"
-              />
-              <button
-                type="submit"
-                disabled={submitting || !email}
-                className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#00C896] text-[#0A1628] rounded-xl font-bold text-sm hover:bg-[#00C896]/90 transition-colors disabled:opacity-60"
-              >
-                {submitting ? 'Submitting…' : 'Request Early Access'}
-                {!submitting && <ArrowRight size={15} />}
-              </button>
-              <p className="text-[10px] text-[#334155] text-center">No spam. No commitments. We set up your account and walk you through it.</p>
-            </form>
-          )}
+          <div className="flex flex-col gap-3">
+            <Link
+              href="/signup"
+              className="flex items-center justify-center gap-2 py-4 bg-[#00C896] text-[#0A1628] rounded-xl font-bold text-base hover:bg-[#00C896]/90 transition-colors"
+            >
+              Create free account <ArrowRight size={16} />
+            </Link>
+            <a
+              href="/demo"
+              className="flex items-center justify-center gap-2 py-3.5 border border-[#1E3A5F] text-[#94A3B8] rounded-xl text-sm hover:border-[#00C896]/40 hover:text-white transition-colors"
+            >
+              Try the demo first — no account needed
+            </a>
+          </div>
+          <p className="text-[10px] text-[#334155] mt-4">Already have an account?{' '}
+            <Link href="/login" className="text-[#64748B] hover:text-[#00C896] transition-colors">Sign in →</Link>
+          </p>
         </div>
       </section>
 

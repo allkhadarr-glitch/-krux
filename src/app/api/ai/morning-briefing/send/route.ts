@@ -165,8 +165,9 @@ TOTAL EXPOSURE: KES ${totalKES.toLocaleString()}
     const briefText = (message.content[0] as { text: string }).text
 
     // Send via WhatsApp (truncated for SMS-style delivery)
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://krux-xi.vercel.app'
     const whatsappText = briefText.length > 1500
-      ? briefText.slice(0, 1450) + '\n\n[Full brief at krux-xi.vercel.app/dashboard]'
+      ? briefText.slice(0, 1450) + `\n\n[Full brief at ${appUrl}/dashboard]`
       : briefText
 
     await sendWhatsApp(whatsappText)

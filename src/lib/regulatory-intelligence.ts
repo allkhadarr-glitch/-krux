@@ -53,6 +53,7 @@ export interface RegulatorProfile {
   common_rejections: string[]
   escalation_path: string
   notes: string
+  last_verified: string  // date when this profile was last checked against primary source
 }
 
 /**
@@ -143,6 +144,7 @@ const KENYA: CountryProfile = {
       ],
       escalation_path: 'PPB Registrations Manager: +254 020 272 4061. Physical address: Upper Hill, Nairobi. For urgent cases: ppb@ppb.go.ke',
       notes: 'PPB 45-day SLA is a hard floor for pharmaceuticals — expedited track exists for essential medicines only with additional documentation. Plan 52 days for actual clearance. PPB does not communicate proactively — you must follow up.',
+      last_verified: 'April 2026',
     },
     {
       code: 'KEBS',
@@ -177,6 +179,7 @@ const KENYA: CountryProfile = {
       ],
       escalation_path: 'KEBS Imports: +254 020 605 0400. PVOC Unit: pvoc@kebs.org. Port liaison office at KPA Mombasa: +254 041 222 1060',
       notes: 'KEBS PVOC scheme requires products to be inspected BEFORE export. If a shipment arrives without PVOC certificate, it may be detained for testing at port at importer\'s cost — typically USD 1,500–5,000 and 14–21 days additional delay.',
+      last_verified: 'April 2026',
     },
     {
       code: 'PCPB',
@@ -211,6 +214,7 @@ const KENYA: CountryProfile = {
       ],
       escalation_path: 'PCPB Registration Officer: +254 020 271 2540 ext 201. Direct line for status: +254 020 271 2541',
       notes: 'PCPB is one of the faster regulators — typical actual processing 14–18 days when full documents submitted. The 21-day window is achievable. Incomplete submissions restart the clock entirely.',
+      last_verified: 'April 2026',
     },
     {
       code: 'KEPHIS',
@@ -242,6 +246,7 @@ const KENYA: CountryProfile = {
       ],
       escalation_path: 'KEPHIS Customer Service: +254 020 318 3000. Port of Mombasa liaison: +254 041 222 2156. Same-day escalation available for critical shipments — call main number and request urgent processing',
       notes: 'KEPHIS is the fastest of all Kenya regulators — 48-hour to 7-day processing when documents are complete. Same-day processing available with escalation call. The phytosanitary certificate from origin is non-negotiable and must come from a government authority.',
+      last_verified: 'April 2026',
     },
     {
       code: 'EPRA',
@@ -275,6 +280,7 @@ const KENYA: CountryProfile = {
       ],
       escalation_path: 'EPRA Petroleum Licensing: +254 020 362 0000. licensing@epra.go.ke. For energy products: EPRA Standards +254 020 362 0100.',
       notes: 'EPRA has two distinct mandates: (1) Petroleum import licensing — all fuels, LPG, and lubricants require an import permit before customs clearance. Processing is 25 days minimum — plan accordingly. (2) Energy efficiency compliance — LEDs, motors, appliances, and transformers must meet Kenya MEPS. Products below MEPS cannot be imported regardless of documentation.',
+      last_verified: 'April 2026',
     },
     {
       code: 'NEMA',
@@ -303,6 +309,7 @@ const KENYA: CountryProfile = {
       ],
       escalation_path: 'NEMA Compliance: +254 020 605 5200. Chemicals Unit: chemicals@nema.go.ke',
       notes: 'NEMA primarily affects industrial chemicals, refrigerants, and specific agricultural chemicals. Most standard commercial shipments are not NEMA-regulated unless they contain restricted substances.',
+      last_verified: 'April 2026',
     },
     {
       code: 'KRA',
@@ -338,6 +345,7 @@ const KENYA: CountryProfile = {
       ],
       escalation_path: 'KRA Mombasa Customs: +254 041 231 0755. KRA intelligence unit for disputes: +254 020 484 9999 ext 3000',
       notes: 'KRA is generally the fastest clearance step (1-3 days) but incorrect HS classification is the most expensive mistake — can result in 25% penalty on unpaid duty plus seizure. Always verify HS code before IDF lodgement.',
+      last_verified: 'April 2026',
     },
     {
       code: 'WHO-GMP',
@@ -364,6 +372,7 @@ const KENYA: CountryProfile = {
       ],
       escalation_path: 'Contact manufacturer to expedite renewal. PPB can provide a 30-day conditional clearance in some cases — request from PPB Registrations Manager',
       notes: 'WHO-GMP is not a Kenya regulator — it is a manufacturer certification held by the supplier. The importer must request it from their manufacturer well in advance. WHO-GMP renewal takes 3-6 months from application to the national medicines authority in the manufacturer\'s country.',
+      last_verified: 'April 2026',
     },
   ],
 }

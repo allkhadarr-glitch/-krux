@@ -1,18 +1,14 @@
 'use client'
 
 import { useActionState } from 'react'
-import { signIn } from './actions'
-import { Shield, Loader2 } from 'lucide-react'
+import { signUp } from './actions'
+import { Shield, Loader2, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
 
 const initialState = { error: '' }
 
-function LoginForm() {
-  const [state, formAction, isPending] = useActionState(signIn, initialState)
-  const params  = useSearchParams()
-  const created = params.get('created') === '1'
+export default function SignupPage() {
+  const [state, formAction, isPending] = useActionState(signUp, initialState)
 
   return (
     <div className="min-h-screen bg-[#0A1628] flex items-center justify-center px-4">
@@ -29,19 +25,15 @@ function LoginForm() {
 
         {/* Card */}
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-8">
-          <h2 className="text-white font-semibold text-lg mb-1">Sign in</h2>
-          <p className="text-[#64748B] text-sm mb-6">Access your compliance dashboard</p>
-
-          {created && (
-            <div className="bg-[#00C896]/10 border border-[#00C896]/30 rounded-lg px-3.5 py-2.5 mb-4">
-              <p className="text-[#00C896] text-sm">Account created — sign in to get started.</p>
-            </div>
-          )}
+          <h2 className="text-white font-semibold text-lg mb-1">Create your account</h2>
+          <p className="text-[#64748B] text-sm mb-6">
+            Free access · 5 demo shipments pre-loaded · No credit card
+          </p>
 
           <form action={formAction} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-[#94A3B8] text-xs font-medium mb-1.5 uppercase tracking-wider">
-                Email
+                Work Email
               </label>
               <input
                 id="email"
@@ -56,29 +48,30 @@ function LoginForm() {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label htmlFor="password" className="block text-[#94A3B8] text-xs font-medium uppercase tracking-wider">
-                  Password
-                </label>
-                <Link href="/forgot-password" className="text-xs text-[#64748B] hover:text-[#00C896] transition-colors">
-                  Forgot password?
-                </Link>
-              </div>
+              <label htmlFor="password" className="block text-[#94A3B8] text-xs font-medium mb-1.5 uppercase tracking-wider">
+                Password
+              </label>
               <input
                 id="password"
                 name="password"
                 type="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 required
+                minLength={8}
                 disabled={isPending}
                 className="w-full bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3.5 py-2.5 text-white text-sm placeholder-[#334155] focus:outline-none focus:border-[#00C896] focus:ring-1 focus:ring-[#00C896]/30 transition-all disabled:opacity-50"
-                placeholder="••••••••"
+                placeholder="8+ characters"
               />
             </div>
 
             {state?.error && (
               <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3.5 py-2.5">
                 <p className="text-red-400 text-sm">{state.error}</p>
+                {state.error.includes('already exists') && (
+                  <Link href="/login" className="text-[#00C896] text-xs mt-1 block hover:underline">
+                    Sign in instead →
+                  </Link>
+                )}
               </div>
             )}
 
@@ -90,44 +83,37 @@ function LoginForm() {
               {isPending ? (
                 <>
                   <Loader2 size={15} className="animate-spin" />
-                  Signing in...
+                  Setting up your account…
                 </>
               ) : (
-                'Sign in'
+                <>
+                  Create account <ArrowRight size={15} />
+                </>
               )}
             </button>
           </form>
+
+          <p className="text-[10px] text-[#334155] text-center mt-4 leading-relaxed">
+            By creating an account you agree to our{' '}
+            <span className="text-[#64748B]">Terms of Service</span>
+            {' '}and{' '}
+            <span className="text-[#64748B]">Privacy Policy</span>
+          </p>
         </div>
 
         <div className="flex flex-col items-center gap-3 mt-6">
           <p className="text-[#64748B] text-sm">
-            No account yet?{' '}
-            <Link href="/signup" className="text-[#00C896] font-medium hover:text-[#00B584] transition-colors">
-              Create one free →
+            Already have an account?{' '}
+            <Link href="/login" className="text-[#00C896] font-medium hover:text-[#00B584] transition-colors">
+              Sign in
             </Link>
           </p>
-          <a
-            href="/demo"
-            className="text-[#64748B] text-sm hover:text-[#00C896] transition-colors"
-          >
-            Try the live demo first →
-          </a>
           <div className="flex items-center gap-2">
             <Shield size={12} className="text-[#334155]" />
-            <p className="text-[#334155] text-xs">
-              Enterprise-grade Kenya import compliance
-            </p>
+            <p className="text-[#334155] text-xs">Data isolated to your organization · Multi-tenant</p>
           </div>
         </div>
       </div>
     </div>
-  )
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense fallback={null}>
-      <LoginForm />
-    </Suspense>
   )
 }

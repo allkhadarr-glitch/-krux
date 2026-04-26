@@ -14,7 +14,15 @@
     },
     {
       "path": "/api/alerts/send",
-      "schedule": "0 6 * * *"
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/ai/morning-briefing/send",
+      "schedule": "30 3 * * 1-5"
+    },
+    {
+      "path": "/api/demo/reset",
+      "schedule": "0 2 * * *"
     }
   ]
 }

@@ -91,11 +91,21 @@ export default function OnboardingPage() {
 
       const aiTried = typeof window !== 'undefined' && localStorage.getItem('krux_ai_tried') === '1'
 
+      // Demo shipments use alpha suffixes (KRUX-2026-PHR-xxxx); real ones use numeric (KRUX-2026-0001)
+      const realShips = Array.isArray(ships)
+        ? ships.filter((s: any) => s.reference_number && /^KRUX-\d{4}-\d{4}/.test(s.reference_number))
+        : []
+      // Demo manufacturers are these two seeded companies
+      const DEMO_MFR_NAMES = ['Zhejiang Pharma Co. Ltd', 'Gujarat Agrochem Industries']
+      const realMfrs = Array.isArray(mfrs)
+        ? mfrs.filter((m: any) => !DEMO_MFR_NAMES.includes(m.company_name))
+        : []
+
       setSteps(prev => prev.map(s => {
-        if (s.id === 'shipment')    return { ...s, status: (Array.isArray(ships) && ships.length > 0) ? 'done' : 'pending' }
-        if (s.id === 'manufacturer') return { ...s, status: (Array.isArray(mfrs) && mfrs.length > 0) ? 'done' : 'pending' }
-        if (s.id === 'team')        return { ...s, status: ((team?.members?.length ?? 0) > 1 || (team?.invites?.length ?? 0) > 0) ? 'done' : 'pending' }
-        if (s.id === 'ai')          return { ...s, status: aiTried ? 'done' : 'pending' }
+        if (s.id === 'shipment')     return { ...s, status: realShips.length > 0 ? 'done' : 'pending' }
+        if (s.id === 'manufacturer') return { ...s, status: realMfrs.length > 0 ? 'done' : 'pending' }
+        if (s.id === 'team')         return { ...s, status: ((team?.members?.length ?? 0) > 1 || (team?.invites?.length ?? 0) > 0) ? 'done' : 'pending' }
+        if (s.id === 'ai')           return { ...s, status: aiTried ? 'done' : 'pending' }
         return s
       }))
     } catch {

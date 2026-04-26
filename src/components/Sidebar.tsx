@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import {
   BarChart3, Briefcase, User, Factory, Settings, Shield, LogOut,
   Zap, ShoppingCart, Archive, Smartphone, TrendingUp, Users, Calendar,
-  FileText, Bell, Bot, Compass, CreditCard,
+  FileText, Bell, Bot, Compass, CreditCard, Hash,
 } from 'lucide-react'
 import { signOut } from '@/app/login/actions'
 import { NotificationBell } from './NotificationBell'
@@ -12,6 +12,8 @@ import { NotificationBell } from './NotificationBell'
 const nav = [
   { href: '/dashboard/actions',     label: 'Action Center',    icon: Zap },
   { href: '/dashboard/operations',  label: 'Operations',       icon: Shield },
+  { href: '/dashboard/hs-lookup',   label: 'HS Code Lookup',   icon: Hash },
+  { href: '/dashboard/briefing',    label: 'Morning Brief',    icon: FileText },
   { href: '/dashboard/ai',          label: 'KRUX AI',          icon: Bot },
   { href: '/dashboard/alerts',      label: 'Alerts',           icon: Bell },
   { href: '/dashboard/closed',      label: 'Closed Shipments', icon: Archive },
@@ -23,7 +25,7 @@ const nav = [
   { href: '/dashboard/mobile',      label: 'Field View',       icon: Smartphone },
   { href: '/dashboard/orders',      label: 'Order Protection', icon: ShoppingCart },
   { href: '/dashboard/management',  label: 'Management',       icon: BarChart3 },
-  { href: '/dashboard/agents',      label: 'AI Tax Quotes',    icon: BarChart3 },
+  { href: '/dashboard/agents',      label: 'Command Center',   icon: Bot },
   { href: '/dashboard/client',      label: 'Client View',      icon: User },
   { href: '/dashboard/manufacturer',label: 'Manufacturer',     icon: Factory },
   { href: '/dashboard/onboarding',  label: 'Getting Started',  icon: Compass },

@@ -1,7 +1,8 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import { Action } from '@/lib/types'
-import { CheckCircle2, Clock, XCircle, AlertTriangle, Loader2, RefreshCw, User } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, Loader2, RefreshCw, User, ExternalLink } from 'lucide-react'
 
 const PRIORITY_ORDER = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const
 
@@ -135,18 +136,33 @@ export default function MobilePage() {
   return (
     <div className="min-h-screen bg-[#0A1628] pb-8">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-[#0A1628] border-b border-[#1E3A5F] px-4 py-3">
+      <div className="sticky top-0 z-10 bg-[#0A1628] border-b border-[#1E3A5F] px-4 pt-3 pb-0">
+        {/* Brand bar */}
         <div className="flex items-center justify-between mb-3">
-          <div>
-            <h1 className="text-lg font-bold text-white">Field Actions</h1>
-            <p className="text-xs text-[#64748B]">
-              {atRisk.length > 0 && <span className="text-red-400 font-semibold">{atRisk.length} at risk · </span>}
-              {sorted.length} showing
-            </p>
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-[#00C896] flex items-center justify-center flex-shrink-0">
+              <span className="text-[#0A1628] font-black text-xs">K</span>
+            </div>
+            <span className="text-white font-bold text-sm tracking-wide">KRUX</span>
           </div>
-          <button onClick={load} className="p-2 text-[#64748B] hover:text-white active:scale-95 transition-all">
-            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard/operations"
+              className="flex items-center gap-1 text-[10px] text-[#64748B] hover:text-[#00C896] transition-colors"
+            >
+              Full dashboard <ExternalLink size={10} />
+            </Link>
+            <button onClick={load} className="p-2 text-[#64748B] hover:text-white active:scale-95 transition-all">
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            </button>
+          </div>
+        </div>
+        <div className="mb-3">
+          <h1 className="text-base font-bold text-white">Field Actions</h1>
+          <p className="text-xs text-[#64748B]">
+            {atRisk.length > 0 && <span className="text-red-400 font-semibold">{atRisk.length} at risk · </span>}
+            {sorted.length} open
+          </p>
         </div>
 
         {/* Assignee filter */}

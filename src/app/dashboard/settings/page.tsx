@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Loader2, Check, User, Building2, Bell } from 'lucide-react'
+import { Loader2, Check, User, Building2, Bell, Lock, Trash2 } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 type Profile = {
   full_name: string
@@ -17,15 +18,63 @@ const ROLES = [
 ]
 
 export default function SettingsPage() {
-  const [profile, setProfile] = useState<Profile>({ full_name: '', role: 'operations', phone: '', organization_id: '' })
-  const [loading, setSaving]  = useState(false)
-  const [saved, setSaved]     = useState(false)
-  const [error, setError]     = useState<string | null>(null)
+  const [profile, setProfile]   = useState<Profile>({ full_name: '', role: 'operations', phone: '', organization_id: '' })
+  const [loading, setSaving]    = useState(false)
+  const [saved, setSaved]       = useState(false)
+  const [error, setError]       = useState<string | null>(null)
+  const [kesRate, setKesRate]   = useState<number | null>(null)
+
+  const [newPwd, setNewPwd]         = useState('')
+  const [confirmPwd, setCfm]        = useState('')
+  const [pwdSaving, setPwdSave]     = useState(false)
+  const [pwdSaved, setPwdSaved]     = useState(false)
+  const [pwdError, setPwdError]     = useState<string | null>(null)
+  const [clearing, setClearing]     = useState(false)
+  const [clearMsg, setClearMsg]     = useState<string | null>(null)
+
+  async function clearDemoData() {
+    setClearing(true)
+    setClearMsg(null)
+    try {
+      const r = await fetch('/api/shipments/clear-demo', { method: 'DELETE' })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error ?? 'Failed')
+      setClearMsg(`Cleared ${d.cleared} demo shipment${d.cleared !== 1 ? 's' : ''}. Your workspace is now empty — add your first real shipment.`)
+      localStorage.removeItem('krux_auto_seeded')
+      localStorage.removeItem('krux_demo_banner_dismissed')
+    } catch (e: any) {
+      setClearMsg(`Error: ${e.message}`)
+    } finally {
+      setClearing(false)
+    }
+  }
+
+  async function changePassword(e: React.FormEvent) {
+    e.preventDefault()
+    if (newPwd !== confirmPwd) { setPwdError('Passwords do not match.'); return }
+    if (newPwd.length < 8)    { setPwdError('Password must be at least 8 characters.'); return }
+    setPwdSave(true)
+    setPwdError(null)
+    const { error: err } = await supabase.auth.updateUser({ password: newPwd })
+    setPwdSave(false)
+    if (err) {
+      setPwdError(err.message)
+    } else {
+      setPwdSaved(true)
+      setNewPwd('')
+      setCfm('')
+      setTimeout(() => setPwdSaved(false), 3000)
+    }
+  }
 
   useEffect(() => {
     fetch('/api/profile')
       .then((r) => r.json())
       .then((d) => { if (!d.error) setProfile(d) })
+      .catch(() => {})
+    fetch('/api/fx/rate')
+      .then(r => r.json())
+      .then(d => { if (d.usd_kes) setKesRate(d.usd_kes) })
       .catch(() => {})
   }, [])
 
@@ -110,13 +159,58 @@ export default function SettingsPage() {
               ['Version',              'KRUX v1.0'],
               ['AI Engine',            'Claude Sonnet 4.6'],
               ['Regulatory Coverage',  '8 bodies'],
-              ['Exchange Rate',        'KES 129 / USD 1'],
             ].map(([k, v]) => (
-              <div key={k} className="flex justify-between border-b border-[#1E3A5F] pb-2 last:border-0">
+              <div key={k} className="flex justify-between border-b border-[#1E3A5F] pb-2">
                 <span className="text-[#64748B]">{k}</span>
                 <span className="text-white font-medium">{v}</span>
               </div>
             ))}
+            <div className="flex justify-between">
+              <span className="text-[#64748B]">Live Exchange Rate</span>
+              <span className="text-white font-medium">
+                {kesRate != null ? `KES ${kesRate.toFixed(2)} / USD 1` : 'Loading…'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Notifications setup */}
+        <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Bell size={14} className="text-[#00C896]" />
+            <h3 className="text-white font-semibold text-sm">Notification Channels</h3>
+          </div>
+          <div className="space-y-4 text-xs">
+            <div className="flex items-start gap-3 p-3 bg-[#0A1628] border border-[#1E3A5F] rounded-lg">
+              <div className="w-6 h-6 rounded-full bg-[#25D366]/10 border border-[#25D366]/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-[#25D366] text-[9px] font-bold">WA</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-semibold mb-0.5">WhatsApp Alerts (Twilio)</p>
+                <p className="text-[#64748B] leading-relaxed mb-2">Morning Brief at 6:30am EAT · Deadline alerts at 14, 7, 3 days</p>
+                <p className="text-[#334155]">Set these env vars in Vercel → Settings → Environment Variables:</p>
+                <div className="mt-1.5 space-y-0.5 font-mono text-[#94A3B8]">
+                  <div>TWILIO_ACCOUNT_SID</div>
+                  <div>TWILIO_AUTH_TOKEN</div>
+                  <div>TWILIO_WHATSAPP_FROM <span className="text-[#64748B] font-sans">(e.g. whatsapp:+14155238886)</span></div>
+                  <div>ALERT_WHATSAPP_TO <span className="text-[#64748B] font-sans">(your +254 number)</span></div>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-3 bg-[#0A1628] border border-[#1E3A5F] rounded-lg">
+              <div className="w-6 h-6 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-blue-400 text-[9px] font-bold">@</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-semibold mb-0.5">Email Alerts (Resend)</p>
+                <p className="text-[#64748B] leading-relaxed mb-2">Shipment deadline alerts · License expiry warnings</p>
+                <p className="text-[#334155]">Set in Vercel Environment Variables:</p>
+                <div className="mt-1.5 font-mono text-[#94A3B8]">
+                  <div>RESEND_API_KEY</div>
+                  <div className="text-[#64748B] font-sans mt-0.5">Get your key at resend.com/api-keys</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -126,6 +220,75 @@ export default function SettingsPage() {
           className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#00C896] text-[#0A1628] text-sm font-bold hover:bg-[#00C896]/90 transition-colors disabled:opacity-50">
           {loading ? <Loader2 size={14} className="animate-spin" /> : saved ? <Check size={14} /> : null}
           {saved ? 'Saved!' : 'Save Changes'}
+        </button>
+      </form>
+
+      {/* Clear demo data */}
+      <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Trash2 size={14} className="text-[#64748B]" />
+          <h3 className="text-white font-semibold text-sm">Demo Data</h3>
+        </div>
+        <p className="text-xs text-[#64748B] mb-3 leading-relaxed">
+          Your workspace was pre-loaded with 5 sample shipments. Remove them when you're ready to start with your real imports.
+        </p>
+        {clearMsg && (
+          <div className={`text-xs rounded-lg px-3 py-2 mb-3 ${clearMsg.startsWith('Error') ? 'bg-red-500/10 border border-red-500/20 text-red-400' : 'bg-[#00C896]/10 border border-[#00C896]/20 text-[#00C896]'}`}>
+            {clearMsg}
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={clearDemoData}
+          disabled={clearing}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-500/30 text-red-400 text-sm font-semibold hover:bg-red-500/10 transition-all disabled:opacity-40"
+        >
+          {clearing ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+          {clearing ? 'Clearing...' : 'Clear demo shipments'}
+        </button>
+      </div>
+
+      {/* Password Change — separate form, outside the profile form */}
+      <form onSubmit={changePassword} className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-5 space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Lock size={14} className="text-[#00C896]" />
+          <h3 className="text-white font-semibold text-sm">Change Password</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">New Password</label>
+            <input
+              type="password"
+              required
+              minLength={8}
+              value={newPwd}
+              onChange={e => setNewPwd(e.target.value)}
+              disabled={pwdSaving}
+              className="w-full mt-1 bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3 py-2 text-sm text-white placeholder-[#334155] focus:outline-none focus:border-[#00C896] disabled:opacity-50"
+              placeholder="8+ characters"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">Confirm Password</label>
+            <input
+              type="password"
+              required
+              value={confirmPwd}
+              onChange={e => setCfm(e.target.value)}
+              disabled={pwdSaving}
+              className="w-full mt-1 bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3 py-2 text-sm text-white placeholder-[#334155] focus:outline-none focus:border-[#00C896] disabled:opacity-50"
+              placeholder="Repeat password"
+            />
+          </div>
+        </div>
+        {pwdError && <div className="text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{pwdError}</div>}
+        <button
+          type="submit"
+          disabled={pwdSaving || !newPwd || !confirmPwd}
+          className="flex items-center gap-2 px-5 py-2 rounded-lg border border-[#1E3A5F] text-[#94A3B8] text-sm font-semibold hover:border-[#00C896]/40 hover:text-white transition-all disabled:opacity-40"
+        >
+          {pwdSaving ? <Loader2 size={13} className="animate-spin" /> : pwdSaved ? <Check size={13} className="text-[#00C896]" /> : null}
+          {pwdSaved ? 'Password updated!' : 'Update password'}
         </button>
       </form>
     </div>

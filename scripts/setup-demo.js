@@ -87,7 +87,7 @@ async function run() {
   // ── 3. Create organization ────────────────────────────────
   const { data: org, error: orgErr } = await supabase
     .from('organizations')
-    .insert({ name: 'KRUXVON Demo', plan: 'pro', is_active: true })
+    .insert({ name: 'KRUX Demo', type: 'clearing_agent_firm', subscription_tier: 'pro', is_active: true })
     .select('id')
     .single()
 
