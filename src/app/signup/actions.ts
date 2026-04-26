@@ -94,7 +94,7 @@ export async function signUp(_: unknown, formData: FormData) {
       const resend = new Resend(process.env.RESEND_API_KEY)
       const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://krux-xi.vercel.app'
       await resend.emails.send({
-        from: 'KRUX <welcome@krux-xi.vercel.app>',
+        from: 'KRUX <welcome@kruxvon.com>',
         to: email,
         subject: 'Welcome to KRUX — your workspace is ready',
         html: `<!DOCTYPE html>

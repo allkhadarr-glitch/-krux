@@ -11,7 +11,7 @@ const supabaseAdmin = createClient(
 
 const ALERT_EMAIL      = process.env.ALERT_EMAIL      ?? 'mabdikadirhaji@gmail.com'
 const ALERT_WHATSAPP   = process.env.ALERT_WHATSAPP_TO ?? ''
-const FROM_EMAIL       = 'KRUX Alerts <alerts@krux-xi.vercel.app>'
+const FROM_EMAIL       = 'KRUX Alerts <alerts@kruxvon.com>'
 
 // ─── WhatsApp via Twilio ─────────────────────────────────────
 

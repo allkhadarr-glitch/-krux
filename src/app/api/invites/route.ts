@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   // Send invite email if Resend is configured
   if (resend) {
     await resend.emails.send({
-      from:    'KRUX <noreply@krux.app>',
+      from:    'KRUX <noreply@kruxvon.com>',
       to:      body.email,
       subject: `You've been invited to KRUX`,
       html: `
