@@ -873,20 +873,23 @@ export default function OperationsPage() {
       {/* ── Desktop table (hidden below lg) ── */}
       <div className="hidden lg:block rounded-xl border border-[#1E3A5F] overflow-hidden">
         <div className="overflow-x-auto">
-        <table className="w-full min-w-[780px]">
+        <table className="w-full min-w-[620px]">
           <thead>
             <tr className="border-b border-[#1E3A5F] bg-[#0F2040]">
-              {['Priority', 'Shipment', 'Stage', 'Regulator', 'Deadline', 'CIF', 'Landed Cost', 'Portals', 'Status', ''].map((h) => (
-                <th key={h} className="px-3 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">
-                  {h}
-                </th>
+              {(['Priority', 'Shipment', 'Stage', 'Regulator', 'Deadline'] as const).map((h) => (
+                <th key={h} className="px-3 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">{h}</th>
               ))}
+              <th className="hidden xl:table-cell px-3 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">CIF</th>
+              <th className="hidden xl:table-cell px-3 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">Landed Cost</th>
+              <th className="hidden xl:table-cell px-3 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">Portals</th>
+              <th className="px-3 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">Status</th>
+              <th className="px-3 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#1E3A5F]">
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-6 py-16 text-center">
+                <td colSpan={8} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-[#0F2040] border border-[#1E3A5F] flex items-center justify-center">
                       <Plus size={20} className="text-[#334155]" />
@@ -994,10 +997,10 @@ export default function OperationsPage() {
                   </td>
 
                   {/* CIF */}
-                  <td className="px-3 py-3 text-sm text-white tabular-nums">{formatUSD(s.cif_value_usd)}</td>
+                  <td className="hidden xl:table-cell px-3 py-3 text-sm text-white tabular-nums">{formatUSD(s.cif_value_usd)}</td>
 
                   {/* Landed Cost */}
-                  <td className="px-3 py-3">
+                  <td className="hidden xl:table-cell px-3 py-3">
                     {s.total_landed_cost_kes ? (
                       <>
                         <div className="text-sm font-bold text-[#00C896] tabular-nums">
@@ -1013,7 +1016,7 @@ export default function OperationsPage() {
                   </td>
 
                   {/* Portals */}
-                  <td className="px-3 py-3">
+                  <td className="hidden xl:table-cell px-3 py-3">
                     <div className="flex items-center gap-2">
                       <PortalDots portals={s.portals} />
                       <button
