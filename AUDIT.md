@@ -3,8 +3,8 @@
 **Production URL:** https://krux-xi.vercel.app  
 **Billing test:** 7 / 7 passed  
 **GitHub:** github.com/allkhadarr-glitch/-krux · branch: master  
-**Latest deployment:** `krux-gz20es444-krux1.vercel.app` — READY  
-**Latest commit:** `7869ea6` — fix: tighten operations page layout — less left gap, table fits on 1280px screens
+**Latest deployment:** `krux-qrfu0llfp-krux1.vercel.app` — READY  
+**Latest commit:** `311533e` — feat: comprehensive responsive layout pass — all dashboard pages
 
 ---
 
@@ -616,7 +616,9 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 - [x] **Demo reset triggered** — fresh seed applied to production demo org (org_id: 08d82f1b-bc88-49a4-8c19-d8d2f4c08896). 5 shipments, 2 manufacturers, 4 notifications.
 - [x] **Demo API-free mode** — `src/lib/demo-content.ts` pre-writes Brief/Steps/Checklist for all 5 demo shipments. Zero API calls, zero spinners in demo mode. Jet A-1 brief: EPRA 25d SLA, HS misclassification (KES 19.9M), CLEARANCE WINDOW CLOSED banner.
 - [x] **Tier-one mobile layout** — sticky `h-14` top bar with KRUX branding + NotificationBell always visible. Slide-out sidebar with backdrop-blur. ShipmentDrawer full-width on mobile with scroll-locked tab strip.
-- [x] **Operations table 10-column layout** — Risk column removed, left-border accent on Priority cell, compact Status labels (Active/Open/Escalated), icon-only action buttons, `min-w-[860px]`, Status visible without horizontal scroll.
+- [x] **Operations table 10-column layout** — Risk column removed, left-border accent on Priority cell, compact Status labels (Active/Open/Escalated), icon-only action buttons, `min-w-[780px]`, Status visible without horizontal scroll.
+- [x] **Comprehensive responsive layout** — All 19 dashboard pages: `p-6` → `px-4 lg:px-5 py-5 lg:py-6`. All h1 headings: `text-2xl` → `text-xl lg:text-2xl`. Non-responsive grids fixed: closed (5→2/3/5), management (4→2/4), agents (4→2/4), client (3→1/3). Tables wrapped in `overflow-x-auto`. DemoBanner `hidden lg:flex` (was covered by mobile top bar on phones).
+- [x] **Operations page gap closed** — outer container `px-3 lg:px-4`, table `min-w-[780px]`, Status `whitespace-nowrap` — ESCALATED no longer clips at 1280px desktop.
 
 ---
 
