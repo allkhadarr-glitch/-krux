@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   BarChart3, Briefcase, User, Factory, Settings, Shield, LogOut,
   Zap, ShoppingCart, Archive, Smartphone, TrendingUp, Users, Calendar,
-  FileText, Bell, Bot, Compass, CreditCard, Hash, Menu, X,
+  FileText, Bell, Bot, Compass, CreditCard, Hash, Menu, X, FolderKanban,
 } from 'lucide-react'
 import { signOut } from '@/app/login/actions'
 import { NotificationBell } from './NotificationBell'
@@ -13,6 +13,7 @@ import { NotificationBell } from './NotificationBell'
 const nav = [
   { href: '/dashboard/actions',      label: 'Action Center',    icon: Zap },
   { href: '/dashboard/operations',   label: 'Operations',       icon: Shield },
+  { href: '/dashboard/portfolio',    label: 'Client Portfolio', icon: FolderKanban },
   { href: '/dashboard/hs-lookup',    label: 'HS Code Lookup',   icon: Hash },
   { href: '/dashboard/briefing',     label: 'Morning Brief',    icon: FileText },
   { href: '/dashboard/ai',           label: 'KRUX AI',          icon: Bot },

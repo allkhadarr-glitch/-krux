@@ -172,6 +172,7 @@ export interface Shipment {
   alert_sent_7d_at?: string
   alert_sent_3d_at?: string
 
+  client_name?: string
   notes?: string
   created_by?: string
   assigned_to?: string

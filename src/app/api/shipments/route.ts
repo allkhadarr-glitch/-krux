@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
   const {
     name, origin_port, origin_country, hs_code, product_description,
     cif_value_usd, pvoc_deadline, regulatory_body_id, storage_rate_per_day,
-    risk_flag_status, import_duty_pct,
+    risk_flag_status, import_duty_pct, client_name,
   } = body
 
   if (!name || !origin_port || !cif_value_usd) {
@@ -113,6 +113,7 @@ export async function POST(req: NextRequest) {
       pvoc_deadline:        pvoc_deadline || null,
       regulatory_body_id:   regulatory_body_id || null,
       storage_rate_per_day: storage_rate_per_day ? Number(storage_rate_per_day) : null,
+      ...(client_name ? { client_name } : {}),
       risk_flag_status:     risk_flag_status ?? 'AMBER',
       remediation_status:   'OPEN',
       shipment_status:      'PENDING',

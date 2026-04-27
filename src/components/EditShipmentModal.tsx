@@ -37,6 +37,7 @@ export default function EditShipmentModal({
     vessel_name:        shipment.vessel_name ?? '',
     bl_number:          shipment.bl_number ?? '',
     eta:                shipment.eta ?? '',
+    client_name:        shipment.client_name ?? '',
   })
 
   useEffect(() => {
@@ -71,6 +72,7 @@ export default function EditShipmentModal({
           vessel_name:        form.vessel_name || null,
           bl_number:          form.bl_number || null,
           eta:                form.eta || null,
+          client_name:        form.client_name || null,
         }),
       })
       const d = await res.json()
@@ -101,6 +103,15 @@ export default function EditShipmentModal({
                 required
                 value={form.name}
                 onChange={(e) => set('name', e.target.value)}
+                className={INPUT}
+              />
+            </Field>
+
+            <Field label="Client / Importer">
+              <input
+                value={form.client_name}
+                onChange={(e) => set('client_name', e.target.value)}
+                placeholder="e.g. Acme Pharmaceuticals Ltd"
                 className={INPUT}
               />
             </Field>

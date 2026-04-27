@@ -1,10 +1,10 @@
 # KRUX Platform — Full Build Audit
-**Last updated:** 2026-04-26 (Session 5)  
+**Last updated:** 2026-04-26 (Session 6)  
 **Production URL:** https://krux-xi.vercel.app  
 **Billing test:** 7 / 7 passed  
 **GitHub:** github.com/allkhadarr-glitch/-krux · branch: master  
-**Latest deployment:** `krux-k1ebfcm3x-krux1.vercel.app` — READY  
-**Latest commit:** `c4a3645` — fix: mobile responsiveness
+**Latest deployment:** `krux-a6hk4omb5-krux1.vercel.app` — READY  
+**Latest commit:** Session 6 — mobile-first operations triage view
 
 ---
 
@@ -587,6 +587,7 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 - [x] Onboarding progress — no longer falsely shows 60–80% due to demo data; filters demo shipments by reference number pattern and known demo manufacturer names
 - [x] Forgot password + update password flows
 - [x] Mobile responsive dashboard — hamburger sidebar, layout padding, operations table horizontal scroll
+- [x] **Mobile-first Operations triage view** — auto-sorted card list (CRITICAL → HIGH → MEDIUM → LOW, then by days remaining ASC). Two groups: "Needs Attention" (CRITICAL/HIGH or ≤7d) + "On Track". Left accent border by risk color (RED/AMBER/GREEN). Full card tappable to open drawer. Hero countdown number visible immediately. Edit/Close/Export as large tap targets. Admin buttons (Run Events/Alerts) hidden on mobile. Desktop table unchanged (full 11 columns, `hidden lg:block`).
 - [x] Email sender domain — all emails now send from `@kruxvon.com` (verified in Resend)
 - [x] Welcome email working — `kruxvon.com` DNS verified, welcome email delivered to real users
 
@@ -599,7 +600,7 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 | WhatsApp morning brief | Twilio env vars not set | Add `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM`, `ALERT_WHATSAPP_TO` to Vercel env vars |
 | WhatsApp deadline alerts | Same | Same |
 | Stripe LIVE mode | Using test keys | Rotate to live Stripe key, re-run `setup-stripe.js` against live, register new webhook |
-| Welcome email from real domain | Resend `from:` is `welcome@krux-xi.vercel.app` — unverified sender → likely spam | Set up custom domain (e.g. `hello@krux.co.ke`), verify with Resend |
+| Welcome email from real domain | ~~Resend `from:` was unverified~~ — **FIXED Session 5**: `kruxvon.com` verified, all emails send from `@kruxvon.com` | ✅ Done |
 | EPRA SLA accuracy | Unverified — currently 25d in code | Verify against epra.go.ke before KRA demo |
 
 ---
@@ -677,6 +678,13 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 | Git push to GitHub (master) | Commit `c201989` |
 | Vercel deployed via `npx vercel --prod` | READY |
 
+### Session 6 (mobile triage + cron verification + lead recovery)
+| Step | Result |
+|---|---|
+| Mobile Operations triage view | Rebuilt — auto-sorted by priority (CRITICAL→HIGH→MEDIUM→LOW, then days ASC). Two groups: "Needs Attention" / "On Track". Left accent border by risk. Full card tap to drawer. Hero countdown. Edit/Close/Export as large tap targets. Admin buttons hidden on mobile. Desktop table unchanged. |
+| Cron verification — all 6 endpoints live-tested | `/api/events/process` ✅ · `/api/actions/evaluate` ✅ · `/api/actions/at-risk` ✅ · `/api/alerts/send` ✅ · `/api/ai/morning-briefing/send` ✅ (3 CRITICAL, 2 URGENT, 4 WATCH, 6 ON_TRACK, KES 2.09M at risk) · `/api/demo/reset` ✅ |
+| Lead recovery emails sent | `HQ@ELEMENT72VITALITY.COM` (Resend ID `c009e89b`) + `haaji1242@gmail.com` (Resend ID `8db60550`) — branded KRUX HTML email, direct signup link |
+
 ### Session 5 (mobile + email fixes)
 | Step | Result |
 |---|---|
@@ -723,21 +731,38 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 - [x] Onboarding progress fixed (no more false 80%)
 - [x] **Critical signup bug fixed** — `subscription_tier: 'free'` → `'trial'`
 
-### Immediate (this week)
-1. **Reach out to two lost leads** — `HQ@ELEMENT72VITALITY.COM` and `haaji1242@gmail.com`. Their accounts were cleaned up. One message: "We fixed the signup bug that hit you. Your workspace is ready in 3 seconds — [link]." This is the fastest revenue action available.
-2. **Wire Twilio WhatsApp** — add 4 env vars to Vercel (`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM`, `ALERT_WHATSAPP_TO`). Morning brief + deadline alerts are already built — they just need a live channel.
-3. **Verify EPRA 25-day SLA** against epra.go.ke — must be correct before any enterprise demo.
+### Done (Sessions 5–6)
+- [x] Mobile responsive dashboard — hamburger sidebar, layout padding, operations table horizontal scroll
+- [x] Mobile-first Operations triage view — auto-sorted, two groups, accent border, tap-to-drawer
+- [x] Email sender domain — all emails from `@kruxvon.com` (Resend verified)
+- [x] All 6 Vercel crons verified live — firing correctly, auth confirmed
+- [x] Lead recovery emails sent to both lost leads (Session 6)
 
-### Before first enterprise demo
-4. **Custom domain** — `krux-xi.vercel.app` looks like a prototype. `.co.ke` or `.io` closes deals faster.
-5. **Resend verified sender domain** — welcome emails and alerts are likely going to spam from `krux-xi.vercel.app`. Set up `hello@yourdomain.com` in Resend.
-6. **Run `/demo` in production** — verify the demo account is seeded and accessible.
-7. **Verify Vercel cron jobs fire** — 4 crons configured (`vercel.json`). Check they execute with `CRON_SECRET` header.
+### Now unblocked (needs your input only)
+1. **Wire Twilio WhatsApp** — provide 4 values: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM` (e.g. `whatsapp:+14155238886`), `ALERT_WHATSAPP_TO` (your +254 number). I push them to Vercel and it goes live in 60 seconds. This is the core product differentiator.
+2. **Custom domain** — you pick/buy `krux.co.ke` or `kruxapp.io`. I do the Vercel config + Resend sender swap. Needed before any enterprise demo.
+
+### Level-up roadmap (next 3 sprints)
+
+**Sprint 7 — Clearing agent power user (biggest market)**
+- Multi-client dashboard: clearing agents manage 10–30 importers. One view showing all clients + critical deadlines
+- Bulk CSV shipment import — reduces onboarding from 30min to 3min
+- Client-facing share link (read-only per-client view, no login required)
+
+**Sprint 8 — WhatsApp-native interface**
+- Inbound WhatsApp: user texts "status" → KRUX replies with today's critical shipments
+- Reply to deadline alert → snooze or mark portal submitted
+- This turns KRUX into a tool that works without opening a laptop
+
+**Sprint 9 — Intelligence + monetization**
+- Stripe LIVE mode — rotate keys, real revenue
+- Predictive delay scoring — track actual regulator turnaround times, surface "PPB is running 60d this month" warnings
+- Weekly email digest for management tier users (read-only role gets a PDF summary, not raw dashboard)
 
 ### After product-market fit confirmed
-8. **Stripe LIVE mode** — rotate keys, re-run `setup-stripe.js` against live, register new webhook
-9. **WhatsApp Business API** (when volume justifies) — move off Twilio sandbox to official BSP
-10. **API access tier** — API key management for Enterprise
+- WhatsApp Business API (move off Twilio sandbox to official BSP when volume justifies)
+- API access tier — key management for Enterprise
+- Multi-entity support (listed in Enterprise features, not built)
 
 ---
 
@@ -753,5 +778,5 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 
 ---
 
-*Full audit maintained by Claude Code — sessions 1–4*  
+*Full audit maintained by Claude Code — sessions 1–6*  
 *All sections derived from live code and confirmed production state.*

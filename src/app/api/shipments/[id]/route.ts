@@ -49,7 +49,7 @@ export async function PATCH(
     name, origin_port, hs_code, product_description,
     cif_value_usd, import_duty_pct, pvoc_deadline,
     regulatory_body_id, risk_flag_status,
-    vessel_name, bl_number, eta,
+    vessel_name, bl_number, eta, client_name,
   } = body
 
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
@@ -57,6 +57,7 @@ export async function PATCH(
   if (origin_port !== undefined)         updates.origin_port         = origin_port
   if (hs_code !== undefined)             updates.hs_code             = hs_code || null
   if (product_description !== undefined) updates.product_description = product_description || null
+  if (client_name)                        updates.client_name         = client_name
   if (pvoc_deadline !== undefined)       updates.pvoc_deadline       = pvoc_deadline || null
   if (regulatory_body_id !== undefined)  updates.regulatory_body_id  = regulatory_body_id || null
   if (risk_flag_status !== undefined)    updates.risk_flag_status    = risk_flag_status

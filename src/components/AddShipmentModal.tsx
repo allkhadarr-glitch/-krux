@@ -108,7 +108,7 @@ export default function AddShipmentModal({
     name: '', origin_port: '', origin_country: '', hs_code: '',
     product_description: '', cif_value_usd: '', import_duty_pct: '25',
     pvoc_deadline: '', regulatory_body_id: '', storage_rate_per_day: '',
-    risk_flag_status: 'AMBER',
+    risk_flag_status: 'AMBER', client_name: '',
   })
 
   useEffect(() => {
@@ -281,11 +281,19 @@ export default function AddShipmentModal({
           {/* Shipment Identity */}
           <div className="space-y-3">
             <h3 className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">Shipment Details</h3>
-            <div>
-              <label className="text-xs text-[#94A3B8] mb-1 block">Shipment Name *</label>
-              <input required value={form.name} onChange={(e) => set('name', e.target.value)}
-                placeholder="e.g. PHARMA CONSIGNMENT — PPB Q2 2026"
-                className="w-full px-3 py-2 bg-[#0F2040] border border-[#1E3A5F] rounded-lg text-sm text-white placeholder-[#64748B] focus:outline-none focus:border-[#00C896]" />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2 sm:col-span-1">
+                <label className="text-xs text-[#94A3B8] mb-1 block">Shipment Name *</label>
+                <input required value={form.name} onChange={(e) => set('name', e.target.value)}
+                  placeholder="e.g. PHARMA CONSIGNMENT — PPB Q2 2026"
+                  className="w-full px-3 py-2 bg-[#0F2040] border border-[#1E3A5F] rounded-lg text-sm text-white placeholder-[#64748B] focus:outline-none focus:border-[#00C896]" />
+              </div>
+              <div className="col-span-2 sm:col-span-1">
+                <label className="text-xs text-[#94A3B8] mb-1 block">Client / Importer</label>
+                <input value={form.client_name} onChange={(e) => set('client_name', e.target.value)}
+                  placeholder="e.g. Acme Pharmaceuticals Ltd"
+                  className="w-full px-3 py-2 bg-[#0F2040] border border-[#1E3A5F] rounded-lg text-sm text-white placeholder-[#64748B] focus:outline-none focus:border-[#00C896]" />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

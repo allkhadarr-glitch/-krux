@@ -588,9 +588,36 @@ export default function OperationsPage() {
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between">
+      {/* ── Mobile triage header (hidden on lg+) ── */}
+      <div className="lg:hidden">
+        <div className="flex items-center justify-between mb-1">
+          <div>
+            <h1 className="text-lg font-bold text-white">Operations</h1>
+            <p className="text-xs text-[#64748B] mt-0.5">
+              {filtered.length} shipments
+              {alerts.filter(a => a.level === 'CRITICAL').length > 0 && (
+                <span className="text-red-400 font-semibold ml-1">· {alerts.filter(a => a.level === 'CRITICAL').length} critical</span>
+              )}
+            </p>
+          </div>
+          {canWrite && (
+            <button
+              onClick={() => {
+                if (isDemo) { trackDemo('gate_triggered', { trigger: 'add_shipment' }); setShowDemoGate(true) }
+                else setShowAddModal(true)
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 bg-[#00C896] text-[#0A1628] rounded-xl text-sm font-bold active:scale-95 transition-all"
+            >
+              <Plus size={14} /> Add
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Desktop header (hidden on mobile) ── */}
+      <div className="hidden lg:flex lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-white">Operations Dashboard</h1>
+          <h1 className="text-2xl font-bold text-white">Operations Dashboard</h1>
           <p className="text-[#64748B] text-sm mt-1">
             {filtered.length} shipments · Kenya Import Compliance
             {alerts.length > 0 && (
@@ -675,7 +702,176 @@ export default function OperationsPage() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-[#1E3A5F] overflow-hidden">
+      {/* ── Mobile triage view (hidden on lg+) ── */}
+      {(() => {
+        const priorityRank: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 }
+        const mobileSorted = [...filtered].sort((a, b) => {
+          const aRank = priorityRank[a.risk?.priority_level ?? ''] ?? 4
+          const bRank = priorityRank[b.risk?.priority_level ?? ''] ?? 4
+          if (aRank !== bRank) return aRank - bRank
+          return daysUntilDeadline(a.pvoc_deadline!) - daysUntilDeadline(b.pvoc_deadline!)
+        })
+        const needsAction = mobileSorted.filter(s => {
+          const lvl = s.risk?.priority_level
+          return lvl === 'CRITICAL' || lvl === 'HIGH' || daysUntilDeadline(s.pvoc_deadline!) <= 7
+        })
+        const onTrack = mobileSorted.filter(s => !needsAction.find(n => n.id === s.id))
+
+        const MobileCard = ({ s }: { s: typeof filtered[0] }) => {
+          const days = daysUntilDeadline(s.pvoc_deadline!)
+          const alert = alerts.find((a) => a.shipmentId === s.id)
+          const riskFlag = s.risk_flag_status
+          const score = s.composite_risk_score != null
+            ? Math.round(s.composite_risk_score * 10)
+            : s.risk?.risk_score != null ? Math.round(s.risk.risk_score * 10) : null
+          const accentColor =
+            riskFlag === 'RED'   ? '#ef4444' :
+            riskFlag === 'AMBER' ? '#f59e0b' : '#00C896'
+          const dayColor =
+            days <= 3  ? 'text-red-400'   :
+            days <= 7  ? 'text-amber-400' : 'text-[#94A3B8]'
+
+          return (
+            <button
+              key={s.id}
+              onClick={() => {
+                if (isDemo) { trackDemo('shipment_clicked', { name: s.name }); setTooltipDismissed(true) }
+                setDrawerShipment(s)
+              }}
+              className="w-full text-left bg-[#0F2040] rounded-2xl overflow-hidden active:scale-[0.98] transition-transform"
+              style={{ borderLeft: `4px solid ${accentColor}` }}
+            >
+              <div className="p-4 space-y-3">
+                {/* Name + score */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[15px] font-semibold text-white leading-snug truncate">{s.name}</div>
+                    <div className="text-xs text-[#64748B] mt-0.5">{s.origin_port} → {s.destination_port}</div>
+                  </div>
+                  {score != null && (
+                    <div className="flex-shrink-0 text-right">
+                      <div className={`text-xl font-black tabular-nums leading-none ${
+                        score >= 80 ? 'text-red-400' : score >= 50 ? 'text-amber-400' : 'text-[#64748B]'
+                      }`}>{score}</div>
+                      <div className="text-[9px] text-[#64748B] text-right">RISK</div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Hero: days remaining */}
+                <div className="flex items-center justify-between">
+                  <div className={`flex items-center gap-1.5 ${dayColor}`}>
+                    {days <= 7 && <AlertTriangle size={13} />}
+                    <Clock size={13} />
+                    <span className="text-sm font-bold">
+                      {days > 0 ? `${days} days left` : `${Math.abs(days)}d overdue`}
+                    </span>
+                    <span className="text-xs text-[#64748B] ml-1">{formatDate(s.pvoc_deadline!)}</span>
+                  </div>
+                  <RegulatorBadge body={s.regulatory_body?.code ?? '—'} />
+                </div>
+
+                {/* Stage + priority */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <StagePill shipmentId={s.id} currentStage={(s as any).shipment_stage ?? 'PRE_SHIPMENT'} />
+                  {s.risk?.priority_level && (
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${priorityColors[s.risk.priority_level as PriorityLevel]}`}>
+                      {s.risk.priority_level}
+                    </span>
+                  )}
+                </div>
+
+                {/* Bottom bar: cost + status + actions */}
+                <div className="flex items-center justify-between pt-2 border-t border-[#1E3A5F]" onClick={(e) => e.stopPropagation()}>
+                  <div>
+                    {s.total_landed_cost_kes ? (
+                      <div className="text-sm font-bold text-[#00C896]">
+                        KES {s.total_landed_cost_kes >= 1_000_000
+                          ? `${(s.total_landed_cost_kes / 1_000_000).toFixed(1)}M`
+                          : s.total_landed_cost_kes.toLocaleString()}
+                      </div>
+                    ) : s.total_landed_cost_usd ? (
+                      <div className="text-sm font-bold text-[#00C896]">{formatUSD(s.total_landed_cost_usd)}</div>
+                    ) : null}
+                    <StatusBadge status={s.remediation_status} />
+                    {alert && (
+                      <div className="text-[10px] text-red-400 font-medium mt-0.5">
+                        Est. loss KES {alert.estimatedAdditionalCostKES.toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {canWrite && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setEditTarget(s) }}
+                        className="p-2 bg-[#1E3A5F] text-[#64748B] rounded-xl active:bg-[#00C896]/20 active:text-[#00C896] transition-all"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                    )}
+                    {canWrite && s.remediation_status !== 'CLOSED' && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setCloseTarget(s) }}
+                        className="flex items-center gap-1 px-3 py-2 bg-[#1E3A5F] text-emerald-400 rounded-xl text-xs font-semibold active:bg-emerald-500/20 transition-all"
+                      >
+                        <CheckCircle2 size={13} /> Close
+                      </button>
+                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); window.open(`/api/shipments/${s.id}/export`, '_blank') }}
+                      className="p-2 bg-[#1E3A5F] text-[#64748B] rounded-xl active:bg-blue-500/20 active:text-blue-400 transition-all"
+                    >
+                      <FileDown size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </button>
+          )
+        }
+
+        return (
+          <div className="lg:hidden space-y-4">
+            {filtered.length === 0 ? (
+              <div className="rounded-2xl border border-[#1E3A5F] bg-[#0F2040] px-6 py-14 text-center">
+                <p className="text-[#64748B] text-sm">No shipments yet</p>
+                {canWrite && !isDemo && (
+                  <button
+                    onClick={() => setShowAddModal(true)}
+                    className="mt-4 flex items-center gap-2 px-4 py-2.5 bg-[#00C896] text-[#0A1628] rounded-xl text-sm font-bold mx-auto"
+                  >
+                    <Plus size={14} /> Add your first shipment
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                {needsAction.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle size={12} className="text-red-400" />
+                      <span className="text-xs font-bold text-red-400 uppercase tracking-widest">Needs Attention · {needsAction.length}</span>
+                    </div>
+                    {needsAction.map(s => <MobileCard key={s.id} s={s} />)}
+                  </div>
+                )}
+                {onTrack.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-[#00C896]" />
+                      <span className="text-xs font-bold text-[#64748B] uppercase tracking-widest">On Track · {onTrack.length}</span>
+                    </div>
+                    {onTrack.map(s => <MobileCard key={s.id} s={s} />)}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )
+      })()}
+
+      {/* ── Desktop table (hidden below lg) ── */}
+      <div className="hidden lg:block rounded-xl border border-[#1E3A5F] overflow-hidden">
         <div className="overflow-x-auto">
         <table className="w-full min-w-[900px]">
           <thead>
