@@ -750,13 +750,13 @@ export default function ShipmentDrawer({
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />
+      <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Drawer */}
-      <div className="fixed right-0 top-0 h-full w-[480px] z-50 bg-[#0A1628] border-l border-[#1E3A5F] flex flex-col shadow-2xl">
+      {/* Drawer — full-screen on mobile, 520px on sm+ */}
+      <div className="fixed right-0 top-0 h-full w-full sm:w-[520px] z-50 bg-[#0A1628] border-l border-[#1E3A5F] flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
 
         {/* Header */}
-        <div className="px-6 py-4 border-b border-[#1E3A5F]">
+        <div className="px-4 sm:px-6 py-4 border-b border-[#1E3A5F]">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0 pr-4">
               <div className="flex items-center gap-2 mb-1">
@@ -812,7 +812,7 @@ export default function ShipmentDrawer({
 
         {/* Clearance Impossible Banner */}
         {windowClosed && (
-          <div className="mx-4 mt-3 mb-1 rounded-xl border border-red-500/50 bg-red-500/10 p-3.5">
+          <div className="mx-3 sm:mx-4 mt-3 mb-1 rounded-xl border border-red-500/50 bg-red-500/10 p-3 sm:p-3.5">
             <div className="flex items-center gap-2 mb-1.5">
               <AlertTriangle size={14} className="text-red-400 flex-shrink-0" />
               <span className="text-sm font-black text-red-400 uppercase tracking-wide">Clearance Window Closed</span>
@@ -829,13 +829,13 @@ export default function ShipmentDrawer({
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="flex border-b border-[#1E3A5F] overflow-x-auto mt-2">
+        {/* Tabs — scrollable strip */}
+        <div className="flex border-b border-[#1E3A5F] overflow-x-auto mt-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {allTabs.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => switchTab(key)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`flex-none sm:flex-1 flex items-center justify-center gap-1.5 py-3 px-3 text-xs font-semibold whitespace-nowrap transition-all min-w-[68px] ${
                 tab === key
                   ? 'text-[#00C896] border-b-2 border-[#00C896]'
                   : 'text-[#64748B] hover:text-white'
@@ -848,7 +848,7 @@ export default function ShipmentDrawer({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           {tab === 'timeline' ? (
             <TimelinePanel shipmentId={shipment.id} />
           ) : tab === 'costs' ? (

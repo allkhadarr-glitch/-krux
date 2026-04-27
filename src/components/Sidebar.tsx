@@ -40,30 +40,43 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
 
   return (
     <>
-      {/* Hamburger — mobile only */}
-      <button
-        onClick={() => setOpen(true)}
-        className="lg:hidden fixed top-3 left-3 z-50 p-2.5 bg-[#0F2040] border border-[#1E3A5F] rounded-xl text-white shadow-lg"
-        aria-label="Open menu"
-      >
-        <Menu size={18} />
-      </button>
+      {/* ── Mobile top bar (hidden on lg+) ── */}
+      <div className="lg:hidden fixed top-0 inset-x-0 z-40 h-14 bg-[#0F2040] border-b border-[#1E3A5F] flex items-center px-3 gap-3 shadow-lg">
+        <button
+          onClick={() => setOpen(true)}
+          className="p-2 rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#1E3A5F] transition-all"
+          aria-label="Open menu"
+        >
+          <Menu size={20} />
+        </button>
 
-      {/* Backdrop — mobile only */}
+        <div className="flex-1 flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-[#00C896] flex items-center justify-center flex-shrink-0">
+            <span className="text-[#0A1628] font-black text-xs">K</span>
+          </div>
+          <span className="text-white font-bold text-sm tracking-wide">KRUX</span>
+          <span className="text-[#334155] text-xs hidden sm:block">Compliance Intelligence</span>
+        </div>
+
+        <NotificationBell />
+      </div>
+
+      {/* ── Backdrop (mobile) ── */}
       {open && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/70 z-40"
+          className="lg:hidden fixed inset-0 bg-black/70 z-40 backdrop-blur-sm"
           onClick={() => setOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* ── Sidebar ── */}
       <aside className={`
-        fixed left-0 top-0 h-full w-64 flex flex-col border-r border-[#1E3A5F] bg-[#0F2040] z-50
+        fixed left-0 top-0 h-full w-72 flex flex-col border-r border-[#1E3A5F] bg-[#0F2040] z-50
         transition-transform duration-300 ease-in-out
-        ${open ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:w-60
+        ${open ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
+        lg:translate-x-0 lg:w-60 lg:shadow-none
       `}>
+        {/* Sidebar header */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-[#1E3A5F]">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#00C896] flex items-center justify-center flex-shrink-0">
@@ -75,11 +88,12 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <NotificationBell />
-            {/* Close button — mobile only */}
+            <div className="hidden lg:block">
+              <NotificationBell />
+            </div>
             <button
               onClick={() => setOpen(false)}
-              className="lg:hidden p-1.5 text-[#64748B] hover:text-white transition-colors"
+              className="lg:hidden p-1.5 rounded-lg text-[#64748B] hover:text-white hover:bg-[#1E3A5F] transition-all"
               aria-label="Close menu"
             >
               <X size={16} />
@@ -87,6 +101,7 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
           </div>
         </div>
 
+        {/* Nav links */}
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           {nav.map(({ href, label, icon: Icon }) => {
             const active = pathname === href
@@ -108,6 +123,7 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
           })}
         </nav>
 
+        {/* Bottom actions */}
         <div className="px-3 py-4 border-t border-[#1E3A5F] space-y-0.5">
           <Link
             href="/dashboard/settings"
@@ -128,9 +144,9 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
             </button>
           </form>
 
-          <div className="px-3 pt-2">
+          <div className="px-3 pt-3">
             <div className="text-[#00C896] text-xs font-bold truncate">{userEmail}</div>
-            <div className="text-[#64748B] text-xs">KRUX v1.0</div>
+            <div className="text-[#334155] text-xs mt-0.5">KRUX v1.0</div>
           </div>
         </div>
       </aside>
