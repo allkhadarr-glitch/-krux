@@ -10,6 +10,7 @@ import {
   ClipboardList, Printer, Copy, Share2,
 } from 'lucide-react'
 import { getRegulator } from '@/lib/regulatory-intelligence'
+import { getDemoContent } from '@/lib/demo-content'
 
 // ─── Tabs ────────────────────────────────────────────────────
 
@@ -639,6 +640,16 @@ export default function ShipmentDrawer({
 
   async function generate(t: Exclude<Tab, 'timeline' | 'costs' | 'files' | 'tax'>) {
     if (results[t] || loading) return
+
+    // Demo mode: serve pre-written content instantly — no API call, no spinner
+    if (isDemo) {
+      const cached = getDemoContent(shipment.name, t)
+      if (cached) {
+        setResults((p) => ({ ...p, [t]: cached }))
+        return
+      }
+    }
+
     setLoading(t)
     try {
       const endpoint = AI_TABS.find((x) => x.key === t)!.endpoint

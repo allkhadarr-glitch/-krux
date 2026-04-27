@@ -320,15 +320,15 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
   await supabase.from('notifications').insert([
     {
       organization_id: orgId,
-      title: 'CRITICAL: Jet A-1 Fuel — EPRA permit not filed, 12 days to deadline',
-      body: 'Jet A-1 Aviation Fuel (500KL) — EPRA processing is 25 days. Deadline in 12 days. Clearance impossible without immediate escalation. KES 96M shipment at risk.',
+      title: 'CRITICAL: Jet A-1 Fuel — EPRA permit not filed',
+      body: 'Jet A-1 Aviation Fuel (500KL) — EPRA processing takes 25 days. PVoC deadline imminent. Clearance is mathematically impossible without immediate escalation. KES 96M shipment at risk.',
       type: 'CRITICAL',
       action_url: '/dashboard/operations',
     },
     {
       organization_id: orgId,
-      title: 'CRITICAL: Pyrethroid shipment — 3 days to deadline',
-      body: 'Lot P2024 has only 3 days until PVoC deadline. KEPHIS phytosanitary certificate still pending.',
+      title: 'CRITICAL: Pyrethroid shipment — deadline imminent',
+      body: 'Lot P2024 PVoC deadline is today. KEPHIS phytosanitary certificate still pending. Escalate immediately.',
       type: 'CRITICAL',
       action_url: '/dashboard/operations',
     },
