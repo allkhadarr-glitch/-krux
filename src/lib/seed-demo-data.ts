@@ -51,6 +51,7 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
       {
         organization_id:        orgId,
         name:                   'Amoxicillin 500mg — Batch K23B',
+        client_name:            'Bidco Africa Ltd',
         reference_number:       `KRUX-2026-PHR-${orgId.slice(0, 4).toUpperCase()}`,
         manufacturer_id:        mfr1?.id ?? null,
         regulatory_body_id:     bodyMap['PPB'] ?? null,
@@ -84,6 +85,7 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
       {
         organization_id:        orgId,
         name:                   'NPK Fertilizer 20-10-10 — 50MT',
+        client_name:            'Twiga Foods Ltd',
         reference_number:       `KRUX-2026-AGR-${orgId.slice(0, 4).toUpperCase()}`,
         manufacturer_id:        mfr2?.id ?? null,
         regulatory_body_id:     bodyMap['PCPB'] ?? null,
@@ -117,6 +119,7 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
       {
         organization_id:        orgId,
         name:                   'LED Panel Lighting Kit — CR2024',
+        client_name:            'Kapa Oil Ltd',
         reference_number:       `KRUX-2026-ELC-${orgId.slice(0, 4).toUpperCase()}`,
         manufacturer_id:        null,
         regulatory_body_id:     bodyMap['KEBS'] ?? null,
@@ -150,6 +153,7 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
       {
         organization_id:        orgId,
         name:                   'Pyrethroid Pesticide — Lot P2024',
+        client_name:            'Bidco Africa Ltd',
         reference_number:       `KRUX-2026-PST-${orgId.slice(0, 4).toUpperCase()}`,
         manufacturer_id:        mfr2?.id ?? null,
         regulatory_body_id:     bodyMap['KEPHIS'] ?? null,
@@ -172,7 +176,7 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
         total_landed_cost_kes:  7394925,
         exchange_rate_used:     129,
         storage_rate_per_day:   38,
-        pvoc_deadline:          addDays(3),
+        pvoc_deadline:          addDays(2),
         eta:                    addDays(1),
         risk_flag_status:       'RED',
         remediation_status:     'ESCALATED',
@@ -183,6 +187,7 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
       {
         organization_id:        orgId,
         name:                   'Jet A-1 Aviation Fuel — 500KL',
+        client_name:            'Kapa Oil Ltd',
         reference_number:       `KRUX-2026-JA1-${orgId.slice(0, 4).toUpperCase()}`,
         manufacturer_id:        null,
         regulatory_body_id:     bodyMap['EPRA'] ?? null,
@@ -205,12 +210,12 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
         total_landed_cost_kes:  96055200,
         exchange_rate_used:     129,
         storage_rate_per_day:   180,
-        pvoc_deadline:          addDays(12),
-        eta:                    addDays(8),
+        pvoc_deadline:          addDays(3),
+        eta:                    addDays(2),
         risk_flag_status:       'RED',
         remediation_status:     'IN_PROGRESS',
-        shipment_status:        'IN_TRANSIT',
-        composite_risk_score:   9,
+        shipment_status:        'AT_PORT',
+        composite_risk_score:   10,
         open_action_count:      3,
       },
     ])
