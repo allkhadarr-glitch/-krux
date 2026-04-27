@@ -3,8 +3,8 @@
 **Production URL:** https://krux-xi.vercel.app  
 **Billing test:** 7 / 7 passed  
 **GitHub:** github.com/allkhadarr-glitch/-krux · branch: master  
-**Latest deployment:** `krux-gddp5enp2-krux1.vercel.app` — READY  
-**Latest commit:** `bd31773` — fix: tighten operations table layout — 10 cols, compact status, risk border accent
+**Latest deployment:** `krux-gz20es444-krux1.vercel.app` — READY  
+**Latest commit:** `7869ea6` — fix: tighten operations page layout — less left gap, table fits on 1280px screens
 
 ---
 
@@ -730,10 +730,11 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 | `Sidebar.tsx` REWRITTEN — tier-one mobile nav | Removed floating hamburger. Added `h-14` sticky mobile top bar: hamburger (left) + KRUX logo (center) + NotificationBell (right). Desktop sidebar unchanged. Mobile sidebar `w-72` with `backdrop-blur-sm` overlay. Bell now always accessible on mobile. |
 | `AlertBanner.tsx` REWRITTEN | `formatKES()` abbreviates millions (KES 1.2M). Two-line layout: badge + name / regulator + days + est. loss. Shorter day label ("2d left" / "1d overdue"). Larger touch targets. |
 | `seed-demo-data.ts` — notification text | Removed hardcoded day counts from notification body text (degrades instantly in production). |
-| Operations table — 11→10 columns | Removed standalone Risk column. Left-border accent (2px) on Priority cell carries RED/AMBER/GREEN signal. Shorter headers: Deadline, CIF, Portals. Compact Status labels: Active/Open/Escalated/Closed. ESCALATED pulses with red dot. Action buttons icon-only. `px-4`→`px-3`. `min-w-[900px]`→`min-w-[860px]`. |
-| Git commit | `bd31773` — fix: tighten operations table layout — 10 cols, compact status, risk border accent |
+| Operations table — 11→10 columns | Removed standalone Risk column. Left-border accent (2px) on Priority cell carries RED/AMBER/GREEN signal. Shorter headers: Deadline, CIF, Portals. Compact Status labels: Active/Open/Escalated/Closed. ESCALATED pulses with red dot. Action buttons icon-only. `px-4`→`px-3`. `min-w-[900px]`→`min-w-[780px]`. |
+| Operations page padding | Outer container `p-4 lg:p-6` → `px-3 lg:px-4` — reduces dead space between sidebar and table from 24px to 16px. Status td gets `whitespace-nowrap` to prevent "Escalated" from being half-clipped at right edge. |
+| Git commit | `7869ea6` — fix: tighten operations page layout — less left gap, table fits on 1280px screens |
 | Git push | master → `allkhadarr-glitch/-krux` |
-| Vercel deployment | `krux-gddp5enp2-krux1.vercel.app` — READY |
+| Vercel deployment | `krux-gz20es444-krux1.vercel.app` — READY |
 
 ### Session 9 continued (HS codes + demo data fix + redeploy)
 | Step | Result |
