@@ -873,11 +873,11 @@ export default function OperationsPage() {
       {/* ── Desktop table (hidden below lg) ── */}
       <div className="hidden lg:block rounded-xl border border-[#1E3A5F] overflow-hidden">
         <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px]">
+        <table className="w-full min-w-[860px]">
           <thead>
             <tr className="border-b border-[#1E3A5F] bg-[#0F2040]">
-              {['Priority', 'Shipment', 'Stage', 'Regulator', 'PVoC Deadline', 'CIF Value', 'Landed Cost', 'Portal Status', 'Risk', 'Status', ''].map((h) => (
-                <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">
+              {['Priority', 'Shipment', 'Stage', 'Regulator', 'Deadline', 'CIF', 'Landed Cost', 'Portals', 'Status', ''].map((h) => (
+                <th key={h} className="px-3 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">
                   {h}
                 </th>
               ))}
@@ -886,7 +886,7 @@ export default function OperationsPage() {
           <tbody className="divide-y divide-[#1E3A5F]">
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={11} className="px-6 py-16 text-center">
+                <td colSpan={10} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-[#0F2040] border border-[#1E3A5F] flex items-center justify-center">
                       <Plus size={20} className="text-[#334155]" />
@@ -913,20 +913,39 @@ export default function OperationsPage() {
                 : alert?.level === 'URGENT'
                 ? 'bg-amber-500/5'
                 : ''
-              // Tooltip shows on the first CRITICAL row only, in demo mode, until dismissed
               const showTooltip = isDemo && !tooltipDismissed && isCriticalRow && idx === filtered.findIndex((x) => alerts.find((a) => a.shipmentId === x.id)?.level === 'CRITICAL')
+
+              // Left-border accent replaces standalone Risk column
+              const riskBorderClass =
+                s.risk_flag_status === 'RED'   ? 'border-l-2 border-l-red-500/70' :
+                s.risk_flag_status === 'AMBER'  ? 'border-l-2 border-l-amber-500/70' :
+                                                  'border-l-2 border-l-emerald-500/40'
+
+              // Compact status labels
+              const STATUS_LABEL: Record<string, string> = {
+                OPEN: 'Open', IN_PROGRESS: 'Active', ESCALATED: 'Escalated', CLOSED: 'Closed',
+              }
+              const STATUS_STYLE: Record<string, string> = {
+                OPEN:        'text-blue-400 bg-blue-400/10 border border-blue-400/30',
+                IN_PROGRESS: 'text-amber-400 bg-amber-400/10 border border-amber-400/30',
+                CLOSED:      'text-emerald-400 bg-emerald-400/10 border border-emerald-400/30',
+                ESCALATED:   'text-red-400 bg-red-400/15 border border-red-400/50 animate-pulse',
+              }
 
               return (
                 <tr
                   key={s.id}
                   className={`hover:bg-[#0F2040]/50 transition-colors relative ${rowBg} ${showTooltip ? 'ring-1 ring-red-500/40' : ''}`}
                 >
-                  <td className="px-4 py-3">
+                  {/* Priority — carries the left-border risk accent */}
+                  <td className={`px-3 py-3 ${riskBorderClass}`}>
                     <PriorityBadge level={s.risk?.priority_level} score={s.risk?.risk_score} compositeScore={s.composite_risk_score} />
                     <RiskDriversTooltip drivers={s.risk?.risk_drivers} />
                     <ScoreBreakdown daysLeft={s.risk?.days_to_deadline} cifUsd={s.cif_value_usd} delayProb={s.risk?.delay_probability} />
                   </td>
-                  <td className="px-4 py-3 relative">
+
+                  {/* Shipment */}
+                  <td className="px-3 py-3 relative">
                     {showTooltip && (
                       <div className="absolute -top-8 left-0 z-20 flex items-center gap-1.5 bg-red-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-lg whitespace-nowrap pointer-events-none">
                         <AlertTriangle size={10} />
@@ -952,37 +971,49 @@ export default function OperationsPage() {
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+
+                  {/* Stage */}
+                  <td className="px-3 py-3">
                     <StagePill shipmentId={s.id} currentStage={(s as any).shipment_stage ?? 'PRE_SHIPMENT'} />
                   </td>
-                  <td className="px-4 py-3">
+
+                  {/* Regulator */}
+                  <td className="px-3 py-3">
                     <RegulatorBadge body={s.regulatory_body?.code ?? '—'} />
                   </td>
-                  <td className="px-4 py-3">
+
+                  {/* Deadline */}
+                  <td className="px-3 py-3">
                     <div className="text-sm text-white">{formatDate(s.pvoc_deadline!)}</div>
                     <div className={`text-xs mt-0.5 flex items-center gap-1 ${days <= 3 ? 'text-red-400' : days <= 7 ? 'text-amber-400' : 'text-[#64748B]'}`}>
                       {days <= 7 && <AlertTriangle size={10} />}
                       <Clock size={10} />
-                      {days > 0 ? `${days}d remaining` : `${Math.abs(days)}d overdue`}
+                      {days > 0 ? `${days}d left` : `${Math.abs(days)}d over`}
                     </div>
                     <ImpossibleWindowBadge regCode={s.regulatory_body?.code} daysLeft={days} />
                   </td>
-                  <td className="px-4 py-3 text-sm text-white">{formatUSD(s.cif_value_usd)}</td>
-                  <td className="px-4 py-3">
+
+                  {/* CIF */}
+                  <td className="px-3 py-3 text-sm text-white tabular-nums">{formatUSD(s.cif_value_usd)}</td>
+
+                  {/* Landed Cost */}
+                  <td className="px-3 py-3">
                     {s.total_landed_cost_kes ? (
                       <>
-                        <div className="text-sm font-bold text-[#00C896]">
+                        <div className="text-sm font-bold text-[#00C896] tabular-nums">
                           KES {s.total_landed_cost_kes >= 1_000_000
                             ? `${(s.total_landed_cost_kes / 1_000_000).toFixed(1)}M`
                             : s.total_landed_cost_kes.toLocaleString()}
                         </div>
-                        <div className="text-[10px] text-[#64748B]">{formatUSD(s.total_landed_cost_usd!)}</div>
+                        <div className="text-[10px] text-[#64748B] tabular-nums">{formatUSD(s.total_landed_cost_usd!)}</div>
                       </>
                     ) : (
-                      <span className="text-sm font-semibold text-[#00C896]">{formatUSD(s.total_landed_cost_usd!)}</span>
+                      <span className="text-sm font-semibold text-[#00C896] tabular-nums">{formatUSD(s.total_landed_cost_usd!)}</span>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+
+                  {/* Portals */}
+                  <td className="px-3 py-3">
                     <div className="flex items-center gap-2">
                       <PortalDots portals={s.portals} />
                       <button
@@ -994,14 +1025,22 @@ export default function OperationsPage() {
                       </button>
                     </div>
                   </td>
-                  <td className="px-4 py-3"><RiskBadge risk={s.risk_flag_status} /></td>
-                  <td className="px-4 py-3"><StatusBadge status={s.remediation_status} /></td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1.5">
+
+                  {/* Status — compact label, no separate Risk column */}
+                  <td className="px-3 py-3">
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUS_STYLE[s.remediation_status] ?? ''}`}>
+                      {s.remediation_status === 'ESCALATED' && <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block" />}
+                      {STATUS_LABEL[s.remediation_status] ?? s.remediation_status}
+                    </span>
+                  </td>
+
+                  {/* Actions */}
+                  <td className="px-3 py-3">
+                    <div className="flex items-center gap-1">
                       {canWrite && (
                         <button onClick={() => setEditTarget(s)}
-                          className="flex items-center gap-1 px-2 py-1 border border-[#1E3A5F] text-[#64748B] rounded-md text-[10px] font-semibold hover:border-[#00C896]/40 hover:text-[#00C896] transition-all"
-                          title="Edit shipment">
+                          className="p-1.5 border border-[#1E3A5F] text-[#64748B] rounded-md hover:border-[#00C896]/40 hover:text-[#00C896] transition-all"
+                          title="Edit">
                           <Pencil size={11} />
                         </button>
                       )}
@@ -1012,8 +1051,8 @@ export default function OperationsPage() {
                         </button>
                       )}
                       <button onClick={() => window.open(`/api/shipments/${s.id}/export`, '_blank')}
-                        className="flex items-center gap-1 px-2 py-1 border border-[#1E3A5F] text-[#64748B] rounded-md text-[10px] font-semibold hover:border-blue-500/40 hover:text-blue-400 transition-all"
-                        title="Export audit report">
+                        className="p-1.5 border border-[#1E3A5F] text-[#64748B] rounded-md hover:border-blue-500/40 hover:text-blue-400 transition-all"
+                        title="Export">
                         <FileDown size={11} />
                       </button>
                       {canWrite && (
@@ -1022,8 +1061,8 @@ export default function OperationsPage() {
                             const d = await r.json()
                             if (d.shipment) setShipments((prev) => [d.shipment, ...prev])
                           }}
-                          className="flex items-center gap-1 px-2 py-1 border border-[#1E3A5F] text-[#64748B] rounded-md text-[10px] font-semibold hover:border-purple-500/40 hover:text-purple-400 transition-all"
-                          title="Duplicate shipment">
+                          className="p-1.5 border border-[#1E3A5F] text-[#64748B] rounded-md hover:border-purple-500/40 hover:text-purple-400 transition-all"
+                          title="Duplicate">
                           <Copy size={11} />
                         </button>
                       )}
