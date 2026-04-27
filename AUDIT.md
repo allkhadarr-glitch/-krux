@@ -1,10 +1,10 @@
 # KRUX Platform — Full Build Audit
-**Last updated:** 2026-04-27 (Session 7)  
+**Last updated:** 2026-04-27 (Session 8)  
 **Production URL:** https://krux-xi.vercel.app  
 **Billing test:** 7 / 7 passed  
 **GitHub:** github.com/allkhadarr-glitch/-krux · branch: master  
-**Latest deployment:** `krux-ku62m5hh6-krux1.vercel.app` — READY  
-**Latest commit:** `6f5f6a0` — Sprint 7: Client Portfolio, Bulk CSV Import, Client Share Links
+**Latest deployment:** `krux-j3nh9o4n3-krux1.vercel.app` — READY  
+**Latest commit:** `55fc56b` — Sprint 9 partial: weekly digest, regulator performance, billing go-live guide
 
 ---
 
@@ -188,6 +188,7 @@ Kenya importers miss PVoC deadlines because they have no single system that trac
 | `20260424000022_stripe.sql` | Adds `stripe_customer_id`, `stripe_subscription_id`, `stripe_price_id` to `organizations` |
 | `20260426000023_shared_briefs.sql` | `shared_briefs` table — token, brief_text, shipment_name, regulator, expires_at (7-day TTL). Public read, org-isolated write |
 | `20260426000024_fix_risk_score_scale.sql` | Risk score display scale fix |
+| `20260427000025_client_portfolio.sql` | `client_name` column on `shipments`, `client_share_tokens` table (token, org, client_name, expires_at), `whatsapp_number` on `user_profiles`. Applied via Supabase CLI `db query --linked` |
 
 ---
 
@@ -294,6 +295,11 @@ Kenya importers miss PVoC deadlines because they have no single system that trac
 |---|---|---|
 | `/api/waitlist` | POST | Waitlist signup |
 | `/api/seed-demo` | POST | Seed demo data for new orgs |
+| `/api/client-share` | GET/POST | Create (POST) or list (GET) read-only share tokens per client name (30-day TTL). Returns public URL `/client/[token]` |
+| `/api/client-share/[token]` | GET | Public. Resolves token → shipments for that client. Returns 410 if expired |
+| `/api/analytics/weekly-digest` | GET/POST | Builds + sends weekly HTML email digest to management/admin users. Cron: every Monday 07:00 UTC |
+| `/api/analytics/regulator-performance` | GET | Returns actual clearance days vs official SLA benchmarks per regulator for org's closed shipments |
+| `/api/whatsapp/inbound` | POST | Twilio webhook. Handles inbound WhatsApp commands: "status" → triage, "done [ref]" → mark submitted, "snooze [ref] [days]" → pause alerts, "help" → command list. Looks up user by `whatsapp_number` in user_profiles |
 
 ---
 
@@ -365,6 +371,7 @@ Accepts PDF or image file (max 10MB). Sends base64 to Claude Sonnet 4.6 with Ken
 
 | Page | Path | Key features |
 |---|---|---|
+| Client Portal (public) | `/client/[token]` | Read-only public page per client. Shows active shipments with days remaining, risk badge, landed cost, regulator. No login required — token is the secret. Expires after 30 days. |
 | Operations | `/dashboard/operations` | Shipment table sorted by risk score, risk drivers tooltip, stage pill (inline update), portal dots, alert banners with KES cost, close modal with integrity/coherence warnings, edit, duplicate, export, real-time Supabase subscription |
 | Shipment Drawer | (slide-over) | 7 tabs: Brief (AI), Steps (AI), Checklist (AI), Duty calc, Costs (CRUD), Files (upload/download), Timeline. Mark Cleared with confirm. Risk footer with score + delay probability |
 | Closed | `/dashboard/closed` | Archive of cleared/cancelled shipments |
@@ -383,6 +390,7 @@ Accepts PDF or image file (max 10MB). Sends base64 to Claude Sonnet 4.6 with Ken
 | Management | `/dashboard/management` | Management overview |
 | Agents | `/dashboard/agents` | Clearing agent tracker |
 | Client | `/dashboard/client` | Client-facing view |
+| Portfolio | `/dashboard/portfolio` | Clearing agent multi-client view. Shipments grouped by `client_name`, sorted by critical count then next deadline. Left accent border by risk. Expand/collapse per client. Share link generates `/client/[token]` URL (30-day TTL). Bulk CSV import modal (required cols: name, cif_value_usd; optional: client_name, origin_port, pvoc_deadline, regulatory_body, product_description) |
 | Mobile | `/dashboard/mobile` | Mobile-optimized view |
 | Onboarding | `/dashboard/onboarding` | New org setup wizard (shown on first login if no shipments) |
 
@@ -590,6 +598,16 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 - [x] **Mobile-first Operations triage view** — auto-sorted card list (CRITICAL → HIGH → MEDIUM → LOW, then by days remaining ASC). Two groups: "Needs Attention" (CRITICAL/HIGH or ≤7d) + "On Track". Left accent border by risk color (RED/AMBER/GREEN). Full card tappable to open drawer. Hero countdown number visible immediately. Edit/Close/Export as large tap targets. Admin buttons (Run Events/Alerts) hidden on mobile. Desktop table unchanged (full 11 columns, `hidden lg:block`).
 - [x] Email sender domain — all emails now send from `@kruxvon.com` (verified in Resend)
 - [x] Welcome email working — `kruxvon.com` DNS verified, welcome email delivered to real users
+- [x] **Client Portfolio dashboard** — `/dashboard/portfolio` — clearing agents manage all importers in one view, grouped by client, sorted by criticality
+- [x] **Bulk CSV shipment import** — upload CSV in Portfolio page, preview table, one-click import of N shipments
+- [x] **Client share links** — `/client/[token]` public read-only portal per importer, 30-day TTL, no login required
+- [x] `client_name` field on shipments — wired into AddShipmentModal + Portfolio grouping
+- [x] **WhatsApp inbound commands** — `/api/whatsapp/inbound` Twilio webhook handles: status, done [ref], snooze [ref] [days], help
+- [x] `whatsapp_number` field on user_profiles — set in Settings page, used to route inbound WhatsApp to correct org
+- [x] **Weekly email digest** — `/api/analytics/weekly-digest` — Monday cron, HTML email with portfolio summary + top critical shipments per org
+- [x] **Regulator performance API** — `/api/analytics/regulator-performance` — actual clearance time vs official SLA benchmarks
+- [x] **Billing go-live guide** — "Currently in Test Mode" banner on billing page with 5-step Stripe live mode instructions
+- [x] **Supabase CLI migration runner** — `npx supabase db query --linked -f <file>` confirmed working for remote schema changes without Docker
 
 ---
 
@@ -597,7 +615,7 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 
 | Feature | Blocked by | Action to unblock |
 |---|---|---|
-| WhatsApp morning brief | Twilio env vars not set | Add `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM`, `ALERT_WHATSAPP_TO` to Vercel env vars |
+| WhatsApp morning brief + inbound commands | Twilio env vars not set. **Backend fully built** — `/api/whatsapp/inbound` handles status/done/snooze/help. Just needs 4 env vars in Vercel. | Add `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM`, `ALERT_WHATSAPP_TO` to Vercel. Set Twilio sandbox webhook URL to `https://krux-xi.vercel.app/api/whatsapp/inbound`. User must add their WhatsApp number in Settings. |
 | WhatsApp deadline alerts | Same | Same |
 | Stripe LIVE mode | Using test keys | Rotate to live Stripe key, re-run `setup-stripe.js` against live, register new webhook |
 | Welcome email from real domain | ~~Resend `from:` was unverified~~ — **FIXED Session 5**: `kruxvon.com` verified, all emails send from `@kruxvon.com` | ✅ Done |
@@ -609,7 +627,7 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 
 | Feature | Notes |
 |---|---|
-| WhatsApp alerts | Code exists, Twilio not wired. 4 env vars needed. This is the core product promise — must ship. |
+| WhatsApp alerts + inbound | Full backend built (outbound deadline alerts + inbound status/done/snooze/help). Twilio not wired. 4 env vars needed + webhook URL set in Twilio console. |
 | Real-time portal scraping | Manual status entry only — would need KenTrade/KEBS API or scheduled browser scraping |
 | API access tier | Planned for Enterprise — no API key management built |
 | Revenue share module | For audit agencies — referenced in types, not built |
@@ -685,6 +703,16 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 | Cron verification — all 6 endpoints live-tested | `/api/events/process` ✅ · `/api/actions/evaluate` ✅ · `/api/actions/at-risk` ✅ · `/api/alerts/send` ✅ · `/api/ai/morning-briefing/send` ✅ (3 CRITICAL, 2 URGENT, 4 WATCH, 6 ON_TRACK, KES 2.09M at risk) · `/api/demo/reset` ✅ |
 | Lead recovery emails sent | `HQ@ELEMENT72VITALITY.COM` (Resend ID `c009e89b`) + `haaji1242@gmail.com` (Resend ID `8db60550`) — branded KRUX HTML email, direct signup link |
 
+### Session 8 (Sprints 7, 8, 9 — client portfolio + WhatsApp inbound + weekly digest)
+| Step | Result |
+|---|---|
+| Migration `20260427000025_client_portfolio.sql` applied to production | Via `npx supabase db query --linked -f ...` — confirmed: `client_name` ✓, `client_share_tokens` ✓, `whatsapp_number` ✓ |
+| Sprint 7 pushed to GitHub | Commit `6f5f6a0` — client portfolio, bulk CSV import, client share links |
+| Sprint 8 pushed to GitHub | Commit `547b959` — WhatsApp inbound commands, whatsapp_number in Settings |
+| Sprint 9 partial committed + pushed | Commit `55fc56b` — weekly digest, regulator performance, billing go-live guide |
+| Vercel production deployment | `dpl_HwU59UMnAJuSFJTgjy7Q5Q5X9U3u` — `krux-j3nh9o4n3-krux1.vercel.app` — READY. 80 routes compiled. |
+| AUDIT.md updated | This entry |
+
 ### Session 5 (mobile + email fixes)
 | Step | Result |
 |---|---|
@@ -738,26 +766,33 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 - [x] All 6 Vercel crons verified live — firing correctly, auth confirmed
 - [x] Lead recovery emails sent to both lost leads (Session 6)
 
+### Done (Session 8 — Sprints 7, 8, 9 partial)
+- [x] Client Portfolio dashboard (`/dashboard/portfolio`) — multi-client view for clearing agents
+- [x] Bulk CSV shipment import — upload CSV, preview, one-click import
+- [x] Client share links — `/client/[token]` read-only public portal per importer
+- [x] `client_name` on shipments + wired into AddShipmentModal
+- [x] WhatsApp inbound command handler — status, done, snooze, help
+- [x] `whatsapp_number` on user_profiles + Settings page field
+- [x] Weekly email digest cron (Monday 07:00 UTC)
+- [x] Regulator performance API
+- [x] Billing go-live guide (5-step Stripe live mode instructions)
+- [x] Migration 25 applied to production via Supabase CLI
+- [x] All 3 sprints deployed: `krux-j3nh9o4n3-krux1.vercel.app` READY
+
 ### Now unblocked (needs your input only)
-1. **Wire Twilio WhatsApp** — provide 4 values: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM` (e.g. `whatsapp:+14155238886`), `ALERT_WHATSAPP_TO` (your +254 number). I push them to Vercel and it goes live in 60 seconds. This is the core product differentiator.
-2. **Custom domain** — you pick/buy `krux.co.ke` or `kruxapp.io`. I do the Vercel config + Resend sender swap. Needed before any enterprise demo.
+1. **Wire Twilio WhatsApp** — entire backend is built. Provide 4 values: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM` (e.g. `whatsapp:+14155238886`), `ALERT_WHATSAPP_TO` (your +254 number). Also set webhook URL in Twilio console to `https://krux-xi.vercel.app/api/whatsapp/inbound`. Done in 5 minutes.
+2. **Custom domain** — pick/buy `krux.co.ke` or `kruxapp.io`. I do the Vercel config + Resend sender swap. Needed before any enterprise demo.
+3. **Stripe live mode** — billing page now has 5-step guide. Rotate to live keys, re-run `setup-stripe.js`, register live webhook.
 
-### Level-up roadmap (next 3 sprints)
+### Level-up roadmap (remaining sprints)
 
-**Sprint 7 — Clearing agent power user (biggest market)**
-- Multi-client dashboard: clearing agents manage 10–30 importers. One view showing all clients + critical deadlines
-- Bulk CSV shipment import — reduces onboarding from 30min to 3min
-- Client-facing share link (read-only per-client view, no login required)
+**Sprint 7 ✅ DONE** — Client Portfolio, Bulk CSV Import, Client Share Links
 
-**Sprint 8 — WhatsApp-native interface**
-- Inbound WhatsApp: user texts "status" → KRUX replies with today's critical shipments
-- Reply to deadline alert → snooze or mark portal submitted
-- This turns KRUX into a tool that works without opening a laptop
+**Sprint 8 ✅ DONE** — WhatsApp inbound commands (status/done/snooze/help), whatsapp_number in Settings
 
-**Sprint 9 — Intelligence + monetization**
-- Stripe LIVE mode — rotate keys, real revenue
-- Predictive delay scoring — track actual regulator turnaround times, surface "PPB is running 60d this month" warnings
-- Weekly email digest for management tier users (read-only role gets a PDF summary, not raw dashboard)
+**Sprint 9 (partial)** — Weekly digest ✅, Regulator performance ✅, Billing go-live guide ✅. Still to do:
+- Stripe LIVE mode rotation (user action + `node scripts/setup-stripe.js`)
+- Predictive delay scoring — surface "PPB is running 60d this month" from real `regulator_delay_profiles` data
 
 ### After product-market fit confirmed
 - WhatsApp Business API (move off Twilio sandbox to official BSP when volume justifies)
