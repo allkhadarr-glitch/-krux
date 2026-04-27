@@ -28,10 +28,10 @@ export default function ClientPage() {
   const days = s.pvoc_deadline ? daysUntilDeadline(s.pvoc_deadline) : null
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="px-4 lg:px-5 py-5 lg:py-6 space-y-4 lg:space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Client Shipment Portal</h1>
+          <h1 className="text-xl lg:text-2xl font-bold text-white">Client Shipment Portal</h1>
           <p className="text-[#64748B] text-sm mt-1">Your live shipment status · KRUX Intelligence</p>
         </div>
         <select
@@ -45,7 +45,7 @@ export default function ClientPage() {
         </select>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-5 col-span-2">
           <div className="flex items-start justify-between">
             <div>
@@ -62,7 +62,7 @@ export default function ClientPage() {
             <RiskBadge risk={s.risk_flag_status} />
           </div>
 
-          <div className="grid grid-cols-3 gap-4 mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-4 mt-6">
             <div>
               <div className="text-[#64748B] text-xs mb-1">Regulatory Body</div>
               <RegulatorBadge body={s.regulatory_body?.code ?? '—'} />
@@ -110,7 +110,7 @@ export default function ClientPage() {
 
       <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-5">
         <h3 className="text-white font-semibold mb-3">Shipment Details</h3>
-        <div className="grid grid-cols-3 gap-4 text-sm">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4 text-sm">
           <div className="p-3 bg-[#0A1628] rounded-lg">
             <div className="text-[#64748B] text-xs mb-1">Regulator</div>
             <div className="text-white font-medium">{s.regulatory_body?.code ?? '—'}</div>

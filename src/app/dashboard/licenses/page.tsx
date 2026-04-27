@@ -142,12 +142,12 @@ export default function LicensesPage() {
   if (loading) return <div className="flex items-center justify-center h-64 text-[#64748B]"><Loader2 size={20} className="animate-spin mr-2" />Loading...</div>
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="px-4 lg:px-5 py-5 lg:py-6 space-y-4 lg:space-y-6">
       {showAdd && <AddDocModal onClose={() => setShowAdd(false)} onSave={(d) => { setDocs((prev) => [...prev, d].sort((a, b) => a.expiry_date.localeCompare(b.expiry_date))); setShowAdd(false) }} />}
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">License &amp; Certificate Tracker</h1>
+          <h1 className="text-xl lg:text-2xl font-bold text-white">License &amp; Certificate Tracker</h1>
           <p className="text-[#64748B] text-sm mt-1">{docs.length} documents · {expired.length} expired · {urgent.length} expiring soon</p>
         </div>
         <button onClick={() => setShowAdd(true)}

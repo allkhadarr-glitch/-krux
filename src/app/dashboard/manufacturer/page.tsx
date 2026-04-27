@@ -420,10 +420,10 @@ export default function ManufacturerVaultPage() {
   if (error)   return <div className="flex items-center justify-center h-64 text-red-400">Error: {error}</div>
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="px-4 lg:px-5 py-5 lg:py-6 space-y-4 lg:space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Manufacturer Vault</h1>
+          <h1 className="text-xl lg:text-2xl font-bold text-white">Manufacturer Vault</h1>
           <p className="text-[#64748B] text-sm mt-1">
             {manufacturers.length} manufacturer{manufacturers.length !== 1 ? 's' : ''} · {totalLicenses} licenses tracked
           </p>

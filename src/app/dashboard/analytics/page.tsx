@@ -52,9 +52,9 @@ export default function AnalyticsPage() {
   const { closed, active, actions, cost_breakdown } = stats
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="px-4 lg:px-5 py-5 lg:py-6 space-y-4 lg:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Analytics</h1>
+        <h1 className="text-xl lg:text-2xl font-bold text-white">Analytics</h1>
         <p className="text-[#64748B] text-sm mt-1">Last 90 days · {closed.total} closed shipments · {active.count} active</p>
       </div>
 
@@ -87,7 +87,8 @@ export default function AnalyticsPage() {
           <p className="text-xs text-[#64748B]">No cost data yet. Add costs to shipments via the Costs tab.</p>
         ) : (
           <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl overflow-hidden">
-            <table className="w-full">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[360px]">
               <thead>
                 <tr className="border-b border-[#1E3A5F] bg-[#0A1628]">
                   {['Cost Type', 'Total (KES)', '% of Total'].map((h) => (
@@ -124,6 +125,7 @@ export default function AnalyticsPage() {
                 </tr>
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>

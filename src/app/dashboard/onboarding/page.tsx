@@ -145,7 +145,7 @@ export default function OnboardingPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Getting Started</h1>
+          <h1 className="text-xl lg:text-2xl font-bold text-white">Getting Started</h1>
           <p className="text-[#64748B] text-sm mt-1">
             {allDone
               ? "You're all set — KRUX is fully configured."

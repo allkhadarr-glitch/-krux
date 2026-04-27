@@ -116,7 +116,7 @@ function BillingContent() {
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-white">Billing & Subscription</h1>
+        <h1 className="text-xl lg:text-2xl font-bold text-white">Billing & Subscription</h1>
         <p className="text-[#64748B] text-sm mt-1">Manage your KRUX plan</p>
       </div>
 

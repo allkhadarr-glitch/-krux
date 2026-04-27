@@ -4,7 +4,7 @@ import { Sparkles } from 'lucide-react'
 
 export function DemoBanner() {
   return (
-    <div className="w-full bg-[#00C896]/10 border-b border-[#00C896]/20 px-6 py-2 flex items-center justify-between">
+    <div className="hidden lg:flex w-full bg-[#00C896]/10 border-b border-[#00C896]/20 px-6 py-2 items-center justify-between">
       <div className="flex items-center gap-2">
         <Sparkles size={12} className="text-[#00C896]" />
         <span className="text-xs text-[#00C896] font-semibold">DEMO</span>

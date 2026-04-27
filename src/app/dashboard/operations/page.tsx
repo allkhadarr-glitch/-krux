@@ -617,7 +617,7 @@ export default function OperationsPage() {
       {/* ── Desktop header (hidden on mobile) ── */}
       <div className="hidden lg:flex lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Operations Dashboard</h1>
+          <h1 className="text-xl lg:text-2xl font-bold text-white">Operations Dashboard</h1>
           <p className="text-[#64748B] text-sm mt-1">
             {filtered.length} shipments · Kenya Import Compliance
             {alerts.length > 0 && (

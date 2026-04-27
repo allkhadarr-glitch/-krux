@@ -105,15 +105,15 @@ export default function ClosedShipmentsPage() {
   if (error)   return <div className="flex items-center justify-center h-64 text-red-400">Error: {error}</div>
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="px-4 lg:px-5 py-5 lg:py-6 space-y-4 lg:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Closed Shipments</h1>
+        <h1 className="text-xl lg:text-2xl font-bold text-white">Closed Shipments</h1>
         <p className="text-[#64748B] text-sm mt-1">Last 30 days · {rows.length} closed</p>
       </div>
 
       {/* Summary strip */}
       {rows.length > 0 && (
-        <div className="grid grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 lg:gap-4">
           {[
             { label: 'Cleared',          value: `${cleared} / ${rows.length}`,                             icon: CheckCircle2,  color: 'text-emerald-400' },
             { label: 'Regime A (Exec)',  value: `${cohortA.length} / ${rows.length}`,                      icon: Clock,         color: 'text-blue-400' },
@@ -140,7 +140,8 @@ export default function ClosedShipmentsPage() {
         </div>
       ) : (
         <div className="rounded-xl border border-[#1E3A5F] overflow-hidden">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px]">
             <thead>
               <tr className="border-b border-[#1E3A5F] bg-[#0F2040]">
                 {['Shipment', 'Regime', 'Outcome', 'Closed', 'Duration', 'Delay', 'Penalty (KES)', 'Actions', 'Critical Missed'].map((h) => (
@@ -201,6 +202,7 @@ export default function ClosedShipmentsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

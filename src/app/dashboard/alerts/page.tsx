@@ -108,7 +108,7 @@ export default function AlertsPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Alerts Center</h1>
+          <h1 className="text-xl lg:text-2xl font-bold text-white">Alerts Center</h1>
           <p className="text-[#64748B] text-sm mt-1">
             {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'} · {notifications.length} total notifications
           </p>

@@ -66,7 +66,7 @@ export default function TeamPage() {
     <div className="p-6 space-y-6 max-w-3xl">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Team</h1>
+          <h1 className="text-xl lg:text-2xl font-bold text-white">Team</h1>
           <p className="text-[#64748B] text-sm mt-1">{members.length} member{members.length !== 1 ? 's' : ''} · {invites.length} pending invite{invites.length !== 1 ? 's' : ''}</p>
         </div>
         <button

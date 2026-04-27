@@ -101,7 +101,7 @@ export default function SettingsPage() {
   return (
     <div className="p-6 space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-white">Settings</h1>
+        <h1 className="text-xl lg:text-2xl font-bold text-white">Settings</h1>
         <p className="text-[#64748B] text-sm mt-1">Manage your profile and access</p>
       </div>
 

@@ -377,11 +377,11 @@ export default function OrdersPage() {
   )
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="px-4 lg:px-5 py-5 lg:py-6 space-y-4 lg:space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Order Protection</h1>
+          <h1 className="text-xl lg:text-2xl font-bold text-white">Order Protection</h1>
           <p className="text-[#64748B] text-sm mt-1">
             {activeOrders.length} active order{activeOrders.length !== 1 ? 's' : ''} · advance payments tracked
           </p>

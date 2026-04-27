@@ -54,13 +54,13 @@ export default function ManagementPage() {
   if (loading) return <div className="flex items-center justify-center h-64 text-[#64748B]">Loading dashboard...</div>
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="px-4 lg:px-5 py-5 lg:py-6 space-y-4 lg:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Management Dashboard</h1>
+        <h1 className="text-xl lg:text-2xl font-bold text-white">Management Dashboard</h1>
         <p className="text-[#64748B] text-sm mt-1">Executive overview · KRUX Compliance Portfolio</p>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
         {[
           { label: 'Total Shipments', value: kpis.total_shipments.toString(), icon: Package, color: '#00C896' },
           { label: 'Landed Cost USD', value: formatUSD(kpis.total_usd), icon: DollarSign, color: '#00C896' },
@@ -74,12 +74,12 @@ export default function ManagementPage() {
                 <Icon size={16} style={{ color }} />
               </div>
             </div>
-            <div className="text-2xl font-bold text-white">{value}</div>
+            <div className="text-xl lg:text-2xl font-bold text-white">{value}</div>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-5">
           <h3 className="text-white font-semibold mb-4">Risk Distribution</h3>
           <div className="space-y-3">

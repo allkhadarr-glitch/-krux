@@ -90,7 +90,7 @@ function StatsStrip({ shipments }: { shipments: EnrichedShipment[] }) {
   ]
 
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
       {stats.map((s) => {
         const Icon = s.icon
         return (
@@ -316,12 +316,12 @@ export default function CommandCenterPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="px-4 lg:px-5 py-5 lg:py-6 space-y-4 lg:space-y-6">
 
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Command Center</h1>
+          <h1 className="text-xl lg:text-2xl font-bold text-white">Command Center</h1>
           <p className="text-[#64748B] text-sm mt-1">{today} · {shipments.length} active shipments</p>
         </div>
         {shipments.some((s) => s.urgency === 'CRITICAL') && (
