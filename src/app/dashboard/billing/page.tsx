@@ -227,6 +227,37 @@ function BillingContent() {
         <a href="/terms" className="text-[#00C896] hover:underline">Terms</a> ·{' '}
         <a href="/privacy" className="text-[#00C896] hover:underline">Privacy</a>
       </p>
+
+      {/* Go Live with Stripe */}
+      <div className="bg-[#0F2040] border border-amber-500/20 rounded-xl p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
+            <span className="text-amber-400 text-xs font-bold">!</span>
+          </div>
+          <h3 className="text-white font-semibold">Currently in Test Mode</h3>
+          <span className="px-2 py-0.5 bg-amber-500/10 text-amber-400 text-[10px] font-bold rounded-full border border-amber-500/20">TEST</span>
+        </div>
+        <p className="text-[#64748B] text-sm mb-5 leading-relaxed">
+          Subscriptions are processed with Stripe test keys. No real charges occur. To accept live payments, follow these steps:
+        </p>
+        <ol className="space-y-3">
+          {[
+            { n: '1', label: 'Get live keys', detail: 'Stripe Dashboard → Developers → API Keys → switch to Live mode. Copy sk_live_... and pk_live_...' },
+            { n: '2', label: 'Update STRIPE_SECRET_KEY in Vercel', detail: 'Vercel → Project → Settings → Environment Variables → replace sk_test_... with sk_live_...' },
+            { n: '3', label: 'Re-run setup-stripe.js', detail: 'node scripts/setup-stripe.js — creates live products + updates STRIPE_PRICE_* env vars automatically' },
+            { n: '4', label: 'Register live webhook', detail: 'Stripe Dashboard → Webhooks → Add endpoint → https://krux-xi.vercel.app/api/payments/webhook — select: checkout.session.completed, invoice.paid, customer.subscription.deleted' },
+            { n: '5', label: 'Update STRIPE_WEBHOOK_SECRET', detail: 'Copy the new whsec_... signing secret from the live webhook → update in Vercel env vars → redeploy' },
+          ].map(({ n, label, detail }) => (
+            <li key={n} className="flex gap-4">
+              <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{n}</div>
+              <div>
+                <div className="text-white text-sm font-semibold">{label}</div>
+                <div className="text-[#64748B] text-xs mt-0.5 leading-relaxed">{detail}</div>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
     </div>
   )
 }
