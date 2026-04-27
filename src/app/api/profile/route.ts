@@ -13,15 +13,16 @@ export async function GET(req: NextRequest) {
 
   const { data } = await supabase
     .from('user_profiles')
-    .select('full_name, role, phone, organization_id')
+    .select('full_name, role, phone, whatsapp_number, organization_id')
     .eq('user_id', userId)
     .single()
 
   return NextResponse.json({
-    full_name:       data?.full_name ?? '',
-    role:            data?.role ?? role,
-    phone:           data?.phone ?? '',
-    organization_id: data?.organization_id ?? orgId,
+    full_name:        data?.full_name ?? '',
+    role:             data?.role ?? role,
+    phone:            data?.phone ?? '',
+    whatsapp_number:  data?.whatsapp_number ?? '',
+    organization_id:  data?.organization_id ?? orgId,
   })
 }
 
@@ -33,10 +34,11 @@ export async function PATCH(req: NextRequest) {
 
   await upsertUserProfile({
     userId,
-    organizationId: body.organization_id ?? orgId,
-    role:           body.role,
-    fullName:       body.full_name,
-    phone:          body.phone,
+    organizationId:  body.organization_id ?? orgId,
+    role:            body.role,
+    fullName:        body.full_name,
+    phone:           body.phone,
+    whatsappNumber:  body.whatsapp_number,
   })
 
   return NextResponse.json({ ok: true })

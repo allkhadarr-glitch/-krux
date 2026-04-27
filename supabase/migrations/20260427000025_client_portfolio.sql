@@ -1,4 +1,4 @@
--- Sprint 7: Client Portfolio support
+-- Sprint 7 + 8: Client Portfolio + WhatsApp inbound
 -- Adds client_name to shipments so clearing agents can group by importer
 -- Adds client_share_tokens for read-only per-client portal links
 
@@ -29,3 +29,7 @@ CREATE POLICY "org_isolation" ON client_share_tokens
 
 CREATE POLICY "public_token_read" ON client_share_tokens
   FOR SELECT USING (true);
+
+-- WhatsApp number on user_profiles (Sprint 8 inbound webhook lookup)
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS whatsapp_number TEXT;
+CREATE INDEX IF NOT EXISTS idx_user_profiles_whatsapp ON user_profiles(whatsapp_number) WHERE whatsapp_number IS NOT NULL;

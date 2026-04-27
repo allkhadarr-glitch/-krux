@@ -97,18 +97,20 @@ export async function getServerSessionContext(): Promise<{
 
 // Upsert a user profile (called on first login / settings save)
 export async function upsertUserProfile(opts: {
-  userId:         string
-  organizationId: string
-  role:           string
-  fullName?:      string
-  phone?:         string
+  userId:           string
+  organizationId:   string
+  role:             string
+  fullName?:        string
+  phone?:           string
+  whatsappNumber?:  string
 }) {
   return serviceSupabase.from('user_profiles').upsert({
-    user_id:         opts.userId,
-    organization_id: opts.organizationId,
-    role:            opts.role,
-    full_name:       opts.fullName ?? null,
-    phone:           opts.phone ?? null,
-    updated_at:      new Date().toISOString(),
+    user_id:          opts.userId,
+    organization_id:  opts.organizationId,
+    role:             opts.role,
+    full_name:        opts.fullName ?? null,
+    phone:            opts.phone ?? null,
+    ...(opts.whatsappNumber !== undefined ? { whatsapp_number: opts.whatsappNumber || null } : {}),
+    updated_at:       new Date().toISOString(),
   }, { onConflict: 'user_id' })
 }

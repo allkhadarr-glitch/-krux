@@ -7,6 +7,7 @@ type Profile = {
   full_name: string
   role: string
   phone: string
+  whatsapp_number: string
   organization_id: string
 }
 
@@ -18,7 +19,7 @@ const ROLES = [
 ]
 
 export default function SettingsPage() {
-  const [profile, setProfile]   = useState<Profile>({ full_name: '', role: 'operations', phone: '', organization_id: '' })
+  const [profile, setProfile]   = useState<Profile>({ full_name: '', role: 'operations', phone: '', whatsapp_number: '', organization_id: '' })
   const [loading, setSaving]    = useState(false)
   const [saved, setSaved]       = useState(false)
   const [error, setError]       = useState<string | null>(null)
@@ -119,10 +120,17 @@ export default function SettingsPage() {
                 placeholder="Your full name" />
             </div>
             <div>
-              <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">Phone / WhatsApp</label>
+              <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">Phone</label>
               <input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
                 className="w-full mt-1 bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#00C896]"
                 placeholder="+254 7XX XXX XXX" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">WhatsApp Number</label>
+              <input value={profile.whatsapp_number} onChange={(e) => setProfile({ ...profile, whatsapp_number: e.target.value })}
+                className="w-full mt-1 bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#00C896]"
+                placeholder="+254 7XX XXX XXX (for inbound commands)" />
+              <p className="text-[10px] text-[#64748B] mt-1">Text "status" to your Twilio number to get today's shipment triage</p>
             </div>
           </div>
         </div>
@@ -186,15 +194,20 @@ export default function SettingsPage() {
                 <span className="text-[#25D366] text-[9px] font-bold">WA</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-white font-semibold mb-0.5">WhatsApp Alerts (Twilio)</p>
-                <p className="text-[#64748B] leading-relaxed mb-2">Morning Brief at 6:30am EAT · Deadline alerts at 14, 7, 3 days</p>
-                <p className="text-[#334155]">Set these env vars in Vercel → Settings → Environment Variables:</p>
-                <div className="mt-1.5 space-y-0.5 font-mono text-[#94A3B8]">
+                <p className="text-white font-semibold mb-0.5">WhatsApp (Twilio)</p>
+                <p className="text-[#64748B] leading-relaxed mb-2">Outbound: Morning Brief 6:30am EAT · Deadline alerts at 14, 7, 3 days<br/>Inbound: text "status", "done [ref]", "snooze [ref] [days]"</p>
+                <p className="text-[#334155] mb-1.5">1. Set in Vercel Environment Variables:</p>
+                <div className="space-y-0.5 font-mono text-[#94A3B8]">
                   <div>TWILIO_ACCOUNT_SID</div>
                   <div>TWILIO_AUTH_TOKEN</div>
-                  <div>TWILIO_WHATSAPP_FROM <span className="text-[#64748B] font-sans">(e.g. whatsapp:+14155238886)</span></div>
-                  <div>ALERT_WHATSAPP_TO <span className="text-[#64748B] font-sans">(your +254 number)</span></div>
+                  <div>TWILIO_WHATSAPP_FROM</div>
+                  <div>ALERT_WHATSAPP_TO <span className="text-[#64748B] font-sans">(your +254)</span></div>
                 </div>
+                <p className="text-[#334155] mt-2 mb-1">2. In Twilio console → WhatsApp Sandbox → set webhook URL:</p>
+                <div className="font-mono text-[#00C896] text-[10px] bg-[#0A1628] px-2 py-1.5 rounded-md break-all">
+                  https://krux-xi.vercel.app/api/whatsapp/inbound
+                </div>
+                <p className="text-[#334155] mt-2">3. Add your WhatsApp number above ↑ to link your account</p>
               </div>
             </div>
             <div className="flex items-start gap-3 p-3 bg-[#0A1628] border border-[#1E3A5F] rounded-lg">

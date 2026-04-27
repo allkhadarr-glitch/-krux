@@ -1,10 +1,10 @@
 # KRUX Platform — Full Build Audit
-**Last updated:** 2026-04-26 (Session 6)  
+**Last updated:** 2026-04-27 (Session 7)  
 **Production URL:** https://krux-xi.vercel.app  
 **Billing test:** 7 / 7 passed  
 **GitHub:** github.com/allkhadarr-glitch/-krux · branch: master  
-**Latest deployment:** `krux-a6hk4omb5-krux1.vercel.app` — READY  
-**Latest commit:** Session 6 — mobile-first operations triage view
+**Latest deployment:** `krux-ku62m5hh6-krux1.vercel.app` — READY  
+**Latest commit:** `6f5f6a0` — Sprint 7: Client Portfolio, Bulk CSV Import, Client Share Links
 
 ---
 
