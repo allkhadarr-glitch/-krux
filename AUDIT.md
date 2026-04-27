@@ -1,10 +1,10 @@
 # KRUX Platform — Full Build Audit
-**Last updated:** 2026-04-27 (Session 9 continued)  
+**Last updated:** 2026-04-27 (Session 10)  
 **Production URL:** https://krux-xi.vercel.app  
 **Billing test:** 7 / 7 passed  
 **GitHub:** github.com/allkhadarr-glitch/-krux · branch: master  
-**Latest deployment:** `krux-jn2l8bouy-krux1.vercel.app` — READY  
-**Latest commit:** `7b77916` — feat: seed 30+ HS codes + fix demo data for KRA/clearing-agent demos
+**Latest deployment:** `krux-gddp5enp2-krux1.vercel.app` — READY  
+**Latest commit:** `bd31773` — fix: tighten operations table layout — 10 cols, compact status, risk border accent
 
 ---
 
@@ -473,13 +473,13 @@ Accepts PDF or image file (max 10MB). Sends base64 to Claude Sonnet 4.6 with Ken
 |---|---|
 | `AddShipmentModal` | Full shipment creation form with HS code autocomplete, cost preview live calc, "Import from document" drag zone that calls `/api/documents/extract` and auto-fills all fields |
 | `EditShipmentModal` | Edit existing shipment fields |
-| `ShipmentDrawer` | 480px slide-over with 7 tabs (Brief, Steps, Checklist, Duty, Costs, Files, Timeline), Mark Cleared flow |
+| `ShipmentDrawer` | Full-width on mobile / `sm:w-[520px]` on desktop. 7 tabs (Brief, Steps, Checklist, Duty, Costs, Files, Timeline), Mark Cleared flow. In demo mode: serves pre-written content instantly from `demo-content.ts`, no API call |
 | `PortalStatusModal` | Per-regulator status grid (NOT_STARTED → APPROVED) with reference number + notes. Fires PORTAL_STATUS_CHANGED event |
-| `AlertBanner` | Top-of-page banners for shipments within 14 days. Shows estimated KES cost, specific regulator action |
+| `AlertBanner` | Two-line layout: severity badge + shipment name / regulator · days · est. loss. KES abbreviates millions. Day label: "2d left"/"1d overdue". Larger touch targets. Expand/collapse +N others |
 | `RiskBadge` | GREEN/AMBER/RED color chips |
 | `NotificationBell` | In-app notification bell with unread count |
 | `OnboardingWizard` | First-use guide shown when org has 0 shipments |
-| `Sidebar` | Navigation: Operations, Closed, Actions, Analytics, Alerts, Compliance, Contacts, Licenses, Team, Settings, Billing |
+| `Sidebar` | Desktop: `lg:w-60` fixed sidebar. Mobile: `h-14` sticky top bar (hamburger + KRUX logo + NotificationBell always visible) + `w-72` slide-out with `backdrop-blur-sm`. Bell on desktop inside sidebar header. No floating hamburger |
 | `DemoGateModal` | Shown when demo user attempts a write action (add shipment, etc.). Captures email, calls `/api/activate`, auto-signs in with returned temp password. On failure: "Something went wrong. Try again." |
 | `ShareButtons` | Copy link + WhatsApp share + Twitter share buttons for `/brief/[token]` page |
 | `ScoreBreakdown` | Hover tooltip on risk score badge in Operations table. Shows 3 coloured bar charts: Urgency (time), Value (CIF), Probability. Formula: `urgency × (0.4 + 0.6 × value) × (0.3 + 0.7 × probability)` |
@@ -614,6 +614,9 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 - [x] **Demo data client_name fix** — all 5 demo shipments now have client_name (Bidco Africa Ltd, Twiga Foods Ltd, Kapa Oil Ltd). Portfolio view at `/dashboard/portfolio` shows populated client groups.
 - [x] **Demo deadlines tightened for demo urgency** — Jet A-1 pvoc_deadline = addDays(3), Pyrethroid = addDays(2). Urgency visible from day 1 of demo seeding.
 - [x] **Demo reset triggered** — fresh seed applied to production demo org (org_id: 08d82f1b-bc88-49a4-8c19-d8d2f4c08896). 5 shipments, 2 manufacturers, 4 notifications.
+- [x] **Demo API-free mode** — `src/lib/demo-content.ts` pre-writes Brief/Steps/Checklist for all 5 demo shipments. Zero API calls, zero spinners in demo mode. Jet A-1 brief: EPRA 25d SLA, HS misclassification (KES 19.9M), CLEARANCE WINDOW CLOSED banner.
+- [x] **Tier-one mobile layout** — sticky `h-14` top bar with KRUX branding + NotificationBell always visible. Slide-out sidebar with backdrop-blur. ShipmentDrawer full-width on mobile with scroll-locked tab strip.
+- [x] **Operations table 10-column layout** — Risk column removed, left-border accent on Priority cell, compact Status labels (Active/Open/Escalated), icon-only action buttons, `min-w-[860px]`, Status visible without horizontal scroll.
 
 ---
 
@@ -718,6 +721,20 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 | Cron verification — all 6 endpoints live-tested | `/api/events/process` ✅ · `/api/actions/evaluate` ✅ · `/api/actions/at-risk` ✅ · `/api/alerts/send` ✅ · `/api/ai/morning-briefing/send` ✅ (3 CRITICAL, 2 URGENT, 4 WATCH, 6 ON_TRACK, KES 2.09M at risk) · `/api/demo/reset` ✅ |
 | Lead recovery emails sent | `HQ@ELEMENT72VITALITY.COM` (Resend ID `c009e89b`) + `haaji1242@gmail.com` (Resend ID `8db60550`) — branded KRUX HTML email, direct signup link |
 
+### Session 10 (demo hardening + tier-one responsive layout + table layout fix)
+| Step | Result |
+|---|---|
+| `src/lib/demo-content.ts` CREATED | Pre-written Brief/Steps/Checklist for all 5 demo shipments. Pattern-matched by `shipment.name`. No API calls, no spinner in demo mode. Jet A-1 flagship brief: EPRA 25d SLA, HS misclassification story (KES 19.9M penalty), CLEARANCE WINDOW CLOSED |
+| `ShipmentDrawer.tsx` — demo content shortcut | `generate()` intercepts before API call when `isDemo=true`. Serves `getDemoContent()` instantly. Falls through to API if no match. |
+| `ShipmentDrawer.tsx` — responsive | Drawer width `w-[480px]` → `w-full sm:w-[520px]`. Backdrop `backdrop-blur-sm`. Animation `slide-in-from-right duration-300`. Tab bar scrollable strip `[scrollbar-width:none]`. Header/content padding `px-4 sm:px-6` / `p-4 sm:p-6`. |
+| `Sidebar.tsx` REWRITTEN — tier-one mobile nav | Removed floating hamburger. Added `h-14` sticky mobile top bar: hamburger (left) + KRUX logo (center) + NotificationBell (right). Desktop sidebar unchanged. Mobile sidebar `w-72` with `backdrop-blur-sm` overlay. Bell now always accessible on mobile. |
+| `AlertBanner.tsx` REWRITTEN | `formatKES()` abbreviates millions (KES 1.2M). Two-line layout: badge + name / regulator + days + est. loss. Shorter day label ("2d left" / "1d overdue"). Larger touch targets. |
+| `seed-demo-data.ts` — notification text | Removed hardcoded day counts from notification body text (degrades instantly in production). |
+| Operations table — 11→10 columns | Removed standalone Risk column. Left-border accent (2px) on Priority cell carries RED/AMBER/GREEN signal. Shorter headers: Deadline, CIF, Portals. Compact Status labels: Active/Open/Escalated/Closed. ESCALATED pulses with red dot. Action buttons icon-only. `px-4`→`px-3`. `min-w-[900px]`→`min-w-[860px]`. |
+| Git commit | `bd31773` — fix: tighten operations table layout — 10 cols, compact status, risk border accent |
+| Git push | master → `allkhadarr-glitch/-krux` |
+| Vercel deployment | `krux-gddp5enp2-krux1.vercel.app` — READY |
+
 ### Session 9 continued (HS codes + demo data fix + redeploy)
 | Step | Result |
 |---|---|
@@ -803,6 +820,11 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 - [x] Email sender domain — all emails from `@kruxvon.com` (Resend verified)
 - [x] All 6 Vercel crons verified live — firing correctly, auth confirmed
 - [x] Lead recovery emails sent to both lost leads (Session 6)
+
+### Done (Session 10 — demo hardening + responsive layout + table)
+- [x] Demo Brief/Steps/Checklist serve pre-written content instantly — no API dependency during demo
+- [x] Tier-one mobile top bar — sticky nav with NotificationBell always accessible, no floating hamburger
+- [x] Operations table 10-column layout — Status no longer cramped, left-border risk accent, compact labels
 
 ### Done (Session 8 — Sprints 7, 8, 9 partial)
 - [x] Client Portfolio dashboard (`/dashboard/portfolio`) — multi-client view for clearing agents
