@@ -1,10 +1,10 @@
 # KRUX Platform — Full Build Audit
-**Last updated:** 2026-04-27 (Session 8)  
+**Last updated:** 2026-04-27 (Session 9)  
 **Production URL:** https://krux-xi.vercel.app  
 **Billing test:** 7 / 7 passed  
 **GitHub:** github.com/allkhadarr-glitch/-krux · branch: master  
-**Latest deployment:** `krux-j3nh9o4n3-krux1.vercel.app` — READY  
-**Latest commit:** `55fc56b` — Sprint 9 partial: weekly digest, regulator performance, billing go-live guide
+**Latest deployment:** `krux-7yf79ktf1-krux1.vercel.app` — READY  
+**Latest commit:** `0f10524` — docs: AUDIT.md session 8
 
 ---
 
@@ -608,6 +608,7 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 - [x] **Regulator performance API** — `/api/analytics/regulator-performance` — actual clearance time vs official SLA benchmarks
 - [x] **Billing go-live guide** — "Currently in Test Mode" banner on billing page with 5-step Stripe live mode instructions
 - [x] **Supabase CLI migration runner** — `npx supabase db query --linked -f <file>` confirmed working for remote schema changes without Docker
+- [x] **Twilio WhatsApp LIVE** — inbound commands wired. Account SID + Auth Token + sandbox number pushed to Vercel. Sandbox webhook set to `/api/whatsapp/inbound`. Participant: `+254722902043`. Commands: status, done [ref], snooze [ref] [days], help.
 
 ---
 
@@ -615,11 +616,20 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 
 | Feature | Blocked by | Action to unblock |
 |---|---|---|
-| WhatsApp morning brief + inbound commands | Twilio env vars not set. **Backend fully built** — `/api/whatsapp/inbound` handles status/done/snooze/help. Just needs 4 env vars in Vercel. | Add `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM`, `ALERT_WHATSAPP_TO` to Vercel. Set Twilio sandbox webhook URL to `https://krux-xi.vercel.app/api/whatsapp/inbound`. User must add their WhatsApp number in Settings. |
-| WhatsApp deadline alerts | Same | Same |
+| WhatsApp morning brief | Twilio wired. Outbound alert template not yet scheduled. | Wire to existing `/api/alerts/send` cron or send manually. |
 | Stripe LIVE mode | Using test keys | Rotate to live Stripe key, re-run `setup-stripe.js` against live, register new webhook |
 | Welcome email from real domain | ~~Resend `from:` was unverified~~ — **FIXED Session 5**: `kruxvon.com` verified, all emails send from `@kruxvon.com` | ✅ Done |
 | EPRA SLA accuracy | Unverified — currently 25d in code | Verify against epra.go.ke before KRA demo |
+
+### Twilio credentials (production — set in Vercel env vars)
+| Variable | Status |
+|---|---|
+| `TWILIO_ACCOUNT_SID` | Set (Vercel encrypted) |
+| `TWILIO_AUTH_TOKEN` | Set (Vercel encrypted) |
+| `TWILIO_WHATSAPP_FROM` | `whatsapp:+14155238886` (Twilio sandbox shared number) |
+| `ALERT_WHATSAPP_TO` | `whatsapp:+254722902043` |
+| Sandbox webhook | `https://krux-xi.vercel.app/api/whatsapp/inbound` — POST |
+| Sandbox participant | `whatsapp:+254722902043` |
 
 ---
 
@@ -702,6 +712,16 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 | Mobile Operations triage view | Rebuilt — auto-sorted by priority (CRITICAL→HIGH→MEDIUM→LOW, then days ASC). Two groups: "Needs Attention" / "On Track". Left accent border by risk. Full card tap to drawer. Hero countdown. Edit/Close/Export as large tap targets. Admin buttons hidden on mobile. Desktop table unchanged. |
 | Cron verification — all 6 endpoints live-tested | `/api/events/process` ✅ · `/api/actions/evaluate` ✅ · `/api/actions/at-risk` ✅ · `/api/alerts/send` ✅ · `/api/ai/morning-briefing/send` ✅ (3 CRITICAL, 2 URGENT, 4 WATCH, 6 ON_TRACK, KES 2.09M at risk) · `/api/demo/reset` ✅ |
 | Lead recovery emails sent | `HQ@ELEMENT72VITALITY.COM` (Resend ID `c009e89b`) + `haaji1242@gmail.com` (Resend ID `8db60550`) — branded KRUX HTML email, direct signup link |
+
+### Session 9 (Twilio WhatsApp go-live)
+| Step | Result |
+|---|---|
+| Twilio account created | Trial — $15.50 credits. Account SID set in Vercel. |
+| WhatsApp sandbox joined | Participant `+254722902043` joined sandbox `+14155238886` with code `join saved-facing` |
+| 4 Twilio env vars pushed to Vercel | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM`, `ALERT_WHATSAPP_TO` — all HTTP 201 |
+| Sandbox webhook URL set | Twilio console → Sandbox settings → When a message comes in → `https://krux-xi.vercel.app/api/whatsapp/inbound` POST |
+| Redeployed to Vercel | `dpl_FESzhMnMwqXyyWEiLgzpERBVVZVX` — `krux-7yf79ktf1-krux1.vercel.app` — READY |
+| WhatsApp inbound live | Text "status" to +1 415 523 8886 to get today's KRUX shipment triage |
 
 ### Session 8 (Sprints 7, 8, 9 — client portfolio + WhatsApp inbound + weekly digest)
 | Step | Result |
