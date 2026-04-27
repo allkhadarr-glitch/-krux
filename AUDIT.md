@@ -608,7 +608,7 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 - [x] **Regulator performance API** — `/api/analytics/regulator-performance` — actual clearance time vs official SLA benchmarks
 - [x] **Billing go-live guide** — "Currently in Test Mode" banner on billing page with 5-step Stripe live mode instructions
 - [x] **Supabase CLI migration runner** — `npx supabase db query --linked -f <file>` confirmed working for remote schema changes without Docker
-- [x] **Twilio WhatsApp LIVE** — inbound commands wired. Account SID + Auth Token + sandbox number pushed to Vercel. Sandbox webhook set to `/api/whatsapp/inbound`. Participant: `+254722902043`. Commands: status, done [ref], snooze [ref] [days], help.
+- [x] **Twilio WhatsApp LIVE + verified** — inbound commands working end-to-end. Sent "status" → received live shipment triage on +254722902043. Commands confirmed: status, done [ref], snooze [ref] [days], help. Sandbox number: +14155238886.
 
 ---
 
@@ -722,6 +722,7 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 | Sandbox webhook URL set | Twilio console → Sandbox settings → When a message comes in → `https://krux-xi.vercel.app/api/whatsapp/inbound` POST |
 | Redeployed to Vercel | `dpl_FESzhMnMwqXyyWEiLgzpERBVVZVX` — `krux-7yf79ktf1-krux1.vercel.app` — READY |
 | WhatsApp inbound live | Text "status" to +1 415 523 8886 to get today's KRUX shipment triage |
+| **End-to-end verified** | Sent "status" → received live KRUX triage (CRITICAL: Pyrethroid Pesticide 2d, URGENT: Amoxicillin 7d, WATCH: Jet A-1 11d) ✓ |
 
 ### Session 8 (Sprints 7, 8, 9 — client portfolio + WhatsApp inbound + weekly digest)
 | Step | Result |
