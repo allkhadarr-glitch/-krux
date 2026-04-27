@@ -553,7 +553,7 @@ export default function OperationsPage() {
   if (error) return <div className="flex items-center justify-center h-64 text-red-400">Error: {error}</div>
 
   return (
-    <div className="p-4 lg:p-6 space-y-4 lg:space-y-6">
+    <div className="px-3 lg:px-4 py-4 lg:py-5 space-y-4 lg:space-y-5">
       {showOnboarding && <OnboardingWizard onDismiss={() => setShowOnboarding(false)} />}
       <AlertBanner alerts={alerts} />
 
@@ -873,7 +873,7 @@ export default function OperationsPage() {
       {/* ── Desktop table (hidden below lg) ── */}
       <div className="hidden lg:block rounded-xl border border-[#1E3A5F] overflow-hidden">
         <div className="overflow-x-auto">
-        <table className="w-full min-w-[860px]">
+        <table className="w-full min-w-[780px]">
           <thead>
             <tr className="border-b border-[#1E3A5F] bg-[#0F2040]">
               {['Priority', 'Shipment', 'Stage', 'Regulator', 'Deadline', 'CIF', 'Landed Cost', 'Portals', 'Status', ''].map((h) => (
@@ -1027,7 +1027,7 @@ export default function OperationsPage() {
                   </td>
 
                   {/* Status — compact label, no separate Risk column */}
-                  <td className="px-3 py-3">
+                  <td className="px-3 py-3 whitespace-nowrap">
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUS_STYLE[s.remediation_status] ?? ''}`}>
                       {s.remediation_status === 'ESCALATED' && <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block" />}
                       {STATUS_LABEL[s.remediation_status] ?? s.remediation_status}
