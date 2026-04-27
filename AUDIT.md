@@ -1,10 +1,10 @@
 # KRUX Platform — Full Build Audit
-**Last updated:** 2026-04-27 (Session 9)  
+**Last updated:** 2026-04-27 (Session 9 continued)  
 **Production URL:** https://krux-xi.vercel.app  
 **Billing test:** 7 / 7 passed  
 **GitHub:** github.com/allkhadarr-glitch/-krux · branch: master  
-**Latest deployment:** `krux-7yf79ktf1-krux1.vercel.app` — READY  
-**Latest commit:** `0f10524` — docs: AUDIT.md session 8
+**Latest deployment:** `krux-jn2l8bouy-krux1.vercel.app` — READY  
+**Latest commit:** `7b77916` — feat: seed 30+ HS codes + fix demo data for KRA/clearing-agent demos
 
 ---
 
@@ -189,6 +189,7 @@ Kenya importers miss PVoC deadlines because they have no single system that trac
 | `20260426000023_shared_briefs.sql` | `shared_briefs` table — token, brief_text, shipment_name, regulator, expires_at (7-day TTL). Public read, org-isolated write |
 | `20260426000024_fix_risk_score_scale.sql` | Risk score display scale fix |
 | `20260427000025_client_portfolio.sql` | `client_name` column on `shipments`, `client_share_tokens` table (token, org, client_name, expires_at), `whatsapp_number` on `user_profiles`. Applied via Supabase CLI `db query --linked` |
+| `20260427000026_hs_codes_seed.sql` | Populates `hs_codes` table with 30 real Kenya HS codes across 7 categories: Petroleum (2710.x, 2711.x), Pharmaceuticals (3002, 3004, 2936), Agrochemicals (3808, 3105, 3102), Electronics (8471, 8517, 9405, 8528, 8542), Food (1006, 1901, 2101), Industrial (3923, 8544), Vehicles (8704). Key codes for demo: `2710.19.11` (Jet A-1, 0% duty, EPRA) vs `2710.19.90` (Other petroleum, 25% duty) — the misclassification story for KRA demo. Applied via Supabase CLI. |
 
 ---
 
@@ -609,6 +610,10 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 - [x] **Billing go-live guide** — "Currently in Test Mode" banner on billing page with 5-step Stripe live mode instructions
 - [x] **Supabase CLI migration runner** — `npx supabase db query --linked -f <file>` confirmed working for remote schema changes without Docker
 - [x] **Twilio WhatsApp LIVE + verified** — inbound commands working end-to-end. Sent "status" → received live shipment triage on +254722902043. Commands confirmed: status, done [ref], snooze [ref] [days], help. Sandbox number: +14155238886.
+- [x] **HS codes table populated** — 30 Kenya HS codes inserted via migration 26. HS Lookup at `/dashboard/hs-lookup` now shows real data including Jet A-1 misclassification story (2710.19.11 vs 2710.19.90).
+- [x] **Demo data client_name fix** — all 5 demo shipments now have client_name (Bidco Africa Ltd, Twiga Foods Ltd, Kapa Oil Ltd). Portfolio view at `/dashboard/portfolio` shows populated client groups.
+- [x] **Demo deadlines tightened for demo urgency** — Jet A-1 pvoc_deadline = addDays(3), Pyrethroid = addDays(2). Urgency visible from day 1 of demo seeding.
+- [x] **Demo reset triggered** — fresh seed applied to production demo org (org_id: 08d82f1b-bc88-49a4-8c19-d8d2f4c08896). 5 shipments, 2 manufacturers, 4 notifications.
 
 ---
 
@@ -712,6 +717,18 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 | Mobile Operations triage view | Rebuilt — auto-sorted by priority (CRITICAL→HIGH→MEDIUM→LOW, then days ASC). Two groups: "Needs Attention" / "On Track". Left accent border by risk. Full card tap to drawer. Hero countdown. Edit/Close/Export as large tap targets. Admin buttons hidden on mobile. Desktop table unchanged. |
 | Cron verification — all 6 endpoints live-tested | `/api/events/process` ✅ · `/api/actions/evaluate` ✅ · `/api/actions/at-risk` ✅ · `/api/alerts/send` ✅ · `/api/ai/morning-briefing/send` ✅ (3 CRITICAL, 2 URGENT, 4 WATCH, 6 ON_TRACK, KES 2.09M at risk) · `/api/demo/reset` ✅ |
 | Lead recovery emails sent | `HQ@ELEMENT72VITALITY.COM` (Resend ID `c009e89b`) + `haaji1242@gmail.com` (Resend ID `8db60550`) — branded KRUX HTML email, direct signup link |
+
+### Session 9 continued (HS codes + demo data fix + redeploy)
+| Step | Result |
+|---|---|
+| Migration 26 applied to production | `npx supabase db query --linked -f supabase/migrations/20260427000026_hs_codes_seed.sql` — 30 HS codes inserted, verified via query |
+| Key codes confirmed in DB | `2710.19.11` (Jet A-1, 0% duty, EPRA) ✓ · `2710.19.90` (Other petroleum, 25% duty) ✓ — misclassification demo story live |
+| seed-demo-data.ts updated | Added client_name to all 5 shipments. Jet A-1 deadline → addDays(3). Pyrethroid → addDays(2). |
+| Git commit | `7b77916` — feat: seed 30+ HS codes + fix demo data for KRA/clearing-agent demos |
+| Git push to GitHub (master) | Pushed to `allkhadarr-glitch/-krux` |
+| Vercel deployment | `dpl_FNjgqABjpS6SwDYJ31XNBFN7n95B` — `krux-jn2l8bouy-krux1.vercel.app` — READY. Aliased to `krux-xi.vercel.app` |
+| Demo reset triggered | POST `/api/demo/reset` — `{"ok":true,"created":{"shipments":5,"manufacturers":2,"notifications":3}}` |
+| Demo org | org_id `08d82f1b-bc88-49a4-8c19-d8d2f4c08896` — reseeded with new client_name values and tight deadlines |
 
 ### Session 9 (Twilio WhatsApp go-live)
 | Step | Result |
