@@ -308,9 +308,53 @@ async function runAlerts() {
     results.license_alerts++
   }
 
+  // ── KRA Ruling Watch alerts ────────────────────────────────
+  // Fires when a KRA tariff ruling has been flagged on a shipment.
+  // Column kra_ruling_flag added in migration 27.
+  const { data: rulingShipments } = await supabaseAdmin
+    .from('shipments')
+    .select('id, organization_id, name, reference_number, hs_code, kra_ruling_notes')
+    .eq('kra_ruling_flag', true)
+    .is('deleted_at', null)
+    .neq('remediation_status', 'CLOSED')
+
+  for (const s of rulingShipments ?? []) {
+    if (resend) {
+      const { error } = await resend.emails.send({
+        from: FROM_EMAIL,
+        to: ALERT_EMAIL,
+        subject: `[KRA RULING] ${s.name} — HS classification under review · KRUX`,
+        html: `
+<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0A1628;font-family:system-ui,sans-serif;">
+<div style="max-width:600px;margin:0 auto;padding:32px 24px;">
+  <div style="margin-bottom:24px;">
+    <div style="display:inline-block;background:#00C896;color:#0A1628;font-weight:900;font-size:18px;padding:6px 12px;border-radius:8px;">K</div>
+    <span style="color:#94A3B8;font-size:13px;margin-left:10px;">KRUX · KRA Ruling Watch</span>
+  </div>
+  <div style="background:#0F2040;border:1px solid #F59E0B40;border-radius:16px;padding:28px;">
+    <div style="display:inline-block;background:#F59E0B20;color:#F59E0B;font-weight:700;font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid #F59E0B40;margin-bottom:16px;letter-spacing:1px;">KRA RULING FLAGGED</div>
+    <h1 style="color:white;font-size:20px;font-weight:700;margin:0 0 6px 0;">${s.name}</h1>
+    <p style="color:#64748B;font-size:13px;margin:0 0 16px 0;">${s.reference_number} · HS ${s.hs_code ?? 'Not set'}</p>
+    <div style="background:#0A1628;border:1px solid #1E3A5F;border-radius:10px;padding:16px;margin-bottom:16px;">
+      <p style="color:#94A3B8;font-size:13px;margin:0;">${s.kra_ruling_notes ?? 'KRA has flagged this shipment\'s HS code classification for review. You will be referred to the KRA Tariff and Valuation teams. Prepare your HS code defence documentation immediately.'}</p>
+    </div>
+    <div style="background:#EF444410;border:1px solid #EF444430;border-radius:10px;padding:14px;">
+      <p style="color:#EF4444;font-size:11px;font-weight:700;margin:0 0 6px 0;letter-spacing:1px;">ACTION REQUIRED</p>
+      <p style="color:#94A3B8;font-size:13px;margin:0;">Contact KRA Mombasa Customs: +254 041 231 0755. Prepare HS code justification, commercial invoice, and product specification. Do not wait — goods may be held pending ruling resolution.</p>
+    </div>
+  </div>
+</div></body></html>`,
+      })
+      if (error) results.errors.push(`KRA ruling ${s.name}: ${error.message}`)
+    }
+    await sendWhatsApp(
+      `[KRUX] KRA RULING FLAGGED\n${s.name} (${s.reference_number})\nHS ${s.hs_code ?? 'not set'} under review.\nContact KRA Mombasa: +254 041 231 0755 immediately.`
+    )
+  }
+
   return {
     ok: true,
-    sent: { shipments: results.shipment_alerts, licenses: results.license_alerts },
+    sent: { shipments: results.shipment_alerts, licenses: results.license_alerts, kra_rulings: (rulingShipments ?? []).length },
     errors: results.errors,
   }
 }

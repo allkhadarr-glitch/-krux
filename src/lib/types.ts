@@ -27,6 +27,9 @@ export type AlertType =
   | 'PORT_CONGESTION' | 'FOREX_MOVEMENT'
   | 'PO_MILESTONE_DUE' | 'PO_OVERDUE'
   | 'ORDER_PROTECTION_BREACH'
+  | 'KRA_RULING_WATCH'  // KRA tariff classification ruling issued — can change duty mid-transit
+
+export type ShipmentType = 'STANDARD' | 'BONDED' | 'TRANSIT'
 
 // ============================================================
 // CORE
@@ -172,6 +175,9 @@ export interface Shipment {
   alert_sent_7d_at?: string
   alert_sent_3d_at?: string
 
+  shipment_type?: ShipmentType  // STANDARD (default) | BONDED (warehouse bond) | TRANSIT (transit bond to EAC)
+  kra_ruling_flag?: boolean     // true when KRA has issued a tariff ruling on this shipment's HS code
+  kra_ruling_notes?: string     // description of ruling + referral to KRA tariff/valuation team
   client_name?: string
   notes?: string
   created_by?: string
