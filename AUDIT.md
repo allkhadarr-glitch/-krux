@@ -1,10 +1,10 @@
 # KRUX Platform — Full Build Audit
-**Last updated:** 2026-04-27 (Session 10)  
+**Last updated:** 2026-04-28 (Session 12)  
 **Production URL:** https://krux-xi.vercel.app  
 **Billing test:** 7 / 7 passed  
 **GitHub:** github.com/allkhadarr-glitch/-krux · branch: master  
-**Latest deployment:** `krux-qrfu0llfp-krux1.vercel.app` — READY  
-**Latest commit:** `311533e` — feat: comprehensive responsive layout pass — all dashboard pages
+**Latest deployment:** auto-triggered — `431cec0`  
+**Latest commit:** `431cec0` — fix: Kenya customs accuracy pass + operations table layout
 
 ---
 
@@ -619,6 +619,16 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 - [x] **Operations table 10-column layout** — Risk column removed, left-border accent on Priority cell, compact Status labels (Active/Open/Escalated), icon-only action buttons, `min-w-[780px]`, Status visible without horizontal scroll.
 - [x] **Comprehensive responsive layout** — All 19 dashboard pages: `p-6` → `px-4 lg:px-5 py-5 lg:py-6`. All h1 headings: `text-2xl` → `text-xl lg:text-2xl`. Non-responsive grids fixed: closed (5→2/3/5), management (4→2/4), agents (4→2/4), client (3→1/3). Tables wrapped in `overflow-x-auto`. DemoBanner `hidden lg:flex` (was covered by mobile top bar on phones).
 - [x] **Operations page gap closed** — outer container `px-3 lg:px-4`, table `min-w-[780px]`, Status `whitespace-nowrap` — ESCALATED no longer clips at 1280px desktop.
+- [x] **Kenya customs accuracy pass** — all 13 files purged of "KRA iTax" references. KRA iCMS is the correct portal for import declarations (iTax is domestic taxes only). Zero remaining `iTax` references in source.
+- [x] **KPA demurrage vs storage clarification** — free days corrected 4→5 in regulatory profile, code comment distinguishes KPA port storage from shipping line container demurrage (two separate charges, often confused).
+- [x] **KEBS PVoC SLA corrected** — `demo-content.ts` brief updated to "30 working days (full cycle including pre-shipment PVoC)". Previous value of 14 days was port clearance only, not the full PVoC cycle.
+- [x] **Regulatory phone numbers standardised** — EPRA and KEPHIS phone numbers in `demo-content.ts` now match `regulatory-intelligence.ts` profiles exactly.
+- [x] **PortalStatusModal KRA entry fixed** — label was "KRA/IDF", now "KRA iCMS". URL was `itax.kra.go.ke`, now `kra.go.ke`. Placeholder reference format updated to iCMS entry number format.
+- [x] **Vessel name + BL number in ShipmentDrawer** — displayed in header beneath shipment name with Ship icon. Lets port contacts cross-reference against vessel manifests.
+- [x] **Demo seed data has real vessel names + BL numbers** — Amoxicillin (MSC ANZU · MSCU3847621900), NPK (CMA CGM SAMBHAR · CMDUIND4572301), LED (COSCO SHIPPING CAPRICORN · COSU6278903410), Pyrethroid (PIL NEPTUNE · PILSIN7634820B1), Jet A-1 (CHEM PHOENIX · CHPXDXB2026047A). Carrier-format prefixes are accurate.
+- [x] **Operations table sticky columns** — Status (`sticky right-[88px]`) and Actions (`sticky right-0`) are always visible regardless of viewport width. Background colour matches row state (critical `bg-red-500/5` / urgent `bg-amber-500/5` / default `bg-[#0A1628]`). Cell padding reduced from `px-3` to `px-2`. Page wrapper narrowed to `px-2 lg:px-3`.
+- [x] **StatusBadge short labels** — `RiskBadge.tsx` `StatusBadge` now renders Open / Active / Escalated / Closed instead of raw enum values IN_PROGRESS / ESCALATED. Fixes mobile card clipping ("IN_PRO" / "ESCAL") and desktop table parity.
+- [x] **ImpossibleWindowBadge no longer forces column wide** — removed `whitespace-nowrap`, reformatted to two-line compact layout. Deadline column no longer squeezes Status off screen at 1280px.
 
 ---
 
@@ -738,6 +748,20 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 | Git push | master → `allkhadarr-glitch/-krux` |
 | Vercel deployment | `krux-gz20es444-krux1.vercel.app` — READY |
 
+### Session 12 (Kenya accuracy pass + operations table layout)
+| Step | Result |
+|---|---|
+| KRA iCMS accuracy pass | Replaced all "iTax" references across 13 source files: `regulatory-intelligence.ts`, `hs-intelligence.ts`, `alerts.ts`, `event-engine.ts`, `demo-content.ts`, `seed-demo-data.ts`, `ShipmentDrawer.tsx`, `PortalStatusModal.tsx`, `ai/chat/route.ts`, `ai/checklist/route.ts`, `alerts/send/route.ts`, `brief/[token]/page.tsx`, `dashboard/actions/page.tsx` |
+| KEBS/KPA/phone accuracy | KEBS SLA 14d→30d in demo brief, KPA free_days 4→5, EPRA/KEPHIS phones match regulatory profiles |
+| Vessel name + BL number | Added to all 5 demo shipments (seed-demo-data.ts) with accurate carrier BL prefix formats. Displayed in ShipmentDrawer header with Ship icon. |
+| Operations table sticky layout | Status: `sticky right-[88px] z-10 min-w-[96px]`. Actions: `sticky right-0 z-10`. Both get row-matched bg. Cell padding `px-3`→`px-2`. Page wrapper `px-3 lg:px-4`→`px-2 lg:px-3`. |
+| StatusBadge labels | RiskBadge.tsx: shows Open/Active/Escalated/Closed instead of raw enum. Fixes mobile card clipping. |
+| ImpossibleWindowBadge | Removed `whitespace-nowrap`. Deadline column no longer forces Status off screen. |
+| TypeScript check | `npx tsc --noEmit` — 0 errors |
+| Git commit | `431cec0` — fix: Kenya customs accuracy pass + operations table layout |
+| Git push | master → `allkhadarr-glitch/-krux` |
+| Vercel deployment | Auto-triggered via GitHub push |
+
 ### Session 9 continued (HS codes + demo data fix + redeploy)
 | Step | Result |
 |---|---|
@@ -829,6 +853,14 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 - [x] Tier-one mobile top bar — sticky nav with NotificationBell always accessible, no floating hamburger
 - [x] Operations table 10-column layout — Status no longer cramped, left-border risk accent, compact labels
 
+### Done (Session 12 — Kenya accuracy + table layout fix)
+- [x] All KRA iTax references replaced with KRA iCMS across 13 files — credibility-critical fix for clearing agent demos
+- [x] KEBS SLA, KPA demurrage, EPRA/KEPHIS phone numbers corrected
+- [x] Demo shipments have real vessel names and BL numbers (carrier-accurate prefixes)
+- [x] Vessel name + BL number shown in ShipmentDrawer header
+- [x] Operations table: Status + Actions sticky right — always visible, no more "ESCAL" / "IN_PRO" clipping
+- [x] StatusBadge shows short labels (Open/Active/Escalated/Closed) on mobile cards and everywhere else
+
 ### Done (Session 8 — Sprints 7, 8, 9 partial)
 - [x] Client Portfolio dashboard (`/dashboard/portfolio`) — multi-client view for clearing agents
 - [x] Bulk CSV shipment import — upload CSV, preview, one-click import
@@ -843,9 +875,10 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 - [x] All 3 sprints deployed: `krux-j3nh9o4n3-krux1.vercel.app` READY
 
 ### Now unblocked (needs your input only)
-1. **Wire Twilio WhatsApp** — entire backend is built. Provide 4 values: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM` (e.g. `whatsapp:+14155238886`), `ALERT_WHATSAPP_TO` (your +254 number). Also set webhook URL in Twilio console to `https://krux-xi.vercel.app/api/whatsapp/inbound`. Done in 5 minutes.
-2. **Custom domain** — pick/buy `krux.co.ke` or `kruxapp.io`. I do the Vercel config + Resend sender swap. Needed before any enterprise demo.
-3. **Stripe live mode** — billing page now has 5-step guide. Rotate to live keys, re-run `setup-stripe.js`, register live webhook.
+1. **Custom domain** — pick/buy `krux.co.ke` or `kruxapp.io`. I do the Vercel config + Resend sender swap. Critical before the SIGINON demo — `krux-xi.vercel.app` looks like a dev URL to a domain expert.
+2. **Stripe live mode** — billing page now has 5-step guide. Rotate to live keys, re-run `setup-stripe.js`, register live webhook.
+3. **SIGINON demo script** — contact is port operations office, Mombasa. Domain expert who files iCMS entries daily. Demo should lead with: Jet A-1 (EPRA penalty math), HS misclassification story, WhatsApp status command from phone. Confirm demo date.
+4. **Wire Twilio WhatsApp** — already live. Sandbox number +14155238886 → sandbox only. For SIGINON demo, the WhatsApp "status" live command is a strong hook. ✅ Already working.
 
 ### Level-up roadmap (remaining sprints)
 
@@ -876,5 +909,17 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 
 ---
 
-*Full audit maintained by Claude Code — sessions 1–6*  
+---
+
+## PART 21 — ACTIVE LEADS
+
+| Lead | Context | Status | Key demo hook |
+|---|---|---|---|
+| **SIGINON Group — Mombasa port ops** | One of East Africa's largest logistics companies. Contact works at Mombasa port operations office — files iCMS entries daily. Domain expert: will spot anything technically wrong immediately. | Warm — reached out | Jet A-1 EPRA penalty math, HS misclassification (KES 19.9M), WhatsApp "status" command live from phone. Lead with operations credibility, not features. |
+| **Cargo owner — uses friend's clearing license** | Small cargo business owner who doesn't clear goods themselves, uses a friend's licensed clearing agent. Lacks visibility into their own shipments. | Contacted | Client portal (`/client/[token]`) — no login, just a link. They see all their shipments, deadlines, status. |
+| **KRA petroleum officer — JKIA** | KRA customs officer at JKIA with petroleum domain knowledge. | Ongoing outreach | HS misclassification story: `2710.19.11` (Jet A-1, 0% duty) vs `2710.19.90` (other petroleum, 25% duty). KES 19.9M exposure on a $620K shipment. |
+
+---
+
+*Full audit maintained by Claude Code — sessions 1–12*  
 *All sections derived from live code and confirmed production state.*
