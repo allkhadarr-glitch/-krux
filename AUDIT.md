@@ -877,6 +877,15 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 - [x] Operations table: Status + Actions sticky right — always visible, no more "ESCAL" / "IN_PRO" clipping
 - [x] StatusBadge shows short labels (Open/Active/Escalated/Closed) on mobile cards and everywhere else
 
+### Done (Session 12 — SIGINON discovery builds)
+- [x] RPB (Radiation Protection Board) — full regulatory profile: SLA, fees (KES 1,000/vehicle), documents, escalation
+- [x] NTSA (National Transport and Safety Authority) — full regulatory profile: registration, number plates, LHD/age restrictions
+- [x] Motor vehicle duty calculator — `/api/duty-calc` now handles `import_type: motor_vehicle` with excise duty (0/10/20% by vehicle age), MSS levy, RPB inspection, NTSA registration, and number plates as separate line items
+- [x] KRA tariff ruling — documented in KRA regulatory profile with full workflow (flag → tariff team → valuation team → defend or revalue)
+- [x] KRA_RULING_WATCH alert type — `kra_ruling_flag` + `kra_ruling_notes` on Shipment. Alert engine fires email + WhatsApp when flag is set.
+- [x] ShipmentType STANDARD / BONDED / TRANSIT — type added, DB column added (migration 27)
+- [x] Migration 27 applied to production — new shipment columns, RPB + NTSA seeded in regulatory_bodies table
+
 ### Done (Session 8 — Sprints 7, 8, 9 partial)
 - [x] Client Portfolio dashboard (`/dashboard/portfolio`) — multi-client view for clearing agents
 - [x] Bulk CSV shipment import — upload CSV, preview, one-click import
