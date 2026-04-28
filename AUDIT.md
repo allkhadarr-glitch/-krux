@@ -3,8 +3,8 @@
 **Production URL:** https://krux-xi.vercel.app  
 **Billing test:** 7 / 7 passed  
 **GitHub:** github.com/allkhadarr-glitch/-krux · branch: master  
-**Latest deployment:** auto-triggered — `431cec0`  
-**Latest commit:** `431cec0` — fix: Kenya customs accuracy pass + operations table layout
+**Latest deployment:** auto-triggered — `6e7d836`  
+**Latest commit:** `6e7d836` — feat: motor vehicle import vertical + KRA ruling watch
 
 ---
 
@@ -748,7 +748,23 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 | Git push | master → `allkhadarr-glitch/-krux` |
 | Vercel deployment | `krux-gz20es444-krux1.vercel.app` — READY |
 
-### Session 12 (Kenya accuracy pass + operations table layout)
+### Session 12 — Part 2 (SIGINON discovery builds — motor vehicle + KRA ruling)
+| Step | Result |
+|---|---|
+| RPB added to regulatory-intelligence.ts | Full profile: SLA 1-2d, KES 1,000 fee, documents, common rejections, escalation path |
+| NTSA added to regulatory-intelligence.ts | Full profile: registration fee ~KES 4,500, number plates KES 3,000, documents (RPB cert required), vehicle age + LHD restrictions |
+| KRA ruling documented | Notes on KRA profile: tariff ruling workflow, mid-transit flagging, defend-or-revalue process |
+| Motor vehicle duty calculator | `/api/duty-calc` now accepts `import_type: motor_vehicle` + `vehicle_age_years`. Returns: excise duty (0/10/20% by age), MSS levy, RPB inspection, NTSA registration, number plates as separate line items |
+| KRA_RULING_WATCH alert type | Added to `AlertType` in types.ts |
+| `kra_ruling_flag` + `kra_ruling_notes` on Shipment | Added to Shipment interface |
+| `ShipmentType` enum | STANDARD / BONDED / TRANSIT — added to types.ts, migration 27 |
+| `kra_ruling_flag` alert in alerts/send route | Scans for `kra_ruling_flag = true` shipments, sends branded email + WhatsApp with KRA Mombasa contact |
+| Migration 27 applied to production | `20260428000027_motor_vehicle_kra_ruling.sql` — new columns, RPB + NTSA seeded in regulatory_bodies |
+| TypeScript check | 0 errors |
+| Git commit | `6e7d836` |
+| Git push + Vercel deploy | Auto-triggered |
+
+### Session 12 — Part 1 (Kenya accuracy pass + operations table layout)
 | Step | Result |
 |---|---|
 | KRA iCMS accuracy pass | Replaced all "iTax" references across 13 source files: `regulatory-intelligence.ts`, `hs-intelligence.ts`, `alerts.ts`, `event-engine.ts`, `demo-content.ts`, `seed-demo-data.ts`, `ShipmentDrawer.tsx`, `PortalStatusModal.tsx`, `ai/chat/route.ts`, `ai/checklist/route.ts`, `alerts/send/route.ts`, `brief/[token]/page.tsx`, `dashboard/actions/page.tsx` |
@@ -915,9 +931,58 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 
 | Lead | Context | Status | Key demo hook |
 |---|---|---|---|
-| **SIGINON Group — Mombasa port ops** | One of East Africa's largest logistics companies. Contact works at Mombasa port operations office — files iCMS entries daily. Domain expert: will spot anything technically wrong immediately. | Warm — reached out | Jet A-1 EPRA penalty math, HS misclassification (KES 19.9M), WhatsApp "status" command live from phone. Lead with operations credibility, not features. |
+| **SIGINON Group — Mombasa port ops (James)** | One of East Africa's largest logistics companies. James works at Mombasa port operations office. Domain expert — files iCMS entries daily, deep regulatory knowledge. Had a long discovery call 2026-04-28. Now acting as product advisor. | Active — sent demo link, follow-up in 2 weeks after motor vehicle + KRA ruling builds | Jet A-1 EPRA penalty math, HS misclassification (KES 19.9M), WhatsApp "status" command live from phone. |
+| **Kenfreight — Mombasa port ops** | Another major Kenya freight forwarder, Mombasa-based. Same world as SIGINON. Outreach in progress 2026-04-28. | In outreach | Same demo sequence as SIGINON. Discovery questions focused on workflow and incidents. |
 | **Cargo owner — uses friend's clearing license** | Small cargo business owner who doesn't clear goods themselves, uses a friend's licensed clearing agent. Lacks visibility into their own shipments. | Contacted | Client portal (`/client/[token]`) — no login, just a link. They see all their shipments, deadlines, status. |
 | **KRA petroleum officer — JKIA** | KRA customs officer at JKIA with petroleum domain knowledge. | Ongoing outreach | HS misclassification story: `2710.19.11` (Jet A-1, 0% duty) vs `2710.19.90` (other petroleum, 25% duty). KES 19.9M exposure on a $620K shipment. |
+
+---
+
+## PART 22 — JAMES (SIGINON) DISCOVERY INTEL — 2026-04-28
+
+Long discovery call. James is now product advisor, not just a lead. Everything below came from him directly and is being built into the product.
+
+### Gap 1 — Motor vehicle imports (entire vertical missing)
+Kenya vehicle imports have a completely different duty and levy structure:
+- **Exercise duty** — not in our duty calculator at all
+- **MSS levy** — missing
+- **Registration fee** — missing
+- **Number plate issuance fee** — missing
+- **Radiation Protection Board (RPB)** — checks hazardous materials in vehicles. KES 1,000 for used vehicles. Not in our regulatory bodies list.
+- **NEMA fee** — we have NEMA but not wired into vehicle imports specifically
+
+### Gap 2 — KRA tariff rulings (biggest operational blindspot)
+KRA issues tariff classification rulings in their iCMS system. Nobody is watching. Goods are already in transit or at port when it happens. Process when triggered:
+1. KRA flags the shipment in iCMS
+2. Importer/agent is referred to KRA tariff team + valuation team
+3. Importer must defend their HS code classification
+4. If convincing → accepted. If not → KRA revalues upward → more duty, more penalties.
+
+Key insight: **the ruling can happen while goods are in transit or at port.** Nobody monitoring = nobody reacts until it's too late. This is a KRUX alert opportunity — "KRA Ruling Watch."
+
+### Gap 3 — Bonded shipments, warehouse bonds, transit bonds (not modelled at all)
+- **Bonded warehouse** — goods stored without paying duty yet, under customs bond
+- **Transit bond** — goods moving through Kenya to Uganda, Rwanda, DRC etc. under bond
+- SIGINON handles significant volume of both. KRUX has no concept of shipment type: STANDARD / BONDED / TRANSIT.
+
+### Gap 4 — HS code lookup UX
+James described typing a keyword (e.g. "spring") and the system pulling the HS code, all duties, levies, and regulatory bodies at once. We have this partially in the HS lookup page but it needs to feel more like a search engine.
+
+### What to send James (within 24h of call)
+> *"James — that was incredibly useful. A few things you said I'm already building: the KRA ruling alert, the motor vehicle duty breakdown, and bonded shipment tracking. You spotted the exact gaps. Would you be open to a follow-up in two weeks once I've patched those in? I want you to be the first to tell me if I got it right."*
+
+### Build plan from James's intel
+
+| Item | Priority | Status |
+|---|---|---|
+| Add RPB (Radiation Protection Board) to regulatory bodies | Quick | ✅ Done — migration 27, full profile in regulatory-intelligence.ts |
+| Add NTSA (National Transport and Safety Authority) to regulatory bodies | Quick | ✅ Done — migration 27, full profile in regulatory-intelligence.ts |
+| Add exercise duty, MSS levy, registration, number plate fee to duty calculator | Quick | ✅ Done — duty-calc route now accepts `import_type: motor_vehicle` |
+| Add motor vehicle as dedicated import type with own duty path | Quick | ✅ Done — excise duty (0/10/20% by vehicle age), MSS levy, RPB, NTSA reg, plates all line items |
+| KRA Ruling Watch — alert type + notification when ruling flagged on shipment | Quick | ✅ Done — `kra_ruling_flag` column, alert email + WhatsApp in alerts/send route |
+| `ShipmentType` STANDARD / BONDED / TRANSIT on Shipment type | Quick | ✅ Done — type added, migration 27 column added |
+| Bonded warehouse workflow end-to-end | Longer | Roadmap |
+| Transit bond tracking end-to-end | Longer | Roadmap |
 
 ---
 
