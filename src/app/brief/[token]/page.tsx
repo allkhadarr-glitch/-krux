@@ -128,7 +128,7 @@ export default async function SharedBriefPage({ params }: { params: Promise<{ to
         </div>
 
         <p className="mt-6 text-[10px] text-[#334155] text-center">
-          AI-generated compliance intelligence · Verify all figures with KRA iTax and relevant regulatory portals before acting ·{' '}
+          AI-generated compliance intelligence · Verify all figures with KRA iCMS and relevant regulatory portals before acting ·{' '}
           <a href={APP_URL} className="text-[#00C896]/60 hover:text-[#00C896]">{APP_URL.replace('https://', '')}</a>
         </p>
       </div>

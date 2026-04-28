@@ -5,7 +5,7 @@ import { X, ExternalLink, Save, Loader2 } from 'lucide-react'
 
 const PORTALS = [
   { key: 'KENTRADE', label: 'KENTRADE', url: 'https://kentrade.go.ke',     placeholder: 'e.g. KT/2026/001234' },
-  { key: 'KRA',      label: 'KRA/IDF',  url: 'https://itax.kra.go.ke',    placeholder: 'e.g. IDF/2026/000001' },
+  { key: 'KRA',      label: 'KRA iCMS', url: 'https://kra.go.ke',          placeholder: 'e.g. C17/2026/000001' },
   { key: 'PPB',      label: 'PPB',      url: 'https://ppb.go.ke',          placeholder: 'e.g. PPB/IMP/2026/001' },
   { key: 'KEBS',     label: 'KEBS',     url: 'https://kebs.org',           placeholder: 'e.g. KEBS/PVoC/2026/001' },
   { key: 'KEPHIS',   label: 'KEPHIS',   url: 'https://kephis.org',         placeholder: 'e.g. KEPH/2026/001' },

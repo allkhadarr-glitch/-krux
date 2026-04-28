@@ -180,7 +180,7 @@ function getAction(regulatorCode: string, days: number): string {
     KEPHIS:   'File KEPHIS phytosanitary certificate request with origin country',
     'WHO-GMP':'Confirm WHO-GMP certificate validity and submit to PPB for verification',
     EPRA:     'Submit EPRA energy audit report and product compliance certificate',
-    KRA:      'File IDF via KRA iTax portal and confirm HS code classification',
+    KRA:      'File IDF via KRA iCMS portal and confirm HS code classification',
     NEMA:     'Submit NEMA environmental impact assessment and importation permit',
   }
   const base = actions[regulatorCode] ?? 'Contact regulator to confirm submission requirements'

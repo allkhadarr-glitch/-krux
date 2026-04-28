@@ -17,7 +17,7 @@ const DOCS_BY_TYPE: Record<string, string[]> = {
   SUBMIT_DOCUMENTS_PCPB:     ['PCPB Registration Documents', 'Pesticide Efficacy Data', 'Safety Data Sheet (SDS)', 'Product Label'],
   SUBMIT_DOCUMENTS_EPRA:     ['EPRA Energy Audit Report', 'Product Compliance Certificate', 'Technical Data Sheet'],
   SUBMIT_DOCUMENTS_NEMA:     ['NEMA Environmental Impact Assessment', 'Importation Permit Application', 'Product MSDS'],
-  SUBMIT_DOCUMENTS_KRA:      ['IDF via KRA iTax Portal', 'HS Code Classification', 'Commercial Invoice', 'Packing List'],
+  SUBMIT_DOCUMENTS_KRA:      ['IDF via KRA iCMS Portal', 'HS Code Classification', 'Commercial Invoice', 'Packing List'],
   SUBMIT_DOCUMENTS_KENTRADE: ['KenTrade Import Declaration', 'Supporting Permits', 'Bill of Lading'],
   CONTACT_AGENT:             ['Agent Contact Log', 'Confirmation of Receipt', 'Status Update Written'],
   APPLY:                     ['Application Form Completed', 'Supporting Documents Attached', 'Payment Receipt'],

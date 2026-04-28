@@ -95,7 +95,7 @@ STEP 1 — FILE EPRA PERMIT NOW  (today, next 2 hours)
   evidence of good faith, which materially reduces penalty exposure.
 
 STEP 2 — CALL EPRA DIRECTOR-GENERAL  (today)
-  Number: +254-20-3201202 (EPRA headquarters, Nairobi)
+  Number: +254 020 362 0000 (EPRA headquarters, Nairobi)
   Request: Expedited review citing operational necessity and
   prior booking commitment with Kenya Pipeline Company (KPC).
   EPRA has a discretionary fast-track process for operationally
@@ -105,7 +105,7 @@ STEP 3 — ENGAGE KRA CUSTOMS IN ADVANCE  (today)
   Action: Submit a pre-entry classification ruling request to KRA
   Customs confirming HS 2710.19.11 (Jet A-1, 0% duty) before
   the cargo is physically examined at Mombasa port.
-  Portal: kra.go.ke/itax → Customs → Pre-entry Classification
+  Contact: KRA Mombasa Customs +254 041 231 0755
   Critical: This locks your duty rate and prevents the KES 19.9M
   misclassification penalty from being applied retroactively.
 
@@ -149,7 +149,7 @@ KRA CUSTOMS — HS CLASSIFICATION PROTECTION
       Prevents reclassification to 2710.19.90 (25% duty = KES 19.9M)
   ✓ Commercial invoice (USD 620,000 — CIF Mombasa)
   ✓ Packing list with litreage breakdown
-  ✗ Import Declaration Form (IDF) — lodged on KRA iTax portal
+  ✗ Import Declaration Form (IDF) — lodged on KRA iCMS by clearing agent
   ✗ Certificate of Origin (UAE — confirms source country for EAC CET)
 
 KENYA PIPELINE COMPANY (KPC) — STORAGE
@@ -218,7 +218,7 @@ KRUX · Kenya Import Compliance Intelligence`,
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 STEP 1 — CALL KEPHIS DIRECTLY  (now)
-  +254-20-3536171 (KEPHIS headquarters, Nairobi)
+  +254 020 318 3000 (KEPHIS headquarters, Nairobi)
   Request emergency clearance protocol for cargo already at port.
 
 STEP 2 — VERIFY PCPB REGISTRATION  (within 1 hour)
@@ -254,7 +254,7 @@ PCPB
 KRA CUSTOMS
   ✓ Commercial invoice
   ✓ Bill of Lading (Chennai → Mombasa)
-  ✗ Import Declaration Form (IDF) on iTax
+  ✗ Import Declaration Form (IDF) — lodged on KRA iCMS
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 MISSING: 5 of 8 documents. File PCPB + KEPHIS today.
@@ -341,7 +341,7 @@ PPB
 KRA CUSTOMS
   ✓ Commercial invoice (USD 45,000 CIF)
   ✓ Bill of Lading (Shanghai → Mombasa)
-  ✗ Import Declaration Form (IDF) on KRA iTax
+  ✗ Import Declaration Form (IDF) — lodged on KRA iCMS
   ✗ KEBS PVoC Certificate of Conformity
 
 STORAGE
@@ -410,9 +410,9 @@ STEP 3 — VERIFY PCPB APPROVED EXPORTER LIST  (today)
   Confirm Gujarat Agrochem Industries is on pcpb.or.ke approved list.
   If not: escalate to PCPB directly before vessel departs India.
 
-STEP 4 — LODGE IDF ON KRA ITAX  (this week)
-  File Import Declaration Form before cargo arrives at Mombasa.
-  HS 3105.20 carries 10% import duty — confirm rate on KRA iTax.
+STEP 4 — LODGE IDF ON KRA iCMS  (this week)
+  Your clearing agent files the Import Declaration Form on KRA iCMS
+  before cargo arrives at Mombasa. HS 3105.20 carries 10% import duty.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 KRUX · Kenya Import Compliance · krux-xi.vercel.app`,
@@ -430,7 +430,7 @@ PCPB
 KRA CUSTOMS
   ✓ Commercial invoice (USD 28,000 CIF)
   ✓ Bill of Lading (Mundra → Mombasa)
-  ✗ Import Declaration Form (IDF) on KRA iTax
+  ✗ Import Declaration Form (IDF) — lodged on KRA iCMS
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 MISSING: 3 of 8 documents. Resolve KEBS + phyto this week.
@@ -453,9 +453,9 @@ CIF VALUE: USD 15,000  (KES 1,935,000)
 LANDED   : KES 2,981,512
 CLIENT   : Kapa Oil Ltd
 
-KEBS requires 14 working days. You have 44 days remaining.
-This shipment is in a safe window and does not require escalation.
-Complete the standard PVoC process this week to stay on track.
+KEBS requires 30 working days (full cycle including pre-shipment PVoC).
+You have 44 days remaining. This shipment is in a safe window.
+Complete the PVoC process at origin this week to stay on track.
 
 Required documents status:
   ✓ KEBS PVoC application — filed
@@ -495,8 +495,8 @@ STEP 3 — PREPARE KEBS COC  (on clearance)
   cargo manifest on entry. Request on completion of inspection.
 
 STEP 4 — FILE KRA IDF  (before vessel arrives)
-  Import Declaration Form on KRA iTax. HS 9405.40: 25% duty.
-  Confirm rate before filing to avoid amendment penalties.
+  Your clearing agent lodges the Import Declaration Form on KRA iCMS.
+  HS 9405.40: 25% import duty + 16% VAT. Confirm rate before filing.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 KRUX · Kenya Import Compliance · krux-xi.vercel.app`,
@@ -513,7 +513,7 @@ KEBS / PVoC
 KRA CUSTOMS
   ✓ Commercial invoice (USD 15,000 CIF)
   ✓ Bill of Lading (Shenzhen → Mombasa)
-  ✗ Import Declaration Form (IDF) on KRA iTax
+  ✗ Import Declaration Form (IDF) — lodged on KRA iCMS
       HS 9405.40 → 25% import duty + 16% VAT + IDF 2% + RDL 1.5%
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

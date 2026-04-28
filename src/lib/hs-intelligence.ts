@@ -3,7 +3,7 @@
  *
  * Curated database of the most commonly mishandled Kenya import HS codes.
  * Duty rates based on EAC Common External Tariff (CET) + Kenya-specific schedules.
- * All rates indicative — verify against KRA iTax current tariff before filing.
+ * All rates indicative — verify against KRA EAC CET tariff schedule before filing.
  */
 
 export interface HSMisclassification {

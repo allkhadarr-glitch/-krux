@@ -29,7 +29,7 @@ const DEMO_CHECKLISTS: Record<string, string> = {
      Pyrethroid insecticides require PCPB registration.
      Contact PCPB office: +254 020 271 2540.
 
-  ✓  KRA IDF — Lodged on iTax portal
+  ✓  KRA IDF — Lodged on KRA iCMS by clearing agent
 
   ─────────────────────────────────────────────────────────
   Status: 3 of 7 documents missing. Clearance is blocked.

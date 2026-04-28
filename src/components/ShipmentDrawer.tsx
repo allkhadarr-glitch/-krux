@@ -7,7 +7,7 @@ import {
   X, Sparkles, Loader2, FileText, Wrench, List, Calculator,
   Clock, CheckCircle2, XCircle, AlertTriangle, Zap, Bell,
   MessageSquare, User, DollarSign, Upload, Trash2, ExternalLink,
-  ClipboardList, Printer, Copy, Share2,
+  ClipboardList, Printer, Copy, Share2, Ship,
 } from 'lucide-react'
 import { getRegulator } from '@/lib/regulatory-intelligence'
 import { getDemoContent } from '@/lib/demo-content'
@@ -83,7 +83,7 @@ function printBrief(text: string, shipmentName: string) {
 <pre>${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
 <div class="footer">
   <span>KRUX · Kenya Import Compliance · krux-xi.vercel.app</span>
-  <span>Verify all figures with KRA iTax and regulatory portals before acting</span>
+  <span>Verify all figures with KRA iCMS and regulatory portals before acting</span>
 </div>
 </body>
 </html>`)
@@ -250,7 +250,7 @@ function DutyPanel({ shipment }: { shipment: any }) {
               </tbody>
             </table>
           </div>
-          <p className="text-[10px] text-[#334155] mt-1.5">1 USD = KES {calc.fx_rate} · Estimates only, verify with KRA iTax portal</p>
+          <p className="text-[10px] text-[#334155] mt-1.5">1 USD = KES {calc.fx_rate} · Estimates only, verify with KRA iCMS portal</p>
         </div>
       )}
 
@@ -773,6 +773,20 @@ export default function ShipmentDrawer({
                 {shipment.reference_number} · {formatUSD(shipment.cif_value_usd)} CIF
                 {shipment.pvoc_deadline && ` · Deadline ${formatDate(shipment.pvoc_deadline)}`}
               </p>
+              {(shipment.vessel_name || shipment.bl_number) && (
+                <p className="text-[#334155] text-[11px] mt-1 flex items-center gap-2 flex-wrap">
+                  {shipment.vessel_name && (
+                    <span className="flex items-center gap-1">
+                      <Ship size={10} className="text-[#334155]" />
+                      {shipment.vessel_name}
+                    </span>
+                  )}
+                  {shipment.vessel_name && shipment.bl_number && <span>·</span>}
+                  {shipment.bl_number && (
+                    <span className="font-mono">{shipment.bl_number}</span>
+                  )}
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-2">
               {!closed && !confirmClose && (

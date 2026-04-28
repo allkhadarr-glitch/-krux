@@ -56,9 +56,9 @@ function ImpossibleWindowBadge({ regCode, daysLeft }: { regCode?: string; daysLe
   const sla = profile.sla_actual_days
   if (sla === 0 || daysLeft >= sla) return null
   return (
-    <div className="flex items-center gap-1 mt-1 text-[10px] font-semibold text-red-400 whitespace-nowrap">
-      <AlertTriangle size={9} className="flex-shrink-0" />
-      {regCode} needs {sla}d — {daysLeft} left
+    <div className="flex items-center gap-1 mt-1 text-[10px] font-semibold text-red-400 leading-tight">
+      <AlertTriangle size={9} className="flex-shrink-0 mt-px" />
+      <span>{regCode}: {sla}d needed, {daysLeft}d left</span>
     </div>
   )
 }
@@ -553,7 +553,7 @@ export default function OperationsPage() {
   if (error) return <div className="flex items-center justify-center h-64 text-red-400">Error: {error}</div>
 
   return (
-    <div className="px-3 lg:px-4 py-4 lg:py-5 space-y-4 lg:space-y-5">
+    <div className="px-2 lg:px-3 py-4 lg:py-5 space-y-4 lg:space-y-5">
       {showOnboarding && <OnboardingWizard onDismiss={() => setShowOnboarding(false)} />}
       <AlertBanner alerts={alerts} />
 
@@ -877,13 +877,13 @@ export default function OperationsPage() {
           <thead>
             <tr className="border-b border-[#1E3A5F] bg-[#0F2040]">
               {(['Priority', 'Shipment', 'Stage', 'Regulator', 'Deadline'] as const).map((h) => (
-                <th key={h} className="px-3 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">{h}</th>
+                <th key={h} className="px-2 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">{h}</th>
               ))}
-              <th className="hidden xl:table-cell px-3 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">CIF</th>
-              <th className="hidden xl:table-cell px-3 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">Landed Cost</th>
-              <th className="hidden xl:table-cell px-3 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">Portals</th>
-              <th className="px-3 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">Status</th>
-              <th className="px-3 py-3"></th>
+              <th className="hidden xl:table-cell px-2 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">CIF</th>
+              <th className="hidden xl:table-cell px-2 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">Landed Cost</th>
+              <th className="hidden xl:table-cell px-2 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide">Portals</th>
+              <th className="sticky right-[88px] z-10 bg-[#0F2040] px-2 py-3 text-left text-xs font-semibold text-[#64748B] uppercase tracking-wide min-w-[96px]">Status</th>
+              <th className="sticky right-0 z-10 bg-[#0F2040] px-2 py-3 w-[88px]"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#1E3A5F]">
@@ -941,14 +941,14 @@ export default function OperationsPage() {
                   className={`hover:bg-[#0F2040]/50 transition-colors relative ${rowBg} ${showTooltip ? 'ring-1 ring-red-500/40' : ''}`}
                 >
                   {/* Priority — carries the left-border risk accent */}
-                  <td className={`px-3 py-3 ${riskBorderClass}`}>
+                  <td className={`px-2 py-3 ${riskBorderClass}`}>
                     <PriorityBadge level={s.risk?.priority_level} score={s.risk?.risk_score} compositeScore={s.composite_risk_score} />
                     <RiskDriversTooltip drivers={s.risk?.risk_drivers} />
                     <ScoreBreakdown daysLeft={s.risk?.days_to_deadline} cifUsd={s.cif_value_usd} delayProb={s.risk?.delay_probability} />
                   </td>
 
                   {/* Shipment */}
-                  <td className="px-3 py-3 relative">
+                  <td className="px-2 py-3 relative">
                     {showTooltip && (
                       <div className="absolute -top-8 left-0 z-20 flex items-center gap-1.5 bg-red-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-lg whitespace-nowrap pointer-events-none">
                         <AlertTriangle size={10} />
@@ -976,17 +976,17 @@ export default function OperationsPage() {
                   </td>
 
                   {/* Stage */}
-                  <td className="px-3 py-3">
+                  <td className="px-2 py-3">
                     <StagePill shipmentId={s.id} currentStage={(s as any).shipment_stage ?? 'PRE_SHIPMENT'} />
                   </td>
 
                   {/* Regulator */}
-                  <td className="px-3 py-3">
+                  <td className="px-2 py-3">
                     <RegulatorBadge body={s.regulatory_body?.code ?? '—'} />
                   </td>
 
                   {/* Deadline */}
-                  <td className="px-3 py-3">
+                  <td className="px-2 py-3 max-w-[110px]">
                     <div className="text-sm text-white">{formatDate(s.pvoc_deadline!)}</div>
                     <div className={`text-xs mt-0.5 flex items-center gap-1 ${days <= 3 ? 'text-red-400' : days <= 7 ? 'text-amber-400' : 'text-[#64748B]'}`}>
                       {days <= 7 && <AlertTriangle size={10} />}
@@ -997,10 +997,10 @@ export default function OperationsPage() {
                   </td>
 
                   {/* CIF */}
-                  <td className="hidden xl:table-cell px-3 py-3 text-sm text-white tabular-nums">{formatUSD(s.cif_value_usd)}</td>
+                  <td className="hidden xl:table-cell px-2 py-3 text-sm text-white tabular-nums">{formatUSD(s.cif_value_usd)}</td>
 
                   {/* Landed Cost */}
-                  <td className="hidden xl:table-cell px-3 py-3">
+                  <td className="hidden xl:table-cell px-2 py-3">
                     {s.total_landed_cost_kes ? (
                       <>
                         <div className="text-sm font-bold text-[#00C896] tabular-nums">
@@ -1016,7 +1016,7 @@ export default function OperationsPage() {
                   </td>
 
                   {/* Portals */}
-                  <td className="hidden xl:table-cell px-3 py-3">
+                  <td className="hidden xl:table-cell px-2 py-3">
                     <div className="flex items-center gap-2">
                       <PortalDots portals={s.portals} />
                       <button
@@ -1029,16 +1029,16 @@ export default function OperationsPage() {
                     </div>
                   </td>
 
-                  {/* Status — compact label, no separate Risk column */}
-                  <td className="px-3 py-3 whitespace-nowrap">
+                  {/* Status — sticky right, always visible */}
+                  <td className={`sticky right-[88px] z-10 px-2 py-3 whitespace-nowrap min-w-[96px] ${rowBg || 'bg-[#0A1628]'} ${isCriticalRow ? 'bg-red-500/5' : alert?.level === 'URGENT' ? 'bg-amber-500/5' : 'bg-[#0A1628]'}`}>
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUS_STYLE[s.remediation_status] ?? ''}`}>
                       {s.remediation_status === 'ESCALATED' && <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block" />}
                       {STATUS_LABEL[s.remediation_status] ?? s.remediation_status}
                     </span>
                   </td>
 
-                  {/* Actions */}
-                  <td className="px-3 py-3">
+                  {/* Actions — sticky right-0 */}
+                  <td className={`sticky right-0 z-10 px-2 py-3 ${isCriticalRow ? 'bg-red-500/5' : alert?.level === 'URGENT' ? 'bg-amber-500/5' : 'bg-[#0A1628]'}`}>
                     <div className="flex items-center gap-1">
                       {canWrite && (
                         <button onClick={() => setEditTarget(s)}

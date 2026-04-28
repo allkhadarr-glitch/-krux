@@ -101,12 +101,19 @@ const KENYA: CountryProfile = {
   port_of_entry: 'Mombasa',
   usd_rate: 130,
   kpa_demurrage: {
-    free_days: 4,
+    free_days: 5,
     daily_rate_usd: 75,
     doubles_after_days: 14,
     confidence: 'estimated',
-    // Source note: KPA rates vary by container type (20ft vs 40ft), terminal, and year.
-    // $75/day is a rough midpoint for a standard container. Verify current schedule at kpa.co.ke.
+    // NOTE — Two separate charges apply at Mombasa port:
+    // 1. KPA PORT STORAGE: charged by Kenya Ports Authority for goods remaining in the container yard
+    //    after the free storage period (typically 5 days from vessel discharge). Rates vary by
+    //    container type (20ft/40ft) and terminal. Verify current schedule at kpa.co.ke.
+    //    ~USD 50–100/container/day is a rough average; doubles after ~14 days.
+    // 2. SHIPPING LINE DEMURRAGE: charged by the shipping company for containers not returned
+    //    within the free time (separate from KPA storage). Ranges from USD 75–200+/day depending
+    //    on shipping line and container type. These are two distinct costs — both accrue simultaneously.
+    // The figure here approximates KPA port storage only.
   },
   regulators: [
     {
@@ -122,7 +129,7 @@ const KENYA: CountryProfile = {
         { name: 'Free Sale Certificate from country of origin', mandatory: true, rejection_reason: 'Confirms the product is legally sold in the exporting country', source_hint: 'Issued by health ministry of exporting country' },
         { name: 'Product Dossier (for new products)', mandatory: false, condition: 'Required for products not previously registered with PPB', rejection_reason: 'New pharmaceutical products require full technical dossier: composition, manufacturing process, stability data, clinical data' },
         { name: 'Product Labeling (English)', mandatory: true, rejection_reason: 'Label must comply with Kenya Pharmacy and Poisons Act Cap 244. Dosage, storage conditions, manufacturer details required', source_hint: 'Review against PPB labeling guidelines at ppb.go.ke' },
-        { name: 'KRA Import Declaration Form (IDF)', mandatory: true, rejection_reason: 'KRA customs requires IDF for all imports over USD 1,000', source_hint: 'File at kra.go.ke/itax' },
+        { name: 'KRA Import Declaration Form (IDF)', mandatory: true, rejection_reason: 'KRA customs requires IDF for all imports over USD 1,000', source_hint: 'Filed on KRA iCMS (Integrated Customs Management System) by your licensed clearing agent' },
         { name: 'Bill of Lading / Airway Bill', mandatory: true, rejection_reason: 'Original BoL required for customs clearance', source_hint: 'Obtain from shipping line' },
         { name: 'Commercial Invoice + Packing List', mandatory: true, rejection_reason: 'Must match BoL quantities exactly. Discrepancies trigger KRA review', source_hint: 'Ensure invoice matches BoL and packing list' },
       ],
@@ -159,7 +166,7 @@ const KENYA: CountryProfile = {
         { name: 'CB Test Certificate (where applicable)', mandatory: false, condition: 'Required for electrical products covered by CB scheme', rejection_reason: 'Without CB cert, separate testing at point of entry may be required' },
         { name: 'PVOC Certificate from origin (via SGS/Bureau Veritas)', mandatory: true, rejection_reason: 'KEBS operates a Pre-Export Verification of Conformity scheme. Products must be inspected at origin by appointed agency (SGS, Bureau Veritas, Intertek)', source_hint: 'Contact SGS or Bureau Veritas at country of origin before shipment' },
         { name: 'Commercial Invoice + Packing List', mandatory: true, rejection_reason: 'Must match test reports and type approval exactly — model numbers, quantities', source_hint: 'Ensure model numbers match type approval certificate exactly' },
-        { name: 'KRA Import Declaration Form (IDF)', mandatory: true, rejection_reason: 'Standard customs requirement', source_hint: 'File at kra.go.ke/itax' },
+        { name: 'KRA Import Declaration Form (IDF)', mandatory: true, rejection_reason: 'Standard customs requirement', source_hint: 'Filed on KRA iCMS by your licensed clearing agent' },
       ],
       penalty: {
         type: 'fixed_cost',
@@ -178,7 +185,7 @@ const KENYA: CountryProfile = {
         'Missing CB test certificate for electrical products',
       ],
       escalation_path: 'KEBS Imports: +254 020 605 0400. PVOC Unit: pvoc@kebs.org. Port liaison office at KPA Mombasa: +254 041 222 1060',
-      notes: 'KEBS PVOC scheme requires products to be inspected BEFORE export. If a shipment arrives without PVOC certificate, it may be detained for testing at port at importer\'s cost — typically USD 1,500–5,000 and 14–21 days additional delay.',
+      notes: 'KEBS PVoC (Pre-export Verification of Conformity) is a PRE-SHIPMENT inspection — it must be completed at origin before the goods leave the exporting country. Appointed agencies are SGS, Bureau Veritas, and Intertek. If a shipment arrives at Mombasa WITHOUT a valid PVoC certificate, KEBS will detain the goods for port-based re-testing — typically USD 1,500–5,000 and 14–21 additional days. The SLA clock shown in KRUX reflects the full clearance cycle including pre-shipment PVoC; if your PVoC cert is already in hand on arrival, port clearance is typically 3–5 working days.',
       last_verified: 'April 2026',
     },
     {
@@ -194,7 +201,7 @@ const KENYA: CountryProfile = {
         { name: 'English-Language Label Copy', mandatory: true, rejection_reason: 'Label must comply with Kenya Pesticides Regulations. Dosage, first aid, resistance management statements required', source_hint: 'Review against PCPB labeling guidelines before submission' },
         { name: 'Toxicological Data', mandatory: true, rejection_reason: 'LD50 values, NOEC, acceptable daily intake data required for registration', source_hint: 'Request from manufacturer. Should be part of product technical dossier' },
         { name: 'Environmental Fate and Effects Data', mandatory: true, rejection_reason: 'PCPB assesses environmental impact. Soil degradation, aquatic toxicity data required', source_hint: 'Part of OECD-format product dossier' },
-        { name: 'KRA Import Declaration Form (IDF)', mandatory: true, rejection_reason: 'Standard customs requirement', source_hint: 'File at kra.go.ke/itax' },
+        { name: 'KRA Import Declaration Form (IDF)', mandatory: true, rejection_reason: 'Standard customs requirement', source_hint: 'Filed on KRA iCMS by your licensed clearing agent' },
       ],
       penalty: {
         type: 'fixed_cost',
@@ -227,7 +234,7 @@ const KENYA: CountryProfile = {
         { name: 'Origin Country Phytosanitary Certificate', mandatory: true, rejection_reason: 'Must be issued by the national plant protection organization (PPQS in India, AQSIQ in China) in the exporting country. KEPHIS will not begin processing without this document', source_hint: 'Request from manufacturer — must come from government authority, not manufacturer' },
         { name: 'Certificate of Analysis (CoA)', mandatory: true, rejection_reason: 'For fertilizers and agricultural chemicals: CoA confirming composition matches label claim', source_hint: 'Should include: composition, purity, batch number' },
         { name: 'Label Copy (English)', mandatory: true, rejection_reason: 'Must comply with Kenya Fertilizers and Animal Foodstuffs Act', source_hint: 'Include application rates, safety information, storage conditions' },
-        { name: 'KRA Import Declaration Form (IDF)', mandatory: true, rejection_reason: 'Standard customs requirement', source_hint: 'File at kra.go.ke/itax' },
+        { name: 'KRA Import Declaration Form (IDF)', mandatory: true, rejection_reason: 'Standard customs requirement', source_hint: 'Filed on KRA iCMS by your licensed clearing agent' },
       ],
       penalty: {
         type: 'seizure_risk',
@@ -257,7 +264,7 @@ const KENYA: CountryProfile = {
       documents: [
         { name: 'EPRA Petroleum Import Permit (Form EPRA/IMP)', mandatory: true, rejection_reason: 'No petroleum product may clear customs without a valid EPRA import permit — processing takes 25 days minimum', source_hint: 'Apply at epra.go.ke/licensing → Petroleum Products → Import Permit. Call +254 020 362 0000 to request expedited track for essential fuel supply.' },
         { name: 'Product Specification / Certificate of Quality', mandatory: true, rejection_reason: 'EPRA requires proof that petroleum meets Kenya specification (e.g. ASTM D1655 for Jet A-1)', source_hint: 'Request from supplier — must include density, flash point, freeze point, and sulphur content data' },
-        { name: 'KRA Import Declaration Form (IDF)', mandatory: true, rejection_reason: 'Standard KRA customs requirement. Jet A-1 HS code 2710.19.11 attracts 0% import duty — verify classification to avoid misclassification penalty', source_hint: 'File at kra.go.ke/itax. Use HS 2710.19.11 for kerosene-type jet fuel.' },
+        { name: 'KRA Import Declaration Form (IDF)', mandatory: true, rejection_reason: 'Standard KRA customs requirement. Jet A-1 HS code 2710.19.11 attracts 0% import duty — verify classification to avoid misclassification penalty', source_hint: 'Filed on KRA iCMS by your clearing agent. Use HS 2710.19.11 for kerosene-type jet fuel.' },
         { name: 'Bill of Lading', mandatory: true, rejection_reason: 'Confirms shipment origin, quantity, and carrier', source_hint: 'Obtain from shipping line or freight forwarder' },
         { name: 'Commercial Invoice + Certificate of Origin', mandatory: true, rejection_reason: 'Required for customs valuation and origin verification', source_hint: 'Issued by supplier. Certificate of Origin must be authenticated by origin country chamber of commerce.' },
         { name: 'Health & Safety Data Sheet (HSDS)', mandatory: true, rejection_reason: 'EPRA requires safety documentation for all petroleum products', source_hint: 'Standard HSDS from fuel supplier covering fire risk, handling, and spill procedures' },
@@ -292,7 +299,7 @@ const KENYA: CountryProfile = {
         { name: 'NEMA Environmental Impact Assessment (EIA)', mandatory: false, condition: 'Required for large-volume chemical imports or new chemical substances', rejection_reason: 'NEMA may require EIA for chemicals with significant environmental impact', source_hint: 'Engage a NEMA-licensed EIA lead expert' },
         { name: 'NEMA Importation Permit', mandatory: true, rejection_reason: 'All NEMA-regulated chemicals require prior importation approval', source_hint: 'Apply at nema.go.ke/permits' },
         { name: 'Material Safety Data Sheet (MSDS)', mandatory: true, rejection_reason: 'Full safety profile required for all chemical imports', source_hint: 'Manufacturer should provide. Must be current version' },
-        { name: 'KRA Import Declaration Form (IDF)', mandatory: true, rejection_reason: 'Standard customs requirement', source_hint: 'File at kra.go.ke/itax' },
+        { name: 'KRA Import Declaration Form (IDF)', mandatory: true, rejection_reason: 'Standard customs requirement', source_hint: 'Filed on KRA iCMS by your licensed clearing agent' },
       ],
       penalty: {
         type: 'seizure_risk',
@@ -318,7 +325,7 @@ const KENYA: CountryProfile = {
       sla_official_days: 3,
       sla_actual_days: 2,
       documents: [
-        { name: 'Import Declaration Form (IDF) via iTax', mandatory: true, rejection_reason: 'All imports over USD 1,000 require IDF lodged on KRA iTax portal before shipment arrives. Fee: 2% of CIF value (minimum KES 5,000)', source_hint: 'File at kra.go.ke/itax. Requires PIN certificate' },
+        { name: 'Import Declaration Form (IDF) via KRA iCMS', mandatory: true, rejection_reason: 'All imports over USD 1,000 require IDF lodged on KRA iCMS before shipment arrives. Fee: 2% of CIF value (minimum KES 5,000)', source_hint: 'Filed on KRA iCMS (Integrated Customs Management System) by your licensed clearing agent. Requires importer PIN certificate' },
         { name: 'Commercial Invoice', mandatory: true, rejection_reason: 'KRA requires commercial invoice to verify CIF value and calculate duties. Must show true transaction value', source_hint: 'Do not undervalue — KRA benchmarks against similar shipments' },
         { name: 'Bill of Lading / Airway Bill', mandatory: true, rejection_reason: 'Proof of shipment required for customs processing', source_hint: 'Obtain from shipping agent' },
         { name: 'Packing List', mandatory: true, rejection_reason: 'Itemized packing list required for physical verification', source_hint: 'Must match invoice and BoL exactly' },
@@ -333,18 +340,18 @@ const KENYA: CountryProfile = {
         // Note: The 2%/week figure approximates KRA interest on unpaid duties.
         // The exact current rate should be verified against the Kenya Customs and Excise Act and current KRA circulars.
       },
-      portal_url: 'https://kra.go.ke/itax',
+      portal_url: 'https://kra.go.ke',
       phone: '+254 020 484 9999',
-      fees_summary: 'IDF levy: 2% of CIF value (minimum KES 5,000). Railway Development Levy (RDL): 1.5% of CIF. Import Duty: 0-100% depending on HS code. VAT: 16% on dutiable value. Excise duty on specific products',
+      fees_summary: 'IDF levy: 2% of CIF value (minimum KES 5,000). Railway Development Levy (RDL): 1.5% of CIF. Import Duty: 0–100% depending on HS code. VAT: 16% on dutiable value. Excise duty on specific products. All duties paid through KRA iCMS.',
       common_rejections: [
-        'IDF not lodged before shipment arrival',
-        'CIF value undervalued vs KRA benchmarks — triggers audit',
-        'Wrong HS code classification — can result in underpayment penalties (25% of duty)',
-        'Invoice and BoL quantities don\'t match',
-        'Missing Certificate of Origin for preferential tariff claims',
+        'IDF not lodged before shipment arrival — KRA iCMS entry must be filed before vessel arrives at Mombasa',
+        'CIF value undervalued vs KRA benchmarks — triggers audit and duty uplift',
+        'Wrong HS code classification — 25% penalty on duty shortfall. KRA officers verify physical cargo against declared HS code',
+        'Invoice and BoL quantities don\'t match — discrepancy triggers physical examination',
+        'Missing Certificate of Origin for preferential tariff claims (EAC/COMESA)',
       ],
-      escalation_path: 'KRA Mombasa Customs: +254 041 231 0755. KRA intelligence unit for disputes: +254 020 484 9999 ext 3000',
-      notes: 'KRA is generally the fastest clearance step (1-3 days) but incorrect HS classification is the most expensive mistake — can result in 25% penalty on unpaid duty plus seizure. Always verify HS code before IDF lodgement.',
+      escalation_path: 'KRA Mombasa Customs (Port): +254 041 231 0755. KRA Contact Centre: +254 020 484 9999. For HS disputes: KRA Customs Advisory Unit.',
+      notes: 'KRA customs clearance (1–3 days) is handled entirely through KRA iCMS — the Integrated Customs Management System used by licensed clearing agents. Importers do not file directly; your clearing agent lodges the customs entry on your behalf. HS code misclassification is the single most expensive error in Kenya customs — 25% penalty on any duty shortfall, plus interest.',
       last_verified: 'April 2026',
     },
     {

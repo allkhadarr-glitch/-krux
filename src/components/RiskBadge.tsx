@@ -14,6 +14,13 @@ export function RiskBadge({ risk }: { risk: RiskFlag }) {
   )
 }
 
+const STATUS_LABEL: Record<RemediationStatus, string> = {
+  OPEN:        'Open',
+  IN_PROGRESS: 'Active',
+  CLOSED:      'Closed',
+  ESCALATED:   'Escalated',
+}
+
 export function StatusBadge({ status }: { status: RemediationStatus }) {
   const styles: Record<RemediationStatus, string> = {
     OPEN:        'text-blue-400   bg-blue-400/10   border border-blue-400/30',
@@ -24,7 +31,7 @@ export function StatusBadge({ status }: { status: RemediationStatus }) {
   return (
     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-wide ${styles[status]}`}>
       {status === 'ESCALATED' && <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block" />}
-      {status}
+      {STATUS_LABEL[status] ?? status}
     </span>
   )
 }
