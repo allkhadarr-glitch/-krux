@@ -300,6 +300,64 @@ KRUX RISK ASSESSMENT
   What changes the trajectory     EPRA expedited track (essential
   fuel supply) — call EPRA Licensing directly and request
   priority processing: +254 020 362 0000`,
+
+  'Used Toyota Probox — 1NZ-FE 2020': `COMPLIANCE BRIEF
+Used Toyota Probox — 1NZ-FE 2020
+KRUX · KEBS + NTSA
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SITUATION
+
+Vehicle IN TRANSIT from Nagoya.
+ETA Mombasa: 10 days.
+KEBS PVoC: NOT YET FILED.
+NTSA pre-registration: PENDING.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FULL DUTY STACK — PROBOX 2020 (6 years old)
+
+CIF Value                              $6,800
+Import Duty (35%)                      $2,380
+Excise Duty (20% on CIF+duty)          $1,836
+IDF Levy (2%)                          $  136
+RDL Levy (1.5%)                        $  102
+VAT (16% on CIF+duty+excise)           $1,763
+PVoC + Clearing                        $  800
+NTSA Reg + RPB + Plates (approx)       $  200
+─────────────────────────────────────────────
+Total landed cost                     $14,017
+Total landed cost                 KES 1.82M
+
+Note: effective tax rate on this vehicle is ~106% of CIF.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT YOU DO NEXT — IN THIS ORDER
+
+  1. File KEBS PVoC request now
+     kebs.go.ke/pvoc → Vehicle Pre-export Inspection
+     Allow 7 days minimum for KEBS to process.
+
+  2. Confirm vehicle age compliance
+     Maximum 8 years from year of manufacture.
+     2020 vehicle clears 2026 limit ✓
+
+  3. Source Jidosha Hoken (Japanese vehicle registration)
+     Required by KEBS — confirms VIN, engine size, year.
+
+  4. Book NTSA inspection slot post-arrival
+     NTSA and KEBS inspect independently. Allow 14 days
+     after vessel arrival for both agencies.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+KRUX RISK ASSESSMENT
+
+  Risk Score           40 / 100
+  Timeline             On track — 15 days to deadline
+  Critical dependency  KEBS PVoC must be filed in next 3 days`,
 }
 
 const DEMO_BRIEF_DEFAULT = DEMO_BRIEFS['Pyrethroid Pesticide — Lot P2024']

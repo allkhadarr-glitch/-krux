@@ -228,6 +228,43 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
         composite_risk_score:   10,
         open_action_count:      3,
       },
+      {
+        // Motor vehicle — shows the full duty stack incl excise, NTSA, RPB, MSS
+        organization_id:        orgId,
+        name:                   'Used Toyota Probox — 1NZ-FE 2020',
+        client_name:            'Kariuki & Sons Traders',
+        reference_number:       `KRUX-2026-VEH-${orgId.slice(0, 4).toUpperCase()}`,
+        manufacturer_id:        null,
+        regulatory_body_id:     bodyMap['KEBS'] ?? null,
+        origin_port:            'Nagoya',
+        destination_port:       'Mombasa',
+        origin_country:         'Japan',
+        vessel_name:            'OCEAN PRIDE',
+        bl_number:              'OPNJP2026081K',
+        hs_code:                '8703.23',
+        product_description:    'Used passenger vehicle — Toyota Probox 1.5L, 2020, RHD, 68,000km. 1NZ-FE engine.',
+        quantity:               1,
+        unit:                   'unit',
+        weight_kg:              1040,
+        cif_value_usd:          6800,
+        import_duty_usd:        2380,
+        vat_usd:                1763,
+        idf_levy_usd:           136,
+        rdl_levy_usd:           102,
+        pvoc_fee_usd:           300,
+        clearing_fee_usd:       500,
+        total_landed_cost_usd:  14017,
+        total_landed_cost_kes:  1822210,
+        exchange_rate_used:     130,
+        storage_rate_per_day:   18,
+        pvoc_deadline:          addDays(15),
+        eta:                    addDays(10),
+        risk_flag_status:       'AMBER',
+        remediation_status:     'OPEN',
+        shipment_status:        'IN_TRANSIT',
+        composite_risk_score:   4,
+        open_action_count:      2,
+      },
     ])
     .select('id, name')
 
@@ -236,6 +273,7 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
   const s0 = createdShipments?.[0]
   const s3 = createdShipments?.[3]
   const s4 = createdShipments?.[4]
+  const s5 = createdShipments?.[5]
 
   if (s0) {
     await supabase.from('actions').insert([
@@ -308,6 +346,25 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
     ])
   }
 
+  if (s5) {
+    await supabase.from('actions').insert([
+      {
+        organization_id: orgId, shipment_id: s5.id,
+        action_type: 'VERIFY_DOCS', priority: 'HIGH',
+        title: 'Confirm KEBS PVoC — Vehicle Age + Mileage',
+        description: 'KEBS inspects year of manufacture and odometer. Max age 8 years (2018 minimum for 2026). Confirm 1NZ-FE engine matches chassis registration. Submit Jidosha Hoken vehicle registration document.',
+        source: 'SYSTEM', status: 'OPEN',
+      },
+      {
+        organization_id: orgId, shipment_id: s5.id,
+        action_type: 'COORDINATE_AGENT', priority: 'MEDIUM',
+        title: 'File NTSA pre-registration — confirm duty stack',
+        description: 'Duty breakdown: 35% import duty ($2,380) + 20% excise ($1,836) + IDF + RDL + VAT = $14,017 total. NTSA registration + RPB (KES 1,000) + number plates due at NTSA after customs clearance.',
+        source: 'SYSTEM', status: 'OPEN',
+      },
+    ])
+  }
+
   if (mfr1?.id) {
     await supabase.from('manufacturer_licenses').insert([
       {
@@ -352,7 +409,7 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
     {
       organization_id: orgId,
       title: 'Your workspace is ready',
-      body: 'Preloaded with 5 demo shipments across PPB, PCPB, KEBS, KEPHIS, and EPRA. Add your real imports to see live risk analysis.',
+      body: 'Preloaded with 6 demo shipments across PPB, PCPB, KEBS, KEPHIS, EPRA, and NTSA — including a vehicle import. Add your real imports to see live risk analysis.',
       type: 'INFO',
       action_url: '/dashboard/operations',
     },
@@ -360,6 +417,6 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
 
   return {
     ok: true as const,
-    created: { shipments: createdShipments?.length ?? 0, manufacturers: 2, notifications: 3 },
+    created: { shipments: createdShipments?.length ?? 0, manufacturers: 2, notifications: 4 },
   }
 }

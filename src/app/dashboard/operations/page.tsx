@@ -771,13 +771,19 @@ export default function OperationsPage() {
                   <RegulatorBadge body={s.regulatory_body?.code ?? '—'} />
                 </div>
 
-                {/* Stage + priority */}
+                {/* Stage + priority + bond type */}
                 <div className="flex items-center gap-2 flex-wrap">
                   <StagePill shipmentId={s.id} currentStage={(s as any).shipment_stage ?? 'PRE_SHIPMENT'} />
                   {s.risk?.priority_level && (
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${priorityColors[s.risk.priority_level as PriorityLevel]}`}>
                       {s.risk.priority_level}
                     </span>
+                  )}
+                  {(s as any).shipment_type === 'BONDED' && (
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-400/10 text-amber-400 border border-amber-400/30">BONDED</span>
+                  )}
+                  {(s as any).shipment_type === 'TRANSIT' && (
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-400/10 text-blue-400 border border-blue-400/30">TRANSIT</span>
                   )}
                 </div>
 
@@ -967,7 +973,15 @@ export default function OperationsPage() {
                     >
                       {s.name}
                     </button>
-                    <div className="text-xs text-[#64748B] mt-0.5">{s.origin_port}</div>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-xs text-[#64748B]">{s.origin_port}</span>
+                      {(s as any).shipment_type === 'BONDED' && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-400/10 text-amber-400 border border-amber-400/30">BONDED</span>
+                      )}
+                      {(s as any).shipment_type === 'TRANSIT' && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-400/10 text-blue-400 border border-blue-400/30">TRANSIT</span>
+                      )}
+                    </div>
                     {alert && (
                       <div className="text-[10px] text-red-400 mt-0.5 font-medium truncate max-w-[200px]">
                         Est. loss: KES {alert.estimatedAdditionalCostKES.toLocaleString()}

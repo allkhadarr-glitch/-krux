@@ -843,6 +843,30 @@ export default function ShipmentDrawer({
           </div>
         )}
 
+        {/* Bonded / Transit info banner */}
+        {(shipment as any).shipment_type === 'BONDED' && (
+          <div className="mx-3 sm:mx-4 mt-2 mb-1 rounded-xl border border-amber-400/30 bg-amber-400/5 p-3 sm:p-3.5">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest bg-amber-400/10 border border-amber-400/30 px-2 py-0.5 rounded">Bonded Shipment</span>
+            </div>
+            <p className="text-xs text-amber-300/80 leading-relaxed">
+              Goods are in a <strong>customs-bonded warehouse</strong>. Import duty is deferred — not paid until goods are removed.
+              Ensure the bond number and warehouse operator details are recorded. Bond expiry must be tracked — exceeding it triggers KRA penalty and forced clearance.
+            </p>
+          </div>
+        )}
+        {(shipment as any).shipment_type === 'TRANSIT' && (
+          <div className="mx-3 sm:mx-4 mt-2 mb-1 rounded-xl border border-blue-400/30 bg-blue-400/5 p-3 sm:p-3.5">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest bg-blue-400/10 border border-blue-400/30 px-2 py-0.5 rounded">Transit Shipment</span>
+            </div>
+            <p className="text-xs text-blue-300/80 leading-relaxed">
+              Goods are <strong>transiting through Kenya</strong> to an EAC destination (Uganda, Rwanda, DRC, Tanzania).
+              No Kenya import duty applies, but a transit bond must be lodged and closed when goods exit. KEPHIS still inspects agricultural goods at the border.
+            </p>
+          </div>
+        )}
+
         {/* Tabs — scrollable strip */}
         <div className="flex border-b border-[#1E3A5F] overflow-x-auto mt-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {allTabs.map(({ key, label, icon: Icon }) => (

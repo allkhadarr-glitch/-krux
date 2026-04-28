@@ -24,6 +24,7 @@ export interface HSCodeEntry {
   rdl_levy_pct:      number       // always 1.5%
   pvoc_required:     boolean
   regulator_codes:   string[]
+  keywords?:         string[]     // trade names, aliases, product synonyms for search
   excise_note?:      string       // excise duty if applicable
   misclassifications: HSMisclassification[]
   statutory_note:    string       // actual legal reference where applicable
@@ -43,6 +44,7 @@ export const HS_DATABASE: HSCodeEntry[] = [
     rdl_levy_pct:    1.5,
     pvoc_required:   true,
     regulator_codes: ['EPRA'],
+    keywords:        ['ATF', 'aviation fuel', 'jet fuel', 'Jet A1', 'jet a-1', 'aviation turbine fuel', 'JKIA fuel', 'kerosene', 'airline fuel', 'aircraft fuel'],
     excise_note:     'No excise duty on Jet A-1 (aviation fuel exemption). Verify with KRA excise schedule.',
     misclassifications: [
       {
@@ -67,6 +69,7 @@ export const HS_DATABASE: HSCodeEntry[] = [
     rdl_levy_pct:    1.5,
     pvoc_required:   true,
     regulator_codes: ['EPRA'],
+    keywords:        ['diesel', 'gas oil', 'AGO', 'automotive gas oil', 'truck fuel', 'generator fuel', 'gasoil', 'heavy fuel', 'industrial diesel'],
     excise_note:     'Excise duty: KES 7.21 per litre (subject to Finance Act revision). Apply on litres declared.',
     misclassifications: [
       {
@@ -91,6 +94,7 @@ export const HS_DATABASE: HSCodeEntry[] = [
     rdl_levy_pct:    1.5,
     pvoc_required:   true,
     regulator_codes: ['EPRA', 'KEBS'],
+    keywords:        ['LPG', 'cooking gas', 'propane', 'butane', 'gas cylinder', 'liquefied gas', 'LP gas', 'household gas', 'gas refill'],
     excise_note:     'No excise on LPG in Kenya as of current Finance Act. Verify each fiscal year.',
     misclassifications: [
       {
@@ -117,6 +121,7 @@ export const HS_DATABASE: HSCodeEntry[] = [
     rdl_levy_pct:    1.5,
     pvoc_required:   true,
     regulator_codes: ['PPB'],
+    keywords:        ['antibiotics', 'amoxicillin', 'azithromycin', 'penicillin', 'tetracycline', 'ciprofloxacin', 'medicine', 'drugs', 'pharma', 'hospital drugs', 'prescription medicine', 'antimicrobial'],
     misclassifications: [
       {
         wrong_code:    '3004.90',
@@ -140,6 +145,7 @@ export const HS_DATABASE: HSCodeEntry[] = [
     rdl_levy_pct:    1.5,
     pvoc_required:   true,
     regulator_codes: ['PPB', 'KEBS'],
+    keywords:        ['vitamins', 'supplements', 'nutraceuticals', 'multivitamins', 'vitamin C', 'omega-3', 'health supplement', 'dietary supplement', 'provitamin', 'mineral supplement', 'capsules', 'softgels'],
     misclassifications: [
       {
         wrong_code:    '2106.90',
@@ -165,6 +171,7 @@ export const HS_DATABASE: HSCodeEntry[] = [
     rdl_levy_pct:    1.5,
     pvoc_required:   true,
     regulator_codes: ['PCPB', 'KEPHIS'],
+    keywords:        ['NPK', 'fertilizer', 'DAP', 'diammonium phosphate', 'compound fertilizer', 'agro inputs', 'crop nutrients', '20-10-10', 'nitrogen phosphorus potassium', 'blended fertilizer', 'basal fertilizer'],
     misclassifications: [
       {
         wrong_code:    '3102.10',
@@ -188,6 +195,7 @@ export const HS_DATABASE: HSCodeEntry[] = [
     rdl_levy_pct:    1.5,
     pvoc_required:   true,
     regulator_codes: ['PCPB', 'KEPHIS'],
+    keywords:        ['insecticide', 'pesticide', 'pyrethroid', 'organophosphate', 'agrochemicals', 'herbicide', 'fungicide', 'crop protection', 'spray', 'acaricide', 'nematicide', 'fumigant', 'weedkiller'],
     misclassifications: [
       {
         wrong_code:    '3808.94',
@@ -213,6 +221,7 @@ export const HS_DATABASE: HSCodeEntry[] = [
     rdl_levy_pct:    1.5,
     pvoc_required:   true,
     regulator_codes: ['KEBS'],
+    keywords:        ['LED lights', 'LED panels', 'lighting', 'light bulbs', 'lamps', 'solar lights', 'fluorescent', 'downlights', 'street lights', 'flood lights', 'strip lights', 'LED strip', 'light fittings', 'luminaires'],
     misclassifications: [
       {
         wrong_code:    '8543.70',
@@ -243,6 +252,7 @@ export const HS_DATABASE: HSCodeEntry[] = [
     rdl_levy_pct:    1.5,
     pvoc_required:   false,
     regulator_codes: ['KEBS'],
+    keywords:        ['laptop', 'notebook', 'tablet', 'computer', 'MacBook', 'iPad', 'Surface', 'Chromebook', 'netbook', 'portable computer', 'PC', 'Lenovo', 'HP laptop', 'Dell laptop'],
     misclassifications: [
       {
         wrong_code:    '8471.41',
@@ -266,6 +276,7 @@ export const HS_DATABASE: HSCodeEntry[] = [
     rdl_levy_pct:    1.5,
     pvoc_required:   false,
     regulator_codes: ['CA', 'KEBS'],
+    keywords:        ['smartphone', 'phone', 'iPhone', 'Samsung', 'Android', 'mobile phone', 'handset', 'Tecno', 'Infinix', 'Xiaomi', 'cellular phone', 'feature phone', 'mobile device', 'cell phone'],
     misclassifications: [
       {
         wrong_code:    '8517.18',
@@ -291,6 +302,7 @@ export const HS_DATABASE: HSCodeEntry[] = [
     rdl_levy_pct:    1.5,
     pvoc_required:   true,
     regulator_codes: ['KEBS', 'KEPHIS'],
+    keywords:        ['rice', 'milled rice', 'long grain rice', 'Basmati', 'Pakistani rice', 'Indian rice', 'white rice', 'polished rice', 'parboiled rice', 'jasmine rice', 'grain'],
     excise_note:     'EAC preferential rate: 0% from Tanzania/Uganda under EAC. General rate: 75% from all other origins. Always verify origin certificate.',
     misclassifications: [
       {
@@ -315,6 +327,7 @@ export const HS_DATABASE: HSCodeEntry[] = [
     rdl_levy_pct:    1.5,
     pvoc_required:   true,
     regulator_codes: ['KEBS', 'KEPHIS'],
+    keywords:        ['palm oil', 'CPO', 'crude palm oil', 'vegetable oil', 'cooking oil', 'edible oil', 'food oil', 'palm', 'fat', 'oil manufacturing'],
     misclassifications: [
       {
         wrong_code:    '1511.90',
@@ -340,6 +353,7 @@ export const HS_DATABASE: HSCodeEntry[] = [
     rdl_levy_pct:    1.5,
     pvoc_required:   true,
     regulator_codes: ['KEBS', 'NTSA'],
+    keywords:        ['car', 'vehicle', 'motor vehicle', 'passenger car', 'SUV', 'sedan', 'Probox', 'Fielder', 'Vitz', 'Demio', 'used car', 'second hand car', 'Toyota', 'Nissan', 'Honda', 'Mazda', 'saloon', 'hatchback', 'station wagon'],
     excise_note:     'Excise duty: 20% of CIF+import duty. Combined effective rate: ~57%+ before VAT.',
     misclassifications: [
       {
@@ -366,6 +380,7 @@ export const HS_DATABASE: HSCodeEntry[] = [
     rdl_levy_pct:    1.5,
     pvoc_required:   false,
     regulator_codes: ['KEBS'],
+    keywords:        ['trousers', 'jeans', 'pants', 'clothing', 'apparel', 'garments', "men's wear", 'denim', 'chinos', 'shorts', 'textile', 'fashion', 'cotton wear', 'fabric goods'],
     misclassifications: [
       {
         wrong_code:    '6211.32',
@@ -391,13 +406,36 @@ export function lookupHS(code: string): HSCodeEntry | undefined {
 export function searchHS(query: string): HSCodeEntry[] {
   const q = query.toLowerCase().trim()
   if (!q) return HS_DATABASE
-  return HS_DATABASE.filter(
-    (e) =>
-      e.code.includes(q) ||
-      e.description.toLowerCase().includes(q) ||
-      e.category.toLowerCase().includes(q) ||
-      e.regulator_codes.some((r) => r.toLowerCase().includes(q))
-  )
+
+  const tokens = q.split(/\s+/).filter(Boolean)
+
+  function score(e: HSCodeEntry): number {
+    const haystack = [
+      e.code,
+      e.description,
+      e.category,
+      ...e.regulator_codes,
+      ...(e.keywords ?? []),
+      e.kra_notes,
+      e.clearance_tip,
+    ].join(' ').toLowerCase()
+
+    // Every token must appear somewhere in the entry
+    if (!tokens.every((t) => haystack.includes(t))) return 0
+
+    // Rank: exact code match → code prefix → description contains full query → keyword match
+    if (e.code.toLowerCase() === q) return 4
+    if (e.code.toLowerCase().startsWith(q)) return 3
+    if (e.description.toLowerCase().includes(q)) return 2
+    if ((e.keywords ?? []).some((k) => k.toLowerCase().includes(q))) return 1.5
+    return 1
+  }
+
+  return HS_DATABASE
+    .map((e) => ({ e, s: score(e) }))
+    .filter(({ s }) => s > 0)
+    .sort((a, b) => b.s - a.s)
+    .map(({ e }) => e)
 }
 
 export const HS_CATEGORIES = [...new Set(HS_DATABASE.map((e) => e.category))]

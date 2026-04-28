@@ -38,6 +38,7 @@ export default function EditShipmentModal({
     bl_number:          shipment.bl_number ?? '',
     eta:                shipment.eta ?? '',
     client_name:        shipment.client_name ?? '',
+    shipment_type:      (shipment.shipment_type ?? 'STANDARD') as 'STANDARD' | 'BONDED' | 'TRANSIT',
   })
 
   useEffect(() => {
@@ -73,6 +74,7 @@ export default function EditShipmentModal({
           bl_number:          form.bl_number || null,
           eta:                form.eta || null,
           client_name:        form.client_name || null,
+          shipment_type:      form.shipment_type,
         }),
       })
       const d = await res.json()
@@ -180,6 +182,26 @@ export default function EditShipmentModal({
                 </select>
               </Field>
             </div>
+
+            <Field label="Shipment Type">
+              <select
+                value={form.shipment_type}
+                onChange={(e) => set('shipment_type', e.target.value)}
+                className={INPUT}
+              >
+                <option value="STANDARD">Standard — regular import, duty paid at clearance</option>
+                <option value="BONDED">Bonded — goods in bonded warehouse, duty deferred</option>
+                <option value="TRANSIT">Transit — moving through Kenya to EAC destination</option>
+              </select>
+            </Field>
+
+            {form.shipment_type !== 'STANDARD' && (
+              <div className="px-3 py-2.5 bg-amber-400/5 border border-amber-400/20 rounded-lg text-xs text-amber-300/80 leading-relaxed">
+                {form.shipment_type === 'BONDED'
+                  ? 'Bonded: Goods are stored under customs bond — duty is not paid until goods are removed from the warehouse. Ensure bond number is recorded in B/L Number field.'
+                  : 'Transit: Goods move through Kenya under a transit bond to Uganda, Rwanda, DRC, or another EAC country. No Kenya import duty applies. KEPHIS still inspects agricultural goods.'}
+              </div>
+            )}
 
             <Field label="Regulatory Body">
               <select

@@ -1,14 +1,15 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import { signUp } from './actions'
-import { Shield, Loader2, ArrowRight } from 'lucide-react'
+import { Shield, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 
 const initialState = { error: '' }
 
 export default function SignupPage() {
   const [state, formAction, isPending] = useActionState(signUp, initialState)
+  const [showPassword, setShowPassword] = useState(false)
 
   return (
     <div className="min-h-screen bg-[#0A1628] flex items-center justify-center px-4">
@@ -51,17 +52,27 @@ export default function SignupPage() {
               <label htmlFor="password" className="block text-[#94A3B8] text-xs font-medium mb-1.5 uppercase tracking-wider">
                 Password
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                minLength={8}
-                disabled={isPending}
-                className="w-full bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3.5 py-2.5 text-white text-sm placeholder-[#334155] focus:outline-none focus:border-[#00C896] focus:ring-1 focus:ring-[#00C896]/30 transition-all disabled:opacity-50"
-                placeholder="8+ characters"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                  disabled={isPending}
+                  className="w-full bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3.5 py-2.5 pr-10 text-white text-sm placeholder-[#334155] focus:outline-none focus:border-[#00C896] focus:ring-1 focus:ring-[#00C896]/30 transition-all disabled:opacity-50"
+                  placeholder="8+ characters"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#94A3B8] transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
             </div>
 
             {state?.error && (

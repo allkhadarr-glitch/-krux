@@ -27,8 +27,8 @@ function RiskBadge({ risk }: { risk: 'CRITICAL' | 'HIGH' | 'MEDIUM' }) {
   )
 }
 
-function HSCard({ entry }: { entry: HSCodeEntry }) {
-  const [expanded, setExpanded]   = useState(false)
+function HSCard({ entry, autoExpand }: { entry: HSCodeEntry; autoExpand?: boolean }) {
+  const [expanded, setExpanded]   = useState(autoExpand ?? false)
   const [aiResult, setAiResult]   = useState<string | null>(null)
   const [aiLoading, setAiLoading] = useState(false)
 
@@ -184,6 +184,11 @@ function HSCard({ entry }: { entry: HSCodeEntry }) {
   )
 }
 
+const POPULAR_SEARCHES = [
+  'jet fuel', 'diesel', 'smartphone', 'laptop', 'rice', 'car',
+  'LED lights', 'fertilizer', 'vitamins', 'pesticide', 'LPG', 'palm oil',
+]
+
 export default function HSLookupPage() {
   const [query, setQuery]       = useState('')
   const [category, setCategory] = useState('All')
@@ -193,34 +198,52 @@ export default function HSLookupPage() {
     return category === 'All' ? bySearch : bySearch.filter((e) => e.category === category)
   }, [query, category])
 
+  const singleResult = results.length === 1
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
           <div className="w-2 h-2 rounded-full bg-[#00C896]" />
           <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Kenya Customs Intelligence</span>
         </div>
         <h1 className="text-2xl font-black text-white">HS Code Lookup</h1>
         <p className="text-[#64748B] text-sm mt-1">
-          Duty rates, regulator requirements, misclassification risks, and KRA officer intelligence — for every Kenya import code.
+          Type a product name — get duty rates, regulators, and misclassification risks instantly.
         </p>
       </div>
 
       {/* Search */}
-      <div className="relative mb-4">
+      <div className="relative mb-3">
         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B]" />
         <input
           autoFocus
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by HS code, product description, or category… (e.g. 2710, jet fuel, LED, fertilizer)"
+          placeholder="e.g. jet fuel, smartphone, rice, NPK fertilizer, Probox…"
           className="w-full pl-11 pr-4 py-3.5 bg-[#0F2040] border border-[#1E3A5F] rounded-xl text-sm text-white placeholder-[#334155] focus:outline-none focus:border-[#00C896]/50 focus:ring-1 focus:ring-[#00C896]/20"
         />
       </div>
 
+      {/* Popular searches — show only when search is empty */}
+      {!query && (
+        <div className="flex gap-2 flex-wrap mb-4">
+          <span className="text-[10px] text-[#334155] font-semibold uppercase tracking-wide self-center">Popular:</span>
+          {POPULAR_SEARCHES.map((term) => (
+            <button
+              key={term}
+              onClick={() => setQuery(term)}
+              className="px-2.5 py-1 rounded-lg text-xs text-[#64748B] border border-[#1E3A5F] hover:border-[#00C896]/40 hover:text-white transition-all"
+            >
+              {term}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Category filters */}
-      <div className="flex gap-2 flex-wrap mb-6">
+      <div className="flex gap-2 flex-wrap mb-5">
         {['All', ...HS_CATEGORIES].map((cat) => (
           <button
             key={cat}
@@ -237,20 +260,32 @@ export default function HSLookupPage() {
       </div>
 
       {/* Results count */}
-      <p className="text-xs text-[#64748B] mb-4">
-        {results.length} code{results.length !== 1 ? 's' : ''} · Click any card to expand KRA intelligence
-      </p>
+      {query && (
+        <p className="text-xs text-[#64748B] mb-4">
+          {results.length === 0
+            ? 'No results'
+            : `${results.length} result${results.length !== 1 ? 's' : ''}${singleResult ? ' — expanded below' : ' · click any card for KRA intelligence'}`}
+        </p>
+      )}
 
       {/* Results */}
       <div className="space-y-4">
-        {results.length === 0 ? (
+        {results.length === 0 && query ? (
           <div className="text-center py-16">
             <Search size={32} className="text-[#334155] mx-auto mb-3" />
-            <p className="text-[#64748B] text-sm">No HS codes match your search.</p>
-            <p className="text-[#334155] text-xs mt-1">Try a product name, category, or partial code.</p>
+            <p className="text-[#64748B] text-sm">No HS codes match &ldquo;{query}&rdquo;.</p>
+            <p className="text-[#334155] text-xs mt-2">Try a product trade name, brand, or partial code (e.g. 2710, DAP, Amoxicillin)</p>
+            <div className="flex gap-2 flex-wrap justify-center mt-4">
+              {POPULAR_SEARCHES.slice(0, 6).map((term) => (
+                <button key={term} onClick={() => setQuery(term)}
+                  className="px-2.5 py-1 rounded-lg text-xs text-[#64748B] border border-[#1E3A5F] hover:border-[#00C896]/40 hover:text-white transition-all">
+                  {term}
+                </button>
+              ))}
+            </div>
           </div>
         ) : (
-          results.map((entry) => <HSCard key={entry.code} entry={entry} />)
+          results.map((entry) => <HSCard key={entry.code} entry={entry} autoExpand={singleResult} />)
         )}
       </div>
     </div>
