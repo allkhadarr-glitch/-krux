@@ -36,7 +36,7 @@ const nav = [
   { href: '/dashboard/billing',      label: 'Billing',          icon: CreditCard },
 ]
 
-export function Sidebar({ userEmail, orgName }: { userEmail: string; orgName?: string | null }) {
+export function Sidebar({ userEmail, orgName, ktin }: { userEmail: string; orgName?: string | null; ktin?: string | null }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
@@ -103,6 +103,14 @@ export function Sidebar({ userEmail, orgName }: { userEmail: string; orgName?: s
           </div>
         </div>
 
+        {/* Entity identity card */}
+        {(ktin || orgName) && (
+          <Link href="/dashboard/settings" onClick={() => setOpen(false)} className="block mx-3 mt-3 px-3 py-2.5 rounded-lg bg-[#0A1628] border border-[#1E3A5F] hover:border-[#00C896]/40 transition-all group">
+            {ktin && <div className="text-[#00C896] text-[11px] font-mono font-bold tracking-widest group-hover:text-[#00D9A8] transition-colors">{ktin}</div>}
+            {orgName && <div className="text-white text-xs font-semibold mt-0.5 truncate">{orgName}</div>}
+          </Link>
+        )}
+
         {/* Nav links */}
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           {nav.map(({ href, label, icon: Icon, highlight }: any) => {
@@ -152,8 +160,8 @@ export function Sidebar({ userEmail, orgName }: { userEmail: string; orgName?: s
           </form>
 
           <div className="px-3 pt-3">
-            <div className="text-[#00C896] text-xs font-bold truncate">{orgName ?? userEmail}</div>
-            <div className="text-[#334155] text-xs mt-0.5">KRUX v1.0</div>
+            <div className="text-[#334155] text-xs truncate">{userEmail}</div>
+            <div className="text-[#1E3A5F] text-xs mt-0.5">KRUX v1.0</div>
           </div>
         </div>
       </aside>
