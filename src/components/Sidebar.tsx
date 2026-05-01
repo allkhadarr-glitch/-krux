@@ -5,16 +5,18 @@ import { usePathname } from 'next/navigation'
 import {
   BarChart3, Briefcase, User, Factory, Settings, Shield, LogOut,
   Zap, ShoppingCart, Archive, Smartphone, TrendingUp, Users, Calendar,
-  FileText, Bell, Bot, Compass, CreditCard, Hash, Menu, X, FolderKanban,
+  FileText, Bell, Bot, Compass, CreditCard, Hash, Menu, X, FolderKanban, Car, ListChecks,
 } from 'lucide-react'
 import { signOut } from '@/app/login/actions'
 import { NotificationBell } from './NotificationBell'
 
 const nav = [
+  { href: '/dashboard/today',        label: 'Today',            icon: ListChecks, highlight: true },
   { href: '/dashboard/actions',      label: 'Action Center',    icon: Zap },
   { href: '/dashboard/operations',   label: 'Operations',       icon: Shield },
   { href: '/dashboard/portfolio',    label: 'Client Portfolio', icon: FolderKanban },
   { href: '/dashboard/hs-lookup',    label: 'HS Code Lookup',   icon: Hash },
+  { href: '/dashboard/mv-calculator', label: 'Vehicle Duty Calc', icon: Car },
   { href: '/dashboard/briefing',     label: 'Morning Brief',    icon: FileText },
   { href: '/dashboard/ai',           label: 'KRUX AI',          icon: Bot },
   { href: '/dashboard/alerts',       label: 'Alerts',           icon: Bell },
@@ -34,7 +36,7 @@ const nav = [
   { href: '/dashboard/billing',      label: 'Billing',          icon: CreditCard },
 ]
 
-export function Sidebar({ userEmail }: { userEmail: string }) {
+export function Sidebar({ userEmail, orgName }: { userEmail: string; orgName?: string | null }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
@@ -103,7 +105,7 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
 
         {/* Nav links */}
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-          {nav.map(({ href, label, icon: Icon }) => {
+          {nav.map(({ href, label, icon: Icon, highlight }: any) => {
             const active = pathname === href
             return (
               <Link
@@ -113,11 +115,16 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   active
                     ? 'bg-[#00C896]/10 text-[#00C896] border border-[#00C896]/20'
-                    : 'text-[#94A3B8] hover:text-white hover:bg-[#1E3A5F]/50'
+                    : highlight
+                      ? 'text-white bg-[#00C896]/5 border border-[#00C896]/15 hover:bg-[#00C896]/10'
+                      : 'text-[#94A3B8] hover:text-white hover:bg-[#1E3A5F]/50'
                 }`}
               >
-                <Icon size={15} className="flex-shrink-0" />
+                <Icon size={15} className={`flex-shrink-0 ${highlight && !active ? 'text-[#00C896]' : ''}`} />
                 {label}
+                {highlight && !active && (
+                  <span className="ml-auto w-2 h-2 rounded-full bg-[#00C896] animate-pulse" />
+                )}
               </Link>
             )
           })}
@@ -145,7 +152,7 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
           </form>
 
           <div className="px-3 pt-3">
-            <div className="text-[#00C896] text-xs font-bold truncate">{userEmail}</div>
+            <div className="text-[#00C896] text-xs font-bold truncate">{orgName ?? userEmail}</div>
             <div className="text-[#334155] text-xs mt-0.5">KRUX v1.0</div>
           </div>
         </div>
