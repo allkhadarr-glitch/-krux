@@ -1,10 +1,10 @@
 # KRUX Platform — Full Build Audit
-**Last updated:** 2026-04-28 (Session 12)  
-**Production URL:** https://krux-xi.vercel.app  
+**Last updated:** 2026-05-01 (Session 13)  
+**Production URL:** https://kruxvon.com  
 **Billing test:** 7 / 7 passed  
 **GitHub:** github.com/allkhadarr-glitch/-krux · branch: master  
-**Latest deployment:** auto-triggered — `6e7d836`  
-**Latest commit:** `6e7d836` — feat: motor vehicle import vertical + KRA ruling watch
+**Latest deployment:** `vercel --prod` CLI (GitHub auto-deploy BROKEN — do not rely on git push) — `dpl_2FGdTE77fTR5qHmhV4FHp1ZzL7FX`  
+**Latest commit:** `a4693ab` — feat: add KTIN identity card to sidebar top
 
 ---
 
@@ -411,7 +411,7 @@ Accepts PDF or image file (max 10MB). Sends base64 to Claude Sonnet 4.6 with Ken
 
 | Page | Path | Content |
 |---|---|---|
-| Signup | `/signup` | Dedicated signup page with email + password form. Server Action creates user, org, seeds demo data, sends welcome email via Resend, auto-signs in, redirects to `/dashboard/operations` |
+| Signup | `/signup` | Dedicated signup page with **Company Name + email + password**. Server Action creates user, org (named from company field, not email domain), seeds demo data, sends KTIN welcome email via Resend, auto-signs in, redirects to `/dashboard/today` |
 | Forgot Password | `/forgot-password` | Sends Supabase password reset email |
 | Update Password | `/auth/update-password` | Authenticated password reset form (Supabase magic link lands here) |
 | Shared Brief | `/brief/[token]` | Public read-only compliance brief page. Full OG metadata for WhatsApp/Twitter previews. Share buttons (copy, WhatsApp, Twitter). "Get KRUX free →" CTA with `?ref=brief` referral tracking. Brief expires after 7 days. |
@@ -629,6 +629,20 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 - [x] **Operations table sticky columns** — Status (`sticky right-[88px]`) and Actions (`sticky right-0`) are always visible regardless of viewport width. Background colour matches row state (critical `bg-red-500/5` / urgent `bg-amber-500/5` / default `bg-[#0A1628]`). Cell padding reduced from `px-3` to `px-2`. Page wrapper narrowed to `px-2 lg:px-3`.
 - [x] **StatusBadge short labels** — `RiskBadge.tsx` `StatusBadge` now renders Open / Active / Escalated / Closed instead of raw enum values IN_PROGRESS / ESCALATED. Fixes mobile card clipping ("IN_PRO" / "ESCAL") and desktop table parity.
 - [x] **ImpossibleWindowBadge no longer forces column wide** — removed `whitespace-nowrap`, reformatted to two-line compact layout. Deadline column no longer squeezes Status off screen at 1280px.
+- [x] **Company name on signup** — signup form now requires Company Name as first field. Org name stored directly from user input (was derived from email domain). KTIN tied to real business name from day one.
+- [x] **KTIN identity card in sidebar** — green monospace KTIN + org name shown in a terminal-style card below the KRUX header, above nav links. Links to Settings. Fetched server-side in layout alongside org name.
+- [x] **Sidebar shows org name** — bottom of sidebar shows org name (or email fallback). Email moved to muted grey footer.
+- [x] **Founder alert shows company name** — alert email subject `${ktin} · ${company}`, body shows company name bold/white at top, email secondary in grey below.
+- [x] **Welcome email redesign** — KTIN in subject line (`KRUX-XXX-KE-XXXXX · issued`). Terminal aesthetic: KTIN in green 28px, one sentence, one CTA. No feature lists.
+- [x] **Waitlist email redesign** — subject "That window was closed." Two sentences, one CTA "APPLY FOR KTIN". No "60 seconds" claim.
+- [x] **`/api/admin/resend-welcome`** — admin endpoint to manually resend welcome + alert emails to any user by email address. Looks up their KTIN from DB.
+- [x] **`/api/email-test`** — diagnostic endpoint to test Resend delivery. Returns `{data, error}` directly.
+- [x] **`/api/entity` bug fixed** — was using `.eq('id', user.id)` (table PK) instead of `.eq('user_id', user.id)` (auth user FK). KTIN never showed in Settings for any user. Fixed with `.maybeSingle()`.
+- [x] **Landing page KTIN non-clickable** — static demo KTIN `KRUX-IMP-KE-00047` changed from `<a href="/verify/...">` to `<span className="select-all">` — prevents 404 on click.
+- [x] **All post-login redirects to `/dashboard/today`** — login actions and signup both redirect to Today view.
+- [x] **RESEND_API_KEY replaced** — old key was revoked. Diagnosed via `/api/email-test`. New key set in Vercel production. Emails now delivering.
+- [x] **Vercel CLI installed** (`npm install -g vercel`). GitHub auto-deploy broken — use `vercel --prod` for all future deployments.
+- [x] **Vercel MCP plugin authenticated** — connected personal account. Team-scoped resources (deployments, logs) still require CLI.
 
 ---
 
@@ -747,6 +761,26 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 | Git commit | `7869ea6` — fix: tighten operations page layout — less left gap, table fits on 1280px screens |
 | Git push | master → `allkhadarr-glitch/-krux` |
 | Vercel deployment | `krux-gz20es444-krux1.vercel.app` — READY |
+
+### Session 13 — Email overhaul + KTIN identity + company name signup (2026-05-01)
+| Step | Result |
+|---|---|
+| **RESEND_API_KEY invalid** | Diagnosed via new `/api/email-test` endpoint. Old key was revoked. Replaced in Vercel production via `npx vercel env rm/add`. Emails now delivering. |
+| Welcome email redesign | Terminal aesthetic: KTIN in subject (`KRUX-AGT-KE-00004 · issued`), KTIN in green 28px in body, one sentence, one CTA. No feature lists, no "6 shipments" noise. |
+| Waitlist email redesign | Subject: "That window was closed." Body: two sentences about closed windows + "APPLY FOR KTIN" CTA. Fires on first capture only (not on 23505 duplicate). |
+| `/api/admin/resend-welcome` created | Admin endpoint: `GET ?secret=CRON_SECRET&to=email` — looks up KTIN, sends welcome + founder alert. Used to manually resend buuledeeqo's missed email. |
+| `/api/admin/email-test` created | Diagnostic: `GET ?to=email` — sends test email, returns `{data, error}` JSON. Used to confirm RESEND_API_KEY validity. |
+| `/api/entity` bug fixed | `.eq('id', user.id)` → `.eq('user_id', user.id)` + `.maybeSingle()`. KTIN was never showing in Settings for any user. Fixed. |
+| Landing page KTIN trust fix | Static KTIN `KRUX-IMP-KE-00047` changed from clickable `<a>` → `<span className="select-all">`. Was 404ing on click. |
+| Login + signup redirect fix | All `redirect('/dashboard/operations')` → `redirect('/dashboard/today')`. Demo route also fixed. |
+| Company name added to signup | `/signup/page.tsx`: Company Name field added as first input. `/signup/actions.ts`: reads `company` from formData, validates non-empty, stores directly as org name. KTIN tied to real company from day one. |
+| Founder alert updated | Subject: `${ktin} · ${company}` (not raw email). Body: company name white/bold 15px, email secondary in grey below. |
+| Sidebar org name | `layout.tsx` fetches org name + KTIN via `getEntityInfo()`. Sidebar shows org name instead of email. Email moved to muted footer. |
+| KTIN identity card in sidebar | Terminal-style card (green KTIN monospace + white org name) below KRUX header, above nav links. Clickable → Settings. |
+| buuledeeqo org name fixed | Direct Supabase REST API PATCH: `organizations.name` updated from "Buuledeeqo Imports" → "Solution Hub". Used 3 curl calls: auth/admin/users → user_profiles → PATCH organizations. |
+| Vercel CLI installed | `npm install -g vercel`. GitHub auto-deploy was not triggering on pushes. Used `vercel --prod` to force-deploy. All 3 session commits are now live. |
+| Git commits | `52c464e` (company name signup) · `0f4d335` (sidebar org name) · `a4693ab` (KTIN identity card) |
+| Production deployment | `vercel --prod` → `dpl_2FGdTE77fTR5qHmhV4FHp1ZzL7FX` · `krux-jfouxprtj-krux1.vercel.app` · aliased to `kruxvon.com` — READY |
 
 ### Session 12 — Part 2 (SIGINON discovery builds — motor vehicle + KRA ruling)
 | Step | Result |
@@ -931,6 +965,10 @@ POST `/api/payments/portal` → Stripe Billing Portal session → user can cance
 | "Already exists" on retry → locked out | Demo user who retried got `{ exists: true }` → redirected to login — but their password was an unknown random string | No recovery path for partial activation | On "already exists": find user via `admin.listUsers`, reset password, return new temp password | 3 |
 | Onboarding shows 60–80% on fresh signup | New users feel they've already done setup — misleading | Demo data (seeded server-side on signup) satisfied the shipment + manufacturer completion checks | Filter demo shipments by ref pattern (`KRUX-YYYY-LETTERS-` = demo), filter known demo manufacturer names | 4 |
 | Hardcoded URL in morning brief | Morning brief WhatsApp message linked to wrong URL in some environments | `briefText.slice(0, 1450) + '\n\n[Full brief at https://krux-xi.vercel.app/dashboard]'` | Uses `NEXT_PUBLIC_APP_URL` env var | 3 |
+| `/api/entity` wrong column | KTIN never showed in Settings for any user | `.eq('id', user.id)` queried the table's own PK (`id`), not the auth user FK (`user_id`) | Changed to `.eq('user_id', user.id)` + `.maybeSingle()` | 13 |
+| RESEND_API_KEY revoked silently | First real external signup (buuledeeqo) received no welcome email. No error surfaced — Resend SDK returns `{data, error}` not throws. | Old API key was revoked in Resend dashboard. SDK returned `{error: {statusCode: 401}}` but code only had try/catch. | Replaced key in Vercel production. Added explicit `if (result.error) console.error(...)` checks. | 13 |
+| Org name derived from email domain | New signups got org names like "Buuledeeqo Imports" — not memorable, generic | actions.ts extracted domain from email (`email.split('@')[1]`) instead of asking for company name | Added Company Name field to signup form. `actions.ts` now reads `company` from formData directly. | 13 |
+| GitHub auto-deploy not triggering | Code pushes to master weren't deploying to production | Vercel GitHub integration broken — webhook not firing | Installed Vercel CLI, use `vercel --prod` for all deployments | 13 |
 
 ---
 
@@ -995,5 +1033,32 @@ James described typing a keyword (e.g. "spring") and the system pulling the HS c
 
 ---
 
-*Full audit maintained by Claude Code — sessions 1–12*  
+---
+
+## PART 23 — REAL USERS (non-demo)
+
+| User | Company | KTIN | Signed up | Notes |
+|---|---|---|---|---|
+| buuledeeqo@gmail.com | Solution Hub | `KRUX-AGT-KE-00004` | 2026-05-01 04:08 EAT | First real external signup. Welcome email not delivered at signup (RESEND_API_KEY was invalid). Manually resent via `/api/admin/resend-welcome`. Org name was "Buuledeeqo Imports" — updated to "Solution Hub" via direct Supabase REST API PATCH. |
+| haaji1242@gmail.com | (founder) | — | 2026-04-26 | Founder test account. |
+| demo@kruxvon.com | (demo org) | — | 2026-04-26 | Demo account — auto-seeded shipments, read-only. |
+
+---
+
+## PART 24 — DEPLOYMENT PROCESS (IMPORTANT)
+
+**GitHub auto-deploy is BROKEN.** Git pushes to master do NOT trigger Vercel deployments automatically. Always deploy manually:
+
+```bash
+cd C:\Users\ADMIN\Desktop\KRUX\krux
+vercel --prod
+```
+
+This takes ~60 seconds and aliases directly to `kruxvon.com`.
+
+**Do NOT rely on git push to deploy.** Commit + push for version control, then separately run `vercel --prod`.
+
+---
+
+*Full audit maintained by Claude Code — sessions 1–13*  
 *All sections derived from live code and confirmed production state.*
