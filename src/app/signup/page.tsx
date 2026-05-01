@@ -26,12 +26,28 @@ export default function SignupPage() {
 
         {/* Card */}
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-8">
-          <h2 className="text-white font-semibold text-lg mb-1">Create your account</h2>
+          <h2 className="text-white font-semibold text-lg mb-1">Apply for your KTIN</h2>
           <p className="text-[#64748B] text-sm mb-6">
-            Free access · 5 demo shipments pre-loaded · No credit card
+            Free access · 6 demo shipments pre-loaded · No credit card
           </p>
 
           <form action={formAction} className="space-y-4">
+            <div>
+              <label htmlFor="company" className="block text-[#94A3B8] text-xs font-medium mb-1.5 uppercase tracking-wider">
+                Company Name
+              </label>
+              <input
+                id="company"
+                name="company"
+                type="text"
+                autoComplete="organization"
+                required
+                disabled={isPending}
+                className="w-full bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3.5 py-2.5 text-white text-sm placeholder-[#334155] focus:outline-none focus:border-[#00C896] focus:ring-1 focus:ring-[#00C896]/30 transition-all disabled:opacity-50"
+                placeholder="Siginon Logistics"
+              />
+            </div>
+
             <div>
               <label htmlFor="email" className="block text-[#94A3B8] text-xs font-medium mb-1.5 uppercase tracking-wider">
                 Work Email
@@ -98,7 +114,7 @@ export default function SignupPage() {
                 </>
               ) : (
                 <>
-                  Create account <ArrowRight size={15} />
+                  Apply for KTIN <ArrowRight size={15} />
                 </>
               )}
             </button>

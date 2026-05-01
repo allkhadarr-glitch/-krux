@@ -30,10 +30,12 @@ async function createClient() {
 }
 
 export async function signUp(_: unknown, formData: FormData) {
+  const company  = (formData.get('company') as string)?.trim()
   const email    = (formData.get('email') as string)?.trim()?.toLowerCase()
   const password = formData.get('password') as string
 
-  if (!email || !password) return { error: 'Email and password are required.' }
+  if (!company)             return { error: 'Company name is required.' }
+  if (!email || !password)  return { error: 'Email and password are required.' }
   if (password.length < 8)  return { error: 'Password must be at least 8 characters.' }
   if (email === process.env.DEMO_USER_EMAIL?.toLowerCase()) {
     return { error: 'That email is reserved. Please use a different email address.' }
@@ -53,14 +55,12 @@ export async function signUp(_: unknown, formData: FormData) {
     return { error: 'Account creation failed. Please try again.' }
   }
 
-  const userId   = created.user.id
-  const domain   = email.split('@')[1]?.split('.')[0] ?? 'My'
-  const orgLabel = domain.charAt(0).toUpperCase() + domain.slice(1)
+  const userId = created.user.id
 
   const { data: org, error: orgErr } = await serviceSupabase
     .from('organizations')
     .insert({
-      name:              `${orgLabel} Imports`,
+      name:              company,
       type:              'clearing_agent_firm',
       subscription_tier: 'trial',
       is_active:         true,
@@ -80,67 +80,84 @@ export async function signUp(_: unknown, formData: FormData) {
     role:            'admin',
   })
 
-  // Seed demo data so the workspace isn't empty on first login
   try {
     await seedDemoData(serviceSupabase, org.id)
   } catch (e) {
     console.error('[signUp] seed error (non-fatal):', e)
   }
 
-  // Welcome email — fires silently if Resend not configured
+  // Fetch KTIN assigned by DB trigger
+  let ktin: string | null = null
+  try {
+    const { data: entity } = await serviceSupabase
+      .from('krux_entities')
+      .select('krux_id')
+      .eq('organization_id', org.id)
+      .maybeSingle()
+    ktin = entity?.krux_id ?? null
+  } catch {}
+
   if (process.env.RESEND_API_KEY) {
     try {
       const { Resend } = await import('resend')
       const resend = new Resend(process.env.RESEND_API_KEY)
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://krux-xi.vercel.app'
-      await resend.emails.send({
-        from: 'KRUX <welcome@kruxvon.com>',
-        to: email,
-        subject: 'Welcome to KRUX — your workspace is ready',
-        html: `<!DOCTYPE html>
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://kruxvon.com'
+
+      const [welcomeResult, alertResult] = await Promise.all([
+        resend.emails.send({
+          from: 'KRUX <noreply@kruxvon.com>',
+          to: email,
+          subject: ktin ? `${ktin} · issued` : 'Your KRUX workspace is live',
+          html: `<!DOCTYPE html>
 <html>
-<body style="margin:0;padding:0;background:#0A1628;font-family:system-ui,sans-serif;">
-  <div style="max-width:560px;margin:0 auto;padding:40px 28px;">
-    <div style="margin-bottom:28px;">
-      <div style="display:inline-block;background:#00C896;color:#0A1628;font-weight:900;font-size:20px;padding:8px 14px;border-radius:10px;">K</div>
-      <span style="color:#94A3B8;font-size:13px;margin-left:12px;">KRUX · Kenya Import Compliance</span>
-    </div>
-    <div style="background:#0F2040;border:1px solid #1E3A5F;border-radius:16px;padding:32px;">
-      <h1 style="color:white;font-size:22px;font-weight:700;margin:0 0 8px 0;">You're in.</h1>
-      <p style="color:#64748B;font-size:14px;margin:0 0 24px 0;">Your KRUX workspace is ready with 5 pre-loaded demo shipments.</p>
-      <div style="background:#0A1628;border:1px solid #1E3A5F;border-radius:10px;padding:16px;margin-bottom:24px;">
-        <p style="color:#94A3B8;font-size:13px;margin:0 0 10px 0;font-weight:600;">What's waiting for you:</p>
-        <ul style="margin:0;padding:0 0 0 16px;color:#64748B;font-size:13px;line-height:2;">
-          <li>5 Kenya shipments — RED, AMBER, and GREEN risk levels</li>
-          <li>Jet A-1 fuel shipment with impossible EPRA clearance window</li>
-          <li>AI compliance briefs for every shipment</li>
-          <li>Morning Brief — what your 6:30am WhatsApp will look like</li>
-        </ul>
-      </div>
-      <a href="${appUrl}/dashboard/operations" style="display:inline-block;background:#00C896;color:#0A1628;font-weight:700;font-size:14px;padding:12px 24px;border-radius:10px;text-decoration:none;">
-        Open your dashboard →
-      </a>
-      <p style="color:#334155;font-size:12px;margin:20px 0 0 0;">
-        When you're ready, clear the demo data in Settings and add your first real shipment.
-      </p>
-    </div>
-    <p style="color:#1E3A5F;font-size:11px;text-align:center;margin:20px 0 0 0;">KRUX · Kenya Import Compliance Intelligence</p>
-  </div>
+<head><meta name="color-scheme" content="dark"><meta name="supported-color-schemes" content="dark"></head>
+<body style="margin:0;padding:0;background:#060E1A;font-family:'Courier New',Courier,monospace;">
+<div style="max-width:480px;margin:0 auto;padding:48px 28px;">
+  <div style="color:#00C896;font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:40px;">KRUX</div>
+  <div style="border-top:1px solid #1E3A5F;margin-bottom:40px;"></div>
+  ${ktin ? `<div style="color:#00C896;font-size:28px;font-weight:900;letter-spacing:3px;margin-bottom:16px;">${ktin}</div>` : ''}
+  <div style="color:#94A3B8;font-size:13px;margin-bottom:40px;">Your workspace is live.</div>
+  <a href="${appUrl}/dashboard/today" style="display:inline-block;background:#00C896;color:#060E1A;font-weight:900;font-size:11px;padding:14px 28px;text-decoration:none;letter-spacing:3px;text-transform:uppercase;">OPEN WORKSPACE</a>
+  <div style="border-top:1px solid #1E3A5F;margin-top:40px;margin-bottom:16px;"></div>
+  ${ktin ? `<div style="color:#1E3A5F;font-size:10px;letter-spacing:1px;">kruxvon.com/verify/${ktin}</div>` : `<div style="color:#1E3A5F;font-size:10px;letter-spacing:1px;">kruxvon.com</div>`}
+</div>
 </body>
 </html>`,
-      })
+        }),
+
+        resend.emails.send({
+          from: 'KRUX <noreply@kruxvon.com>',
+          to: process.env.ALERT_EMAIL ?? 'mabdikadirhaji@gmail.com',
+          subject: ktin ? `${ktin} · ${company}` : `New signup: ${company}`,
+          html: `<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#060E1A;font-family:'Courier New',Courier,monospace;">
+<div style="max-width:400px;margin:0 auto;padding:32px 24px;">
+  <div style="color:#00C896;font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:24px;">KRUX · New Operator</div>
+  <div style="border-top:1px solid #1E3A5F;margin-bottom:24px;"></div>
+  ${ktin ? `<div style="color:#00C896;font-size:20px;font-weight:900;letter-spacing:2px;margin-bottom:8px;">${ktin}</div>` : ''}
+  <div style="color:white;font-size:15px;font-weight:700;margin-bottom:4px;">${company}</div>
+  <div style="color:#64748B;font-size:12px;margin-bottom:4px;">${email}</div>
+  <div style="color:#334155;font-size:11px;margin-bottom:24px;">${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi', dateStyle: 'full', timeStyle: 'short' })} EAT</div>
+  <a href="${appUrl}/admin" style="display:inline-block;background:#00C896;color:#060E1A;font-weight:900;font-size:10px;padding:10px 20px;text-decoration:none;letter-spacing:2px;text-transform:uppercase;">VIEW IN ADMIN</a>
+</div>
+</body>
+</html>`,
+        }),
+      ])
+
+      if (welcomeResult.error) console.error('[signUp] welcome email failed:', JSON.stringify(welcomeResult.error))
+      if (alertResult.error)   console.error('[signUp] alert email failed:',   JSON.stringify(alertResult.error))
     } catch (e) {
-      console.error('[signUp] welcome email error (non-fatal):', e)
+      console.error('[signUp] email error (non-fatal):', e)
     }
   }
 
-  // Sign in immediately — sets session cookies
   const supabase = await createClient()
   const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password })
   if (signInErr) {
-    // Account was created but sign-in failed — send them to login page
     redirect('/login?created=1')
   }
 
-  redirect('/dashboard/operations')
+  redirect('/dashboard/today')
 }
