@@ -8,6 +8,27 @@ import {
   MessageSquare, User, Send,
 } from 'lucide-react'
 
+// ─── Portal URLs per regulator ───────────────────────────────
+
+const PORTAL_BY_REGULATOR: Record<string, string> = {
+  PPB:      'https://www.ppb.go.ke',
+  KEBS:     'https://pvoc.kebs.org',
+  KEPHIS:   'https://www.kephis.org',
+  EPRA:     'https://www.epra.go.ke',
+  PCPB:     'https://www.pcpb.or.ke',
+  NEMA:     'https://www.nema.go.ke',
+  KRA:      'https://itax.kra.go.ke',
+  KENTRADE: 'https://www.kentrade.go.ke',
+  CA:       'https://www.ca.go.ke',
+  DVS:      'https://www.dvs.go.ke',
+}
+
+function getPortalUrl(actionType: string): string | null {
+  const upper = actionType.toUpperCase()
+  const match = Object.keys(PORTAL_BY_REGULATOR).find((reg) => upper.includes(reg))
+  return match ? PORTAL_BY_REGULATOR[match] : null
+}
+
 // ─── Document checklist per action type ──────────────────────
 
 const DOCS_BY_TYPE: Record<string, string[]> = {
@@ -213,11 +234,14 @@ function ActionCard({
   const shipRef = (action as any).shipment
   const execStatus: string | undefined = (action as any).execution_status
 
+  const portalUrl = getPortalUrl(action.action_type)
+
   async function handleStart() {
     setActing(true)
     await fetch(`/api/actions/${action.id}/start`, { method: 'POST' })
     setActing(false)
     onRefresh()
+    if (portalUrl) window.open(portalUrl, '_blank', 'noopener,noreferrer')
   }
 
   async function handleFail() {
@@ -404,9 +428,10 @@ function ActionCard({
               onClick={handleStart}
               disabled={isBusy}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400/10 text-amber-400 border border-amber-400/25 rounded-lg text-xs font-semibold hover:bg-amber-400/20 disabled:opacity-50 transition-all"
+              title={portalUrl ? `Opens ${portalUrl}` : undefined}
             >
               {acting ? <Loader2 size={11} className="animate-spin" /> : <Clock size={11} />}
-              Start
+              {portalUrl ? 'Start → Portal' : 'Start'}
             </button>
           )}
 

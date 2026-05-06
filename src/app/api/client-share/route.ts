@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { getSessionContext } from '@/lib/session'
+import { randomBytes } from 'crypto'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,9 +21,11 @@ export async function POST(req: NextRequest) {
     ? new Date(Date.now() + expires_days * 86400000).toISOString()
     : null
 
+  const token = randomBytes(24).toString('hex')
+
   const { data, error } = await supabaseAdmin
     .from('client_share_tokens')
-    .insert({ organization_id: orgId, client_name: client_name.trim(), label: label || null, created_by: userId, expires_at })
+    .insert({ organization_id: orgId, token, client_name: client_name.trim(), label: label || null, created_by: userId, expires_at })
     .select()
     .single()
 

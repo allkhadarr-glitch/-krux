@@ -28,11 +28,31 @@ export async function POST(
   // Fetch shipment
   const { data: shipment } = await supabase
     .from('shipments')
-    .select('id, name, organization_id, reference_number, cif_value_usd, pvoc_deadline, created_at')
+    .select('id, name, organization_id, reference_number, cif_value_usd, pvoc_deadline, created_at, eta, actual_arrival_date, regulatory_body_id')
     .eq('id', id)
     .single()
 
   if (!shipment) return NextResponse.json({ error: 'Shipment not found' }, { status: 404 })
+
+  // Resolve regulator code for SLA tracking
+  let regulator_code: string | null = null
+  if (shipment.regulatory_body_id) {
+    const { data: rb } = await supabase
+      .from('regulatory_bodies')
+      .select('code')
+      .eq('id', shipment.regulatory_body_id)
+      .single()
+    regulator_code = rb?.code ?? null
+  }
+
+  // Actual clearance days — from ETA/arrival to today (only meaningful when CLEARED)
+  let actual_clearance_days: number | null = null
+  if (status === 'CLEARED') {
+    const arrivalDate = shipment.actual_arrival_date ?? shipment.eta
+    if (arrivalDate) {
+      actual_clearance_days = Math.ceil((Date.now() - new Date(arrivalDate).getTime()) / 86400000)
+    }
+  }
 
   // Summarise execution at closure time — this is the context snapshot
   const { data: actions } = await supabase
@@ -119,6 +139,8 @@ export async function POST(
       first_action_started_after_deadline,
       actual_total_cost_kes:   actual_total_cost_kes > 0 ? actual_total_cost_kes : null,
       actual_cost_breakdown:   Object.keys(actual_cost_breakdown).length > 0 ? actual_cost_breakdown : null,
+      actual_clearance_days,
+      regulator_code,
     },
   })
 

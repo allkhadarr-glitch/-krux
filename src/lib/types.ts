@@ -628,3 +628,75 @@ export interface ManufacturerSummary {
   avg_reliability_score: number
   expiring_licenses: number
 }
+
+// ============================================================
+// ENTITY NETWORK — persistent trade identity
+// ============================================================
+
+export type KruxEntityType  = 'IMP' | 'AGT' | 'MFG' | 'EXP' | 'BRK'
+export type ComplianceTier  = 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM'
+
+export interface KruxEntity {
+  id:                    string
+  krux_id:               string       // KTIN e.g. KRUX-IMP-KE-00001
+  entity_type:           KruxEntityType
+  country_code:          string
+  name:                  string
+  trading_name?:         string
+  kra_pin?:              string
+  registration_number?:  string
+  email?:                string
+  phone?:                string
+  organization_id?:      string
+  clearing_agent_id?:    string
+  manufacturer_id?:      string
+  // Compliance profile — null until >= 5 shipments
+  total_shipments:       number
+  cleared_on_time:       number
+  clearance_failures:    number
+  hs_misclassifications: number
+  avg_clearance_days?:   number
+  compliance_score?:     number       // 0–100
+  compliance_tier?:      ComplianceTier
+  last_shipment_at?:     string
+  is_verified:           boolean
+  verified_at?:          string
+  notes?:                string
+  created_at:            string
+  updated_at:            string
+}
+
+// ============================================================
+// SHIPMENT EVENTS — immutable intelligence log
+// ============================================================
+
+export type ShipmentEventType =
+  | 'SHIPMENT_CREATED'
+  | 'STAGE_CHANGED'
+  | 'RISK_FLAG_CHANGED'
+  | 'REMEDIATION_STATUS_CHANGED'
+  | 'CLEARED'
+  | 'REGULATOR_STATUS_CHANGED'
+  | 'ACTION_COMPLETED'
+  | 'ACTION_DISMISSED'
+  | 'DOCUMENT_UPLOADED'
+  | 'NOTE_ADDED'
+  | 'WHATSAPP_COMMAND'
+  | 'BRIEF_GENERATED'
+  | 'DELETED'
+
+export type EventActorType = 'USER' | 'SYSTEM' | 'CRON' | 'WHATSAPP' | 'API'
+
+export interface ShipmentEvent {
+  id:                  string
+  shipment_id:         string
+  organization_id:     string
+  event_type:          ShipmentEventType
+  from_value?:         string
+  to_value?:           string
+  metadata:            Record<string, unknown>
+  actor_type:          EventActorType
+  actor_id?:           string
+  days_since_created?: number
+  created_at:          string
+}

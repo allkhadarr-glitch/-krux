@@ -2,11 +2,11 @@
   "crons": [
     {
       "path": "/api/events/process",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 5 * * *"
     },
     {
       "path": "/api/actions/evaluate",
-      "schedule": "0 * * * *"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/actions/at-risk",
@@ -21,12 +21,24 @@
       "schedule": "30 3 * * 1-5"
     },
     {
+      "path": "/api/ai/morning-briefing/remind",
+      "schedule": "30 9 * * 1-5"
+    },
+    {
       "path": "/api/demo/reset",
       "schedule": "0 2 * * *"
     },
     {
       "path": "/api/analytics/weekly-digest",
       "schedule": "0 7 * * 1"
+    },
+    {
+      "path": "/api/cron/compliance-scores",
+      "schedule": "0 22 * * *"
+    },
+    {
+      "path": "/api/cron/nurture-sequence",
+      "schedule": "0 6 * * *"
     }
   ]
 }

@@ -7,10 +7,11 @@ import {
   X, Sparkles, Loader2, FileText, Wrench, List, Calculator,
   Clock, CheckCircle2, XCircle, AlertTriangle, Zap, Bell,
   MessageSquare, User, DollarSign, Upload, Trash2, ExternalLink,
-  ClipboardList, Printer, Copy, Share2, Ship,
+  ClipboardList, Printer, Copy, Share2, Ship, BookmarkPlus,
 } from 'lucide-react'
-import { getRegulator } from '@/lib/regulatory-intelligence'
+import { getRegulator, getWindowStatus } from '@/lib/regulatory-intelligence'
 import { getDemoContent } from '@/lib/demo-content'
+import ClearanceDebriefModal from './ClearanceDebriefModal'
 
 // ─── Tabs ────────────────────────────────────────────────────
 
@@ -272,6 +273,52 @@ function DutyPanel({ shipment }: { shipment: any }) {
             </pre>
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Detention Meter ─────────────────────────────────────────
+
+function DetentionMeter({ shipment }: { shipment: Shipment }) {
+  const rate = shipment.storage_rate_per_day
+  const arrivalStr = (shipment as any).actual_arrival_date ?? shipment.eta
+  if (!rate || !arrivalStr) return null
+
+  const KES_RATE    = 130
+  const daysAtPort  = Math.max(0, Math.ceil((Date.now() - new Date(arrivalStr).getTime()) / 86400000))
+  const dailyKES    = Math.round(rate * KES_RATE)
+  const accruedKES  = dailyKES * daysAtPort
+  const proj30KES   = accruedKES + dailyKES * 30
+
+  const severity = daysAtPort >= 14 ? 'red' : daysAtPort >= 7 ? 'amber' : 'slate'
+  const colors = {
+    red:   { border: 'border-red-500/40',   bg: 'bg-red-500/5',   text: 'text-red-400',   badge: 'bg-red-500/10 text-red-400' },
+    amber: { border: 'border-amber-500/40', bg: 'bg-amber-500/5', text: 'text-amber-400', badge: 'bg-amber-500/10 text-amber-400' },
+    slate: { border: 'border-[#1E3A5F]',    bg: 'bg-[#0F2040]',   text: 'text-[#94A3B8]', badge: 'bg-[#1E3A5F] text-[#64748B]' },
+  }[severity]
+
+  return (
+    <div className={`border ${colors.border} ${colors.bg} rounded-xl p-4 space-y-3`}>
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Storage Accruing</span>
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded font-mono ${colors.badge}`}>
+          {daysAtPort}d AT PORT
+        </span>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div>
+          <div className="text-[10px] text-[#64748B] mb-0.5">Daily rate</div>
+          <div className={`text-sm font-bold font-mono ${colors.text}`}>KES {dailyKES.toLocaleString()}</div>
+        </div>
+        <div>
+          <div className="text-[10px] text-[#64748B] mb-0.5">Accrued to date</div>
+          <div className={`text-sm font-bold font-mono ${colors.text}`}>KES {accruedKES.toLocaleString()}</div>
+        </div>
+        <div>
+          <div className="text-[10px] text-[#64748B] mb-0.5">+30 day projection</div>
+          <div className="text-sm font-bold font-mono text-white">KES {proj30KES.toLocaleString()}</div>
+        </div>
       </div>
     </div>
   )
@@ -590,14 +637,19 @@ export default function ShipmentDrawer({
   const [tab, setTab]         = useState<Tab>('brief')
   const [results, setResults] = useState<Partial<Record<Exclude<Tab, 'timeline' | 'costs' | 'files' | 'tax'>, string>>>({})
   const [loading, setLoading] = useState<Tab | null>(null)
-  const [closing, setClosing] = useState(false)
-  const [closed, setClosed]   = useState(shipment.remediation_status === 'CLOSED')
+  const [closing, setClosing]       = useState(false)
+  const [closed, setClosed]         = useState(shipment.remediation_status === 'CLOSED')
   const [confirmClose, setConfirmClose] = useState(false)
+  const [showDebrief, setShowDebrief]   = useState(false)
   const [pendingGateTab, setPendingGateTab] = useState<Tab | null>(null)
   const [docChecklist, setDocChecklist] = useState<Record<string, string> | null>(null)
-  const [copied, setCopied]     = useState(false)
-  const [shareUrl, setShareUrl] = useState<string | null>(null)
-  const [sharing, setSharing]   = useState(false)
+  const [copied, setCopied]         = useState(false)
+  const [shareUrl, setShareUrl]     = useState<string | null>(null)
+  const [sharing, setSharing]       = useState(false)
+  const [savedTpl, setSavedTpl]     = useState(false)
+  const [savingTpl, setSavingTpl]   = useState(false)
+  const [seedingActions, setSeedingActions] = useState(false)
+  const [seededActions, setSeededActions]   = useState(false)
 
   // Load document checklist from localStorage on mount
   useEffect(() => {
@@ -712,9 +764,45 @@ export default function ShipmentDrawer({
       })
       setClosed(true)
       setConfirmClose(false)
+      setShowDebrief(true)
     } finally {
       setClosing(false)
     }
+  }
+
+  async function saveAsTemplate() {
+    if (savingTpl) return
+    setSavingTpl(true)
+    try {
+      await fetch('/api/templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name:                shipment.name,
+          hs_code:             shipment.hs_code,
+          origin_country:      (shipment as any).origin_country,
+          regulatory_body_id:  shipment.regulatory_body?.id ?? (shipment as any).regulatory_body_id,
+          shipment_type:       (shipment as any).shipment_type ?? 'STANDARD',
+          storage_rate_per_day: shipment.storage_rate_per_day,
+          weight_kg:           (shipment as any).weight_kg,
+          cif_value_usd:       shipment.cif_value_usd,
+        }),
+      })
+      setSavedTpl(true)
+      setTimeout(() => setSavedTpl(false), 3000)
+    } finally {
+      setSavingTpl(false)
+    }
+  }
+
+  async function seedActions() {
+    if (seedingActions || seededActions) return
+    setSeedingActions(true)
+    try {
+      await fetch(`/api/shipments/${shipment.id}/suggest-actions`, { method: 'POST' })
+      setSeededActions(true)
+    } catch {}
+    finally { setSeedingActions(false) }
   }
 
   // Auto-load brief on open
@@ -730,14 +818,17 @@ export default function ShipmentDrawer({
   const result       = isAITab ? results[tab as Exclude<Tab, 'timeline' | 'costs' | 'files' | 'tax'>] : null
   const isLoading    = loading === tab
 
-  // Impossible clearance window detection
+  // Clearance window intelligence — checks pvoc_deadline first, falls back to ETA
   const regProfile    = shipment.regulatory_body?.code ? getRegulator('KE', shipment.regulatory_body.code) : null
+  const windowStatus  = getWindowStatus(
+    { pvoc_deadline: shipment.pvoc_deadline, eta: (shipment as any).eta },
+    regProfile
+  )
+  const windowClosed  = windowStatus?.status === 'IMPOSSIBLE'
+  const windowTight   = windowStatus?.status === 'TIGHT'
   const slaActual     = regProfile?.sla_actual_days ?? 0
-  const deadlineDays  = shipment.pvoc_deadline
-    ? Math.ceil((new Date(shipment.pvoc_deadline).getTime() - Date.now()) / 86400000)
-    : null
-  const windowClosed  = slaActual > 0 && deadlineDays != null && deadlineDays > 0 && deadlineDays < slaActual
-  const daysShort     = windowClosed ? slaActual - deadlineDays! : 0
+  const deadlineDays  = windowStatus?.daysRemaining ?? null
+  const daysShort     = windowStatus?.daysShort ?? 0
 
   const allTabs = [
     ...AI_TABS,
@@ -789,6 +880,22 @@ export default function ShipmentDrawer({
               )}
             </div>
             <div className="flex items-center gap-2">
+              <button
+                onClick={seedActions}
+                disabled={seedingActions || seededActions}
+                title={seededActions ? 'Actions generated' : 'Generate Action Centre tasks for this shipment'}
+                className="p-1.5 rounded-lg border border-[#1E3A5F] text-[#64748B] hover:text-blue-400 hover:border-blue-400/30 transition-colors disabled:opacity-40"
+              >
+                {seededActions ? <CheckCircle2 size={14} className="text-[#00C896]" /> : seedingActions ? <Loader2 size={14} className="animate-spin" /> : <ClipboardList size={14} />}
+              </button>
+              <button
+                onClick={saveAsTemplate}
+                disabled={savingTpl || savedTpl}
+                title="Save as template"
+                className="p-1.5 rounded-lg border border-[#1E3A5F] text-[#64748B] hover:text-[#00C896] hover:border-[#00C896]/30 transition-colors disabled:opacity-40"
+              >
+                {savedTpl ? <CheckCircle2 size={14} className="text-[#00C896]" /> : savingTpl ? <Loader2 size={14} className="animate-spin" /> : <BookmarkPlus size={14} />}
+              </button>
               {!closed && !confirmClose && (
                 <button
                   onClick={() => setConfirmClose(true)}
@@ -824,21 +931,39 @@ export default function ShipmentDrawer({
           </div>
         </div>
 
-        {/* Clearance Impossible Banner */}
+        {/* Clearance Window Banner — IMPOSSIBLE */}
         {windowClosed && (
           <div className="mx-3 sm:mx-4 mt-3 mb-1 rounded-xl border border-red-500/50 bg-red-500/10 p-3 sm:p-3.5">
             <div className="flex items-center gap-2 mb-1.5">
-              <AlertTriangle size={14} className="text-red-400 flex-shrink-0" />
+              <AlertTriangle size={14} className="text-red-400 flex-shrink-0 animate-pulse" />
               <span className="text-sm font-black text-red-400 uppercase tracking-wide">Clearance Window Closed</span>
             </div>
             <p className="text-xs text-red-300/90 leading-relaxed">
-              <span className="font-bold">{shipment.regulatory_body?.code ?? 'Regulator'}</span> requires{' '}
-              <span className="font-bold">{slaActual} days</span> to process.
-              Only <span className="font-bold">{deadlineDays} days</span> remain.{' '}
-              You needed to start <span className="font-bold">{daysShort} days ago.</span>
+              <span className="font-bold">{shipment.regulatory_body?.code ?? 'Regulator'}</span> needs{' '}
+              <span className="font-bold">{slaActual} days</span> to process — only{' '}
+              <span className="font-bold">{deadlineDays} days</span> until{' '}
+              {windowStatus?.useETA ? 'arrival' : 'deadline'}. You are{' '}
+              <span className="font-bold">{daysShort} days short.</span>
             </p>
             <p className="text-[10px] text-red-400/70 mt-1.5">
-              File immediately to create a record and reduce penalty exposure. The brief below shows you how.
+              File immediately to create a paper trail and reduce penalty exposure. See Brief tab for next steps.
+            </p>
+          </div>
+        )}
+
+        {/* Clearance Window Banner — TIGHT */}
+        {!windowClosed && windowTight && (
+          <div className="mx-3 sm:mx-4 mt-3 mb-1 rounded-xl border border-amber-500/40 bg-amber-500/5 p-3 sm:p-3.5">
+            <div className="flex items-center gap-2 mb-1.5">
+              <AlertTriangle size={14} className="text-amber-400 flex-shrink-0" />
+              <span className="text-sm font-bold text-amber-400 uppercase tracking-wide">Tight Window — Act Now</span>
+            </div>
+            <p className="text-xs text-amber-300/90 leading-relaxed">
+              <span className="font-bold">{shipment.regulatory_body?.code ?? 'Regulator'}</span> needs{' '}
+              <span className="font-bold">{slaActual} days</span>. You have{' '}
+              <span className="font-bold">{deadlineDays} days</span> until{' '}
+              {windowStatus?.useETA ? 'arrival' : 'deadline'} —{' '}
+              only <span className="font-bold">{windowStatus?.daysShort} day{windowStatus?.daysShort !== 1 ? 's' : ''} of buffer.</span> Any delay closes the window.
             </p>
           </div>
         )}
@@ -890,7 +1015,10 @@ export default function ShipmentDrawer({
           {tab === 'timeline' ? (
             <TimelinePanel shipmentId={shipment.id} />
           ) : tab === 'costs' ? (
-            <CostsPanel shipmentId={shipment.id} />
+            <div className="space-y-4">
+              <DetentionMeter shipment={shipment} />
+              <CostsPanel shipmentId={shipment.id} />
+            </div>
           ) : tab === 'files' ? (
             <FilesPanel shipmentId={shipment.id} regulatorCode={shipment.regulatory_body?.code} />
           ) : tab === 'tax' ? (
@@ -1023,6 +1151,17 @@ export default function ShipmentDrawer({
           </div>
         )}
       </div>
+
+      {showDebrief && (
+        <ClearanceDebriefModal
+          shipmentId={shipment.id}
+          shipmentName={shipment.name}
+          vesselName={(shipment as any).vessel_name}
+          shippingLine={(shipment as any).shipping_line}
+          regulatorCode={shipment.regulatory_body?.code}
+          onClose={() => setShowDebrief(false)}
+        />
+      )}
     </>
   )
 }

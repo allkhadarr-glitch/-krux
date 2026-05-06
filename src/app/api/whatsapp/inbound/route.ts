@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { createHmac } from 'crypto'
 import { getKesRate } from '@/lib/fx'
+import { logShipmentEvent } from '@/lib/shipment-events'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -98,6 +100,19 @@ async function handleDone(orgId: string, ref: string): Promise<string> {
     completed_at:    new Date().toISOString(),
   })
 
+  logShipmentEvent({
+    shipmentId:     shipment.id,
+    organizationId: orgId,
+    eventType:      'ACTION_COMPLETED',
+    toValue:        'COMPLETED',
+    metadata: {
+      action_type:       'FOLLOW_UP',
+      completion_signal: 'WHATSAPP',
+      title:             'Portal submission confirmed via WhatsApp',
+    },
+    actorType: 'WHATSAPP',
+  })
+
   return `✅ Marked "${shipment.name}" submission confirmed.\nOpen the app to update portal status and close out the shipment.`
 }
 
@@ -136,12 +151,34 @@ async function handleHelp(): Promise<string> {
   ].join('\n')
 }
 
+// ── Twilio signature verification ─────────────────────────────
+
+function verifyTwilioSignature(authToken: string, signature: string, url: string, params: URLSearchParams): boolean {
+  const sorted = [...params.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => k + v)
+    .join('')
+  const expected = createHmac('sha1', authToken).update(url + sorted).digest('base64')
+  return expected === signature
+}
+
 // ── Route handler ─────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   // Twilio sends form-encoded body
   const text = await req.text()
   const params = new URLSearchParams(text)
+
+  // Verify request is genuinely from Twilio
+  const authToken = process.env.TWILIO_AUTH_TOKEN
+  if (authToken) {
+    const signature = req.headers.get('x-twilio-signature') ?? ''
+    const url = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://kruxvon.com'}/api/whatsapp/inbound`
+    if (!verifyTwilioSignature(authToken, signature, url, params)) {
+      return new NextResponse('Forbidden', { status: 403 })
+    }
+  }
+
   const from = params.get('From') ?? ''   // whatsapp:+254700000000
   const body = (params.get('Body') ?? '').trim()
 

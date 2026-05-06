@@ -1,27 +1,66 @@
 # KRUX Platform — Full Build Audit
-**Last updated:** 2026-05-01 (Session 13)  
+**Last updated:** 2026-05-01 (Session 23)  
 **Production URL:** https://kruxvon.com  
 **Billing test:** 7 / 7 passed  
 **GitHub:** github.com/allkhadarr-glitch/-krux · branch: master  
-**Latest deployment:** `vercel --prod` CLI (GitHub auto-deploy BROKEN — do not rely on git push) — `dpl_2FGdTE77fTR5qHmhV4FHp1ZzL7FX`  
-**Latest commit:** `a4693ab` — feat: add KTIN identity card to sidebar top
+**Latest deployment:** `vercel --prod` CLI (GitHub auto-deploy BROKEN — do not rely on git push)  
+**Deploy command:** `npx vercel --prod --yes`
 
 ---
 
 ## PART 1 — WHAT KRUX IS
 
-KRUX is a Kenya import compliance management platform for importers, clearing agents, and manufacturers. It tracks shipments through 8 Kenyan regulatory bodies (PPB, KEBS, PCPB, KEPHIS, EPRA, NEMA, KRA, WHO-GMP), enforces PVoC certificate deadlines, calculates landed costs in real-time, generates AI-powered compliance briefs, manages manufacturer vetting, and automates compliance action generation with effectiveness tracking.
+**Positioning:** KRUX is not a tool. It is the standard. East Africa's trade infrastructure — the identity, the record, the intelligence.
 
-### Problem being solved
-Kenya importers miss PVoC deadlines because they have no single system that tracks all 8 regulators, calculates real storage penalty costs, and tells them exactly what to do next. A missed deadline at PPB (45-day SLA) on a $100K shipment can cost KES 650,000+ in demurrage.
+**Tagline:** East Africa's trade standard
 
-### Target customers (first tier)
-- Clearing agent firms (they manage shipments for multiple importers — one sale = multiplied volume)
+**The three pillars:**
+- **Identity** — Every entity gets a KTIN (KRUX Trade Identity Number). Permanent. Portable. The D-U-N-S number of East African trade.
+- **Record** — Every shipment, every event, every compliance outcome — permanently on record. The system of truth for East African trade.
+- **Intelligence** — Regulatory window computation, impossible window detection, SLA gap analysis, KES exposure calculation. The data that existed but never worked for the importer.
+
+**Strategic position:** KRUX does not compete with clearing agents, regulators, or KENTRADE. It becomes the ground everyone stands on. Infrastructure is not adversarial — it is the condition that the market depends on. Dependency is built through embedding, not force.
+
+**The SWIFT parallel:** SWIFT didn't tell banks they were doing transfers wrong. It built the standard. Connected enough participants that being off SWIFT meant being outside the market. KRUX is building the same — KTIN becomes what serious operators are asked for. Compliance scores become what banks reference. The network makes absence costly without KRUX ever making an enemy.
+
+**Target customers (first tier):**
+- Clearing agent firms (one agent = 10–30 importers. B2B2C flywheel)
 - Mid-size importers ($500K–$5M annual import value, 10–50 shipments/year)
 
-### Target customers (second tier — build toward)
+**Target customers (second tier — build toward):**
+- Gulf African Bank — compliance score as trade finance signal
 - Large importers (Bidco, Kapa Oil, Twiga Foods)
-- Enterprise (Safaricom, multinationals) — needs API access tier
+- KENTRADE — pre-screening layer (approach after 50 real clients)
+
+---
+
+## PART 1B — SESSION 23 IMPROVEMENTS (2026-05-01)
+
+### 1. DVS SLA Data Fix (`src/lib/regulatory-intelligence.ts`)
+- **Before:** `sla_actual_days: 7` (wrong — this was port inspection time only)
+- **After:** `sla_actual_days: 21` (correct — SIP must be applied 21 days before vessel departure)
+- **Why it matters:** The window checker was showing DVS as OK when it was actually IMPOSSIBLE. An importer with 12 days to ETA would see a green window for DVS. With the fix, they correctly see IMPOSSIBLE and know to act.
+- **Source:** DVS notes in the same file: "Apply for SIP minimum 21 days before departure"
+
+### 2. Verify Page Redesign (`src/app/verify/[krux_id]/page.tsx`)
+- Removed all emojis from tier labels (PLATINUM/GOLD/SILVER/BRONZE stand alone)
+- Removed "Sign up free" CTA — replaced with "Register entity" (institutional, not startup)
+- Removed "Powered by KRUX · Kenya Trade Intelligence" — replaced with "KRUX · East Africa's trade standard"
+- Added KTIN issue date (from `created_at`)
+- Added "How scores are calculated" link → `/methodology`
+- Added document letterhead style header with "Retrieved [date]"
+- Changed "Verified compliance record" subtext — replaced with structured document layout
+- Sharp corners, no rounded-2xl — feels like a registry document not a startup card
+- Footer disclaimer upgraded: "KTINs are issued once and cannot be reassigned or transferred"
+
+### 3. Methodology Page (`src/app/methodology/page.tsx`) — NEW
+- Public page at `/methodology`
+- Publishes the exact scoring formula: clearance rate (75pts) + speed bonus (20pts)
+- Publishes tier thresholds: PLATINUM ≥85, GOLD ≥70, SILVER ≥50, BRONZE <50
+- Explains data sources (verified platform activity, not self-reported)
+- Roadmap section: signals to be added in future versions
+- Same Bloomberg/D&B dark monospace aesthetic as the rest of the platform
+- Referenced from verify page footer: "How scores are calculated →"
 
 ### Pricing (TEST mode — live requires Stripe live key rotation)
 | Plan | Price | Limit |
@@ -1059,6 +1098,42 @@ This takes ~60 seconds and aliases directly to `kruxvon.com`.
 **Do NOT rely on git push to deploy.** Commit + push for version control, then separately run `vercel --prod`.
 
 ---
+
+---
+
+## PART 25 — LOOM DEMO SCRIPT (90 seconds)
+
+**Format:** Screen recording only, no face cam. Narrate live or record voice separately.  
+**URL to open:** `https://kruxvon.com/demo`  
+**WhatsApp number:** +1 415 523 8886  
+
+---
+
+**[0:00 – 0:08] Open on Operations dashboard**  
+> "This is a Kenya import compliance dashboard. Every shipment you're managing, live."
+
+**[0:08 – 0:22] Click into Jet A-1 or Pyrethroid — show the red IMPOSSIBLE WINDOW badge**  
+> "EPRA needs 25 days to process a petroleum import permit. This shipment's deadline is in 3 days. That window is physically closed. KRUX caught it before the goods left origin."
+
+**[0:22 – 0:38] Open the Brief tab — show the AI-generated next steps**  
+> "It already knows what to do next — file the EPRA permit, flag KRA, escalate to management. One click generates the full compliance brief."
+
+**[0:38 – 0:52] Switch to phone, open WhatsApp, text 'status' to +14155238886**  
+> "And if you're at the port and don't have a laptop — text 'status' to KRUX on WhatsApp. You get your full shipment triage in 10 seconds."
+
+**[0:52 – 1:05] Show the WhatsApp reply arriving with triage**  
+> "Critical, urgent, watch — sorted by risk. No app to open, no login."
+
+**[1:05 – 1:20] Back to dashboard — show the KTIN card in sidebar (KRUX-AGT-KE-00004 · Solution Hub)**  
+> "Every operator on KRUX gets a KTIN — a permanent Kenya trade identity number. Banks and insurers will use this to verify your compliance history."
+
+**[1:20 – 1:30] Cut to signup page (`kruxvon.com/signup`)**  
+> "Free to start. Your KTIN is issued instantly. kruxvon.com"
+
+---
+
+**Outreach message after sending Loom (for SIGINON/James, cargo owner, KIFWA cold outreach):**  
+> "James — I built the KRA ruling watch and motor vehicle duty stack you described. 90 seconds, here's what it looks like now: [Loom link]. No ask — just wanted you to see it."
 
 *Full audit maintained by Claude Code — sessions 1–13*  
 *All sections derived from live code and confirmed production state.*

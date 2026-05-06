@@ -70,7 +70,7 @@ export async function signIn(_: unknown, formData: FormData) {
     redirect('/dashboard/onboarding')
   }
 
-  redirect('/dashboard/operations')
+  redirect('/dashboard/today')
 }
 
 export async function signOut() {

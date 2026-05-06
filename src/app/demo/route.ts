@@ -19,7 +19,7 @@ export async function GET() {
   const headerStore  = await headers()
   const ua           = headerStore.get('user-agent') ?? ''
   const mobileDest   = new URL('/dashboard/mobile', base)
-  const desktopDest  = new URL('/dashboard/operations', base)
+  const desktopDest  = new URL('/dashboard/today', base)
   const redirect     = () => NextResponse.redirect(isMobile(ua) ? mobileDest : desktopDest)
 
   const supabase = createServerClient(

@@ -3,20 +3,19 @@ import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { getSessionContext } from '@/lib/session'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-04-22.dahlia' as any })
-
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const PRICES: Record<string, string> = {
-  basic:      process.env.STRIPE_PRICE_BASIC!,
-  pro:        process.env.STRIPE_PRICE_PRO!,
-  enterprise: process.env.STRIPE_PRICE_ENTERPRISE!,
-}
-
 export async function POST(req: NextRequest) {
+  if (!process.env.STRIPE_SECRET_KEY) return NextResponse.json({ error: 'Billing not configured' }, { status: 503 })
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-04-22.dahlia' as any })
+  const PRICES: Record<string, string> = {
+    basic:      process.env.STRIPE_PRICE_BASIC ?? '',
+    pro:        process.env.STRIPE_PRICE_PRO ?? '',
+    enterprise: process.env.STRIPE_PRICE_ENTERPRISE ?? '',
+  }
   const { orgId, userId } = await getSessionContext(req)
 
   const { plan } = await req.json()

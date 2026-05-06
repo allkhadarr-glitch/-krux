@@ -1,10 +1,12 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Users, AlertTriangle, Clock, ChevronDown, ChevronUp,
-  Link2, Plus, Upload, X, Loader2, CheckCircle2, FileText,
+  Link2, Plus, Upload, X, Loader2, CheckCircle2, FileText, ArrowUpRight,
 } from 'lucide-react'
 import { Shipment } from '@/lib/types'
+import AddShipmentModal from '@/components/AddShipmentModal'
+import { getRegulator, getWindowStatus } from '@/lib/regulatory-intelligence'
 
 function daysUntil(d: string) {
   return Math.ceil((new Date(d).getTime() - Date.now()) / 86400000)
@@ -18,6 +20,7 @@ type ClientGroup = {
   name: string
   shipments: Shipment[]
   criticalCount: number
+  impossibleCount: number
   nextDeadline: string | null
   totalKES: number
 }
@@ -31,7 +34,7 @@ function CsvImportModal({ onClose, onImported }: { onClose: () => void; onImport
   const [saving, setSaving]   = useState(false)
   const [done, setDone]       = useState(false)
   const [created, setCreated] = useState(0)
-  const fileRef               = React.useRef<HTMLInputElement>(null)
+  const fileRef               = useRef<HTMLInputElement>(null)
 
   function parseCSV(text: string) {
     const lines  = text.trim().split('\n')
@@ -261,6 +264,7 @@ export default function ClientPortfolioPage() {
   const [expanded, setExpanded]       = useState<Set<string>>(new Set())
   const [showCsv, setShowCsv]         = useState(false)
   const [shareClient, setShareClient] = useState<string | null>(null)
+  const [showAddFor, setShowAddFor]   = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -283,10 +287,17 @@ export default function ClientPortfolioPage() {
     return Object.entries(byClient)
       .map(([name, sArr]) => {
         const criticalCount = sArr.filter(s => {
-          const lvl = s.risk?.priority_level
-          return lvl === 'CRITICAL' || lvl === 'HIGH' || (s.pvoc_deadline && daysUntil(s.pvoc_deadline) <= 7)
+          const days = s.pvoc_deadline ? daysUntil(s.pvoc_deadline) : null
+          const lvl  = s.risk?.priority_level
+          return lvl === 'CRITICAL' || lvl === 'HIGH' || (days !== null && days <= 7) || (s as any).remediation_status === 'ESCALATED'
         }).length
-        const deadlines = sArr.filter(s => s.pvoc_deadline).map(s => s.pvoc_deadline!) .sort()
+        const impossibleCount = sArr.filter(s => {
+          const profile = s.regulatory_body?.code ? getRegulator('KE', s.regulatory_body.code) : null
+          if (!profile) return false
+          const ws = getWindowStatus({ pvoc_deadline: s.pvoc_deadline, eta: s.eta }, profile)
+          return ws?.status === 'IMPOSSIBLE'
+        }).length
+        const deadlines = sArr.filter(s => s.pvoc_deadline).map(s => s.pvoc_deadline!).sort()
         return {
           name,
           shipments: sArr.sort((a, b) => {
@@ -295,6 +306,7 @@ export default function ClientPortfolioPage() {
             return da - db
           }),
           criticalCount,
+          impossibleCount,
           nextDeadline: deadlines[0] ?? null,
           totalKES: sArr.reduce((sum, s) => sum + (s.total_landed_cost_kes ?? 0), 0),
         }
@@ -354,7 +366,7 @@ export default function ClientPortfolioPage() {
         {groups.map((g) => {
           const isOpen = expanded.has(g.name)
           const nextDays = g.nextDeadline ? daysUntil(g.nextDeadline) : null
-          const accentColor = g.criticalCount > 0 ? '#ef4444' : nextDays !== null && nextDays <= 14 ? '#f59e0b' : '#00C896'
+          const accentColor = g.impossibleCount > 0 ? '#ef4444' : g.criticalCount > 0 ? '#f59e0b' : nextDays !== null && nextDays <= 14 ? '#f59e0b' : '#00C896'
 
           return (
             <div
@@ -363,11 +375,11 @@ export default function ClientPortfolioPage() {
               style={{ borderLeft: `4px solid ${accentColor}` }}
             >
               {/* Client summary row */}
-              <button
-                onClick={() => toggle(g.name)}
-                className="w-full px-5 py-4 flex items-center justify-between gap-3 hover:bg-[#1E3A5F]/30 transition-colors text-left"
-              >
-                <div className="flex items-center gap-4 flex-1 min-w-0">
+              <div className="px-5 py-4 flex items-center justify-between gap-3">
+                <button
+                  onClick={() => toggle(g.name)}
+                  className="flex items-center gap-4 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
+                >
                   <div className="flex-1 min-w-0">
                     <div className="text-white font-semibold truncate">{g.name}</div>
                     <div className="text-[#64748B] text-xs mt-0.5">
@@ -379,54 +391,77 @@ export default function ClientPortfolioPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    {g.criticalCount > 0 && (
-                      <span className="flex items-center gap-1 text-xs text-red-400 font-semibold">
-                        <AlertTriangle size={11} /> {g.criticalCount} critical
-                      </span>
-                    )}
-                    {g.totalKES > 0 && (
-                      <span className="text-sm font-bold text-[#00C896]">
-                        KES {g.totalKES >= 1_000_000 ? `${(g.totalKES / 1_000_000).toFixed(1)}M` : g.totalKES.toLocaleString()}
-                      </span>
-                    )}
-                    {g.name !== '— Unassigned —' && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setShareClient(g.name) }}
-                        className="p-1.5 bg-[#1E3A5F] text-[#64748B] hover:text-[#00C896] rounded-lg transition-colors"
-                        title="Share client portal link"
-                      >
-                        <Link2 size={13} />
-                      </button>
-                    )}
-                  </div>
+                </button>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {g.impossibleCount > 0 && (
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 font-mono">
+                      {g.impossibleCount} IMPOSSIBLE
+                    </span>
+                  )}
+                  {g.criticalCount > 0 && g.impossibleCount === 0 && (
+                    <span className="flex items-center gap-1 text-xs text-amber-400 font-semibold">
+                      <AlertTriangle size={11} /> {g.criticalCount} critical
+                    </span>
+                  )}
+                  {g.totalKES > 0 && (
+                    <span className="text-sm font-bold text-[#00C896]">
+                      KES {g.totalKES >= 1_000_000 ? `${(g.totalKES / 1_000_000).toFixed(1)}M` : g.totalKES.toLocaleString()}
+                    </span>
+                  )}
+                  {g.name !== '— Unassigned —' && (
+                    <button
+                      onClick={() => { setShowAddFor(g.name) }}
+                      className="flex items-center gap-1 px-2.5 py-1.5 bg-[#00C896]/10 text-[#00C896] hover:bg-[#00C896]/20 rounded-lg text-xs font-semibold transition-colors"
+                      title={`Add shipment for ${g.name}`}
+                    >
+                      <Plus size={12} /> Add
+                    </button>
+                  )}
+                  {g.name !== '— Unassigned —' && (
+                    <button
+                      onClick={() => setShareClient(g.name)}
+                      className="p-1.5 bg-[#1E3A5F] text-[#64748B] hover:text-[#00C896] rounded-lg transition-colors"
+                      title="Share client portal link"
+                    >
+                      <Link2 size={13} />
+                    </button>
+                  )}
+                  <button onClick={() => toggle(g.name)} className="p-1 text-[#64748B]">
+                    {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </button>
                 </div>
-                {isOpen ? <ChevronUp size={16} className="text-[#64748B] flex-shrink-0" /> : <ChevronDown size={16} className="text-[#64748B] flex-shrink-0" />}
-              </button>
+              </div>
 
               {/* Expanded shipment list */}
               {isOpen && (
                 <div className="border-t border-[#1E3A5F]">
                   {g.shipments.map((s, i) => {
-                    const days = s.pvoc_deadline ? daysUntil(s.pvoc_deadline) : null
-                    const dayColor = days !== null && days <= 3 ? 'text-red-400' : days !== null && days <= 7 ? 'text-amber-400' : 'text-[#64748B]'
+                    const days       = s.pvoc_deadline ? daysUntil(s.pvoc_deadline) : null
+                    const isOverdue  = days !== null && days <= 0
+                    const isEscalated = (s as any).remediation_status === 'ESCALATED'
+                    const dayColor   = isOverdue ? 'text-red-400' : days !== null && days <= 3 ? 'text-red-400' : days !== null && days <= 7 ? 'text-amber-400' : 'text-[#64748B]'
                     return (
                       <div
                         key={s.id}
-                        className={`px-5 py-3 flex items-center justify-between gap-3 ${i < g.shipments.length - 1 ? 'border-b border-[#1E3A5F]/40' : ''}`}
+                        className={`px-5 py-3 flex items-center gap-3 ${i < g.shipments.length - 1 ? 'border-b border-[#1E3A5F]/40' : ''} ${isOverdue || isEscalated ? 'bg-red-500/5' : ''}`}
                       >
                         <div className="flex-1 min-w-0">
-                          <div className="text-[#94A3B8] text-sm font-medium truncate">{s.name}</div>
-                          <div className="text-[#64748B] text-xs">{s.reference_number} · {s.origin_port}</div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[#94A3B8] text-sm font-medium truncate">{s.name}</span>
+                            {isOverdue && (
+                              <span className="text-[9px] font-bold font-mono tracking-widest text-red-400 bg-red-500/10 px-1.5 py-0.5 flex-shrink-0">WINDOW CLOSED</span>
+                            )}
+                            {!isOverdue && isEscalated && (
+                              <span className="text-[9px] font-bold font-mono tracking-widest text-red-400 bg-red-500/10 px-1.5 py-0.5 flex-shrink-0">ESCALATED</span>
+                            )}
+                          </div>
+                          <div className="text-[#64748B] text-xs mt-0.5">{s.reference_number} · {s.regulatory_body?.code ?? '—'} · {s.origin_port}</div>
                         </div>
                         <div className={`flex items-center gap-1 text-xs font-semibold flex-shrink-0 ${dayColor}`}>
                           <Clock size={11} />
                           {s.pvoc_deadline
                             ? days !== null && days > 0 ? `${days}d` : days === 0 ? 'today' : `${Math.abs(days!)}d late`
                             : '—'}
-                        </div>
-                        <div className="text-xs text-[#94A3B8] flex-shrink-0">
-                          {s.regulatory_body?.code ?? '—'}
                         </div>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${
                           s.risk_flag_status === 'RED'   ? 'bg-red-500/10 text-red-400' :
@@ -435,6 +470,13 @@ export default function ClientPortfolioPage() {
                         }`}>
                           {s.risk_flag_status}
                         </span>
+                        <a
+                          href={`/dashboard/operations?open=${s.id}`}
+                          className="flex items-center gap-1 text-[10px] text-[#64748B] hover:text-[#00C896] font-mono flex-shrink-0 transition-colors"
+                          title="Open in operations"
+                        >
+                          <ArrowUpRight size={12} />
+                        </a>
                       </div>
                     )
                   })}
@@ -450,6 +492,13 @@ export default function ClientPortfolioPage() {
       )}
       {shareClient && (
         <ShareModal clientName={shareClient} onClose={() => setShareClient(null)} />
+      )}
+      {showAddFor !== null && (
+        <AddShipmentModal
+          defaultClientName={showAddFor}
+          onClose={() => setShowAddFor(null)}
+          onAdded={() => { setShowAddFor(null); load() }}
+        />
       )}
     </div>
   )

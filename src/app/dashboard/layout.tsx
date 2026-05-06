@@ -6,6 +6,7 @@ import { Sidebar } from '@/components/Sidebar'
 import { DemoProvider } from '@/context/demo'
 import { DemoBanner } from '@/components/DemoBanner'
 import { ActivationBanner } from '@/components/ActivationBanner'
+import { PostHogIdentify } from '@/components/PostHogIdentify'
 
 const serviceSupabase = createServiceClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -59,6 +60,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <DemoProvider isDemo={isDemo}>
+      {!isDemo && (
+        <PostHogIdentify
+          userId={user.id}
+          email={user.email ?? ''}
+          orgName={orgName}
+          ktin={ktin}
+        />
+      )}
       <div className="flex flex-col h-screen overflow-hidden">
         {isDemo && <DemoBanner />}
         {!isDemo && <ActivationBanner />}

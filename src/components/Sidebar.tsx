@@ -3,37 +3,26 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  BarChart3, Briefcase, User, Factory, Settings, Shield, LogOut,
-  Zap, ShoppingCart, Archive, Smartphone, TrendingUp, Users, Calendar,
-  FileText, Bell, Bot, Compass, CreditCard, Hash, Menu, X, FolderKanban, Car, ListChecks,
+  Settings, Shield, LogOut,
+  Zap, Archive, TrendingUp,
+  FileText, Bell, Hash, Menu, X, FolderKanban, Car, ListChecks, Receipt, Upload,
 } from 'lucide-react'
 import { signOut } from '@/app/login/actions'
 import { NotificationBell } from './NotificationBell'
 
 const nav = [
-  { href: '/dashboard/today',        label: 'Today',            icon: ListChecks, highlight: true },
-  { href: '/dashboard/actions',      label: 'Action Center',    icon: Zap },
-  { href: '/dashboard/operations',   label: 'Operations',       icon: Shield },
-  { href: '/dashboard/portfolio',    label: 'Client Portfolio', icon: FolderKanban },
-  { href: '/dashboard/hs-lookup',    label: 'HS Code Lookup',   icon: Hash },
-  { href: '/dashboard/mv-calculator', label: 'Vehicle Duty Calc', icon: Car },
-  { href: '/dashboard/briefing',     label: 'Morning Brief',    icon: FileText },
-  { href: '/dashboard/ai',           label: 'KRUX AI',          icon: Bot },
-  { href: '/dashboard/alerts',       label: 'Alerts',           icon: Bell },
-  { href: '/dashboard/closed',       label: 'Closed Shipments', icon: Archive },
-  { href: '/dashboard/analytics',    label: 'Analytics',        icon: TrendingUp },
-  { href: '/dashboard/compliance',   label: 'Compliance Cal.',  icon: Calendar },
-  { href: '/dashboard/licenses',     label: 'Licenses',         icon: FileText },
-  { href: '/dashboard/team',         label: 'Team',             icon: Users },
-  { href: '/dashboard/contacts',     label: 'Agent Directory',  icon: Briefcase },
-  { href: '/dashboard/mobile',       label: 'Field View',       icon: Smartphone },
-  { href: '/dashboard/orders',       label: 'Order Protection', icon: ShoppingCart },
-  { href: '/dashboard/management',   label: 'Management',       icon: BarChart3 },
-  { href: '/dashboard/agents',       label: 'Command Center',   icon: Bot },
-  { href: '/dashboard/client',       label: 'Client View',      icon: User },
-  { href: '/dashboard/manufacturer', label: 'Manufacturer',     icon: Factory },
-  { href: '/dashboard/onboarding',   label: 'Getting Started',  icon: Compass },
-  { href: '/dashboard/billing',      label: 'Billing',          icon: CreditCard },
+  { href: '/dashboard/today',         label: 'Today',            icon: ListChecks, highlight: true },
+  { href: '/dashboard/actions',       label: 'Action Centre',    icon: Zap },
+  { href: '/dashboard/operations',    label: 'Operations',       icon: Shield },
+  { href: '/dashboard/portfolio',     label: 'Client Portfolio', icon: FolderKanban },
+  { href: '/dashboard/hs-lookup',     label: 'HS Code Lookup',   icon: Hash },
+  { href: '/dashboard/mv-calculator', label: 'Vehicle Duty',     icon: Car },
+  { href: '/dashboard/quotation',     label: 'Quotation',        icon: Receipt },
+  { href: '/dashboard/alerts',        label: 'Alerts',           icon: Bell },
+  { href: '/dashboard/closed',        label: 'Closed Shipments', icon: Archive },
+  { href: '/dashboard/analytics',     label: 'Analytics',        icon: TrendingUp },
+  { href: '/dashboard/briefing',      label: 'Morning Brief',    icon: FileText },
+  { href: '/dashboard/import',        label: 'Import History',   icon: Upload },
 ]
 
 export function Sidebar({ userEmail, orgName, ktin }: { userEmail: string; orgName?: string | null; ktin?: string | null }) {

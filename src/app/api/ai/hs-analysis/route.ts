@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
 
     const message = await client.messages.create({
       model:      'claude-sonnet-4-6',
-      max_tokens: 600,
+      max_tokens: 1800,
       system: `You are KRUX — Kenya's import compliance intelligence system. You have deep expertise in Kenya customs classification, KRA enforcement patterns, and the East African Community Common External Tariff. You know how KRA customs officers at Mombasa and Nairobi ICD actually operate in practice. Be specific, practical, and Kenya-focused. Plain text only. No markdown.`,
       messages: [{
         role: 'user',

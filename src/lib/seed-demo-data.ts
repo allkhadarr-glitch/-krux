@@ -384,6 +384,45 @@ export async function seedDemoData(supabase: SupabaseClient, orgId: string) {
     ])
   }
 
+  await supabase.from('shipment_templates').insert([
+    {
+      organization_id:      orgId,
+      name:                 'Pharma — China PPB',
+      hs_code:              '3004.20',
+      origin_country:       'China',
+      regulatory_body_id:   bodyMap['PPB'] ?? null,
+      shipment_type:        'STANDARD',
+      cif_value_usd:        45000,
+      weight_kg:            820,
+      storage_rate_per_day: 45,
+      use_count:            7,
+    },
+    {
+      organization_id:      orgId,
+      name:                 'Petroleum — UAE EPRA',
+      hs_code:              '2710.19.11',
+      origin_country:       'UAE',
+      regulatory_body_id:   bodyMap['EPRA'] ?? null,
+      shipment_type:        'STANDARD',
+      cif_value_usd:        620000,
+      weight_kg:            395000,
+      storage_rate_per_day: 180,
+      use_count:            3,
+    },
+    {
+      organization_id:      orgId,
+      name:                 'Used Vehicle — Japan KEBS',
+      hs_code:              '8703.23',
+      origin_country:       'Japan',
+      regulatory_body_id:   bodyMap['KEBS'] ?? null,
+      shipment_type:        'STANDARD',
+      cif_value_usd:        6800,
+      weight_kg:            1040,
+      storage_rate_per_day: 18,
+      use_count:            12,
+    },
+  ])
+
   await supabase.from('notifications').insert([
     {
       organization_id: orgId,

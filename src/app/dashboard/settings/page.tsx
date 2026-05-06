@@ -1,7 +1,15 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Loader2, Check, User, Building2, Bell, Lock, Trash2 } from 'lucide-react'
+import { Loader2, Check, User, Building2, Bell, Lock, Trash2, Copy, CheckCheck, ShieldCheck } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+
+const TYPE_LABEL: Record<string, string> = {
+  IMP: 'Importer',
+  AGT: 'Clearing Agent',
+  MFG: 'Manufacturer',
+  EXP: 'Exporter',
+  BRK: 'Broker',
+}
 
 type Profile = {
   full_name: string
@@ -9,6 +17,16 @@ type Profile = {
   phone: string
   whatsapp_number: string
   organization_id: string
+}
+
+type KruxEntity = {
+  krux_id:          string
+  entity_type:      string
+  compliance_score: number | null
+  compliance_tier:  string | null
+  total_shipments:  number
+  avg_clearance_days: number | null
+  is_verified:      boolean
 }
 
 const ROLES = [
@@ -32,6 +50,9 @@ export default function SettingsPage() {
   const [pwdError, setPwdError]     = useState<string | null>(null)
   const [clearing, setClearing]     = useState(false)
   const [clearMsg, setClearMsg]     = useState<string | null>(null)
+  const [entity, setEntity]         = useState<KruxEntity | null>(null)
+  const [copied, setCopied]         = useState(false)
+  const [copiedSig, setCopiedSig]   = useState(false)
 
   async function clearDemoData() {
     setClearing(true)
@@ -76,6 +97,10 @@ export default function SettingsPage() {
     fetch('/api/fx/rate')
       .then(r => r.json())
       .then(d => { if (d.usd_kes) setKesRate(d.usd_kes) })
+      .catch(() => {})
+    fetch('/api/entity')
+      .then(r => r.json())
+      .then(d => { if (!d.error) setEntity(d) })
       .catch(() => {})
   }, [])
 
@@ -182,6 +207,88 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* KTIN */}
+        {entity && (
+          <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <ShieldCheck size={14} className="text-[#00C896]" />
+              <h3 className="text-white font-semibold text-sm">KTIN — KRUX Trade Identity Number</h3>
+              {entity.is_verified && (
+                <span className="ml-auto text-[10px] font-bold text-[#00C896] bg-[#00C896]/10 border border-[#00C896]/30 px-2 py-0.5 rounded-full">VERIFIED</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="font-mono text-lg font-bold text-white tracking-wide">{entity.krux_id}</span>
+              <button
+                type="button"
+                onClick={() => { navigator.clipboard.writeText(entity.krux_id); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
+                className="p-1.5 rounded-md hover:bg-[#1E3A5F] transition-colors text-[#64748B] hover:text-white"
+              >
+                {copied ? <CheckCheck size={13} className="text-[#00C896]" /> : <Copy size={13} />}
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-3 text-xs">
+              <div className="bg-[#0A1628] rounded-lg p-3">
+                <p className="text-[#64748B] mb-1">Type</p>
+                <p className="text-white font-semibold">
+                  {entity.entity_type === 'IMP' ? 'Importer'
+                  : entity.entity_type === 'AGT' ? 'Clearing Agent'
+                  : entity.entity_type === 'MFG' ? 'Manufacturer'
+                  : entity.entity_type === 'EXP' ? 'Exporter'
+                  : 'Broker'}
+                </p>
+              </div>
+              <div className="bg-[#0A1628] rounded-lg p-3">
+                <p className="text-[#64748B] mb-1">Shipments</p>
+                <p className="text-white font-semibold">{entity.total_shipments}</p>
+              </div>
+              <div className="bg-[#0A1628] rounded-lg p-3">
+                <p className="text-[#64748B] mb-1">Compliance</p>
+                <p className={`font-bold ${
+                  entity.compliance_tier === 'PLATINUM' ? 'text-cyan-300'
+                  : entity.compliance_tier === 'GOLD'    ? 'text-yellow-400'
+                  : entity.compliance_tier === 'SILVER'  ? 'text-slate-300'
+                  : entity.compliance_tier === 'BRONZE'  ? 'text-orange-400'
+                  : 'text-[#64748B]'
+                }`}>
+                  {entity.compliance_tier
+                    ? `${entity.compliance_tier} · ${entity.compliance_score}`
+                    : entity.total_shipments < 5
+                      ? `${5 - entity.total_shipments} more to unlock`
+                      : 'Calculating…'}
+                </p>
+              </div>
+            </div>
+            <p className="text-[10px] text-[#334155] mt-3">Your permanent trade identity on the KRUX network. Banks and insurers will use this ID to verify your compliance history.</p>
+
+            {/* Email signature block */}
+            <div className="mt-4 border-t border-[#1E3A5F] pt-4">
+              <p className="text-[10px] text-[#64748B] uppercase tracking-wide mb-2">Email Signature Block</p>
+              <div className="bg-[#060E1A] border border-[#1E3A5F] rounded-lg px-3 py-2.5 font-mono text-xs leading-relaxed select-all">
+                <p className="text-white">
+                  {entity.krux_id} | {TYPE_LABEL[entity.entity_type] ?? 'Broker'}{entity.compliance_tier ? ` | ${entity.compliance_tier}` : ''}
+                </p>
+                <p className="text-[#64748B]">Verified · kruxvon.com/verify/{entity.krux_id}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const typeLabel = TYPE_LABEL[entity.entity_type] ?? 'Broker'
+                  const tierPart = entity.compliance_tier ? ` | ${entity.compliance_tier}` : ''
+                  const sig = `${entity.krux_id} | ${typeLabel}${tierPart}\nVerified · kruxvon.com/verify/${entity.krux_id}`
+                  navigator.clipboard.writeText(sig)
+                  setCopiedSig(true)
+                  setTimeout(() => setCopiedSig(false), 2000)
+                }}
+                className="mt-2 flex items-center gap-1.5 text-[10px] text-[#64748B] hover:text-[#00C896] transition-colors"
+              >
+                {copiedSig ? <CheckCheck size={12} className="text-[#00C896]" /> : <Copy size={12} />}
+                {copiedSig ? 'Copied!' : 'Copy to clipboard'}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Notifications setup */}
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-5">
           <div className="flex items-center gap-2 mb-4">
@@ -205,7 +312,7 @@ export default function SettingsPage() {
                 </div>
                 <p className="text-[#334155] mt-2 mb-1">2. In Twilio console → WhatsApp Sandbox → set webhook URL:</p>
                 <div className="font-mono text-[#00C896] text-[10px] bg-[#0A1628] px-2 py-1.5 rounded-md break-all">
-                  https://krux-xi.vercel.app/api/whatsapp/inbound
+                  https://kruxvon.com/api/whatsapp/inbound
                 </div>
                 <p className="text-[#334155] mt-2">3. Add your WhatsApp number above ↑ to link your account</p>
               </div>

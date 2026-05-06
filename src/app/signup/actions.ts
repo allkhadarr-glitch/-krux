@@ -4,7 +4,6 @@ import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { seedDemoData } from '@/lib/seed-demo-data'
 
 const serviceSupabase = createServiceClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -80,12 +79,6 @@ export async function signUp(_: unknown, formData: FormData) {
     role:            'admin',
   })
 
-  try {
-    await seedDemoData(serviceSupabase, org.id)
-  } catch (e) {
-    console.error('[signUp] seed error (non-fatal):', e)
-  }
-
   // Fetch KTIN assigned by DB trigger
   let ktin: string | null = null
   try {
@@ -96,6 +89,31 @@ export async function signUp(_: unknown, formData: FormData) {
       .maybeSingle()
     ktin = entity?.krux_id ?? null
   } catch {}
+
+  // WhatsApp ping to founder — fire and forget
+  const _waNotify = (async () => {
+    const sid   = process.env.TWILIO_ACCOUNT_SID
+    const token = process.env.TWILIO_AUTH_TOKEN
+    const from  = process.env.TWILIO_WHATSAPP_FROM
+    const to    = process.env.ALERT_WHATSAPP_TO
+    if (!sid || !token || !from || !to) return
+    const body = [
+      `KRUX · New Signup`,
+      ktin ? `${ktin} · ${company}` : company,
+      email,
+      new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit' }) + ' EAT',
+      `kruxvon.com/admin`,
+    ].join('\n')
+    const params = new URLSearchParams({ From: from, To: `whatsapp:${to}`, Body: body })
+    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString('base64')}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params.toString(),
+    })
+  })().catch(() => {})
 
   if (process.env.RESEND_API_KEY) {
     try {

@@ -151,13 +151,13 @@ const KENYA: CountryProfile = {
       ],
       escalation_path: 'PPB Registrations Manager: +254 020 272 4061. Physical address: Upper Hill, Nairobi. For urgent cases: ppb@ppb.go.ke',
       notes: 'PPB 45-day SLA is a hard floor for pharmaceuticals — expedited track exists for essential medicines only with additional documentation. Plan 52 days for actual clearance. PPB does not communicate proactively — you must follow up.',
-      last_verified: 'April 2026',
+      last_verified: 'May 2026 — official SLA confirmed via PPB Customer Service Charter. 52d actual unconfirmed; call +254 020 272 4060',
     },
     {
       code: 'KEBS',
       full_name: 'Kenya Bureau of Standards',
       regulates: ['Electronics', 'Electrical Equipment', 'Construction Materials', 'Textiles', 'Footwear', 'Food Processing Equipment', 'Motor Vehicles', 'Toys'],
-      sla_official_days: 30,
+      sla_official_days: 30, // Note: The 5-6 working day figure found in KEBS PVoC manual refers to the INSPECTION STEP at origin only. Full process (scheduling + inspection + certificate issuance + transit to Kenya) takes 30-35 days. Our 30d official estimate is the lead time importers need to allow before vessel departure, not the certificate-to-issuance time.
       sla_actual_days: 35,
       documents: [
         { name: 'KEBS Type Approval Application', mandatory: true, rejection_reason: 'All KEBS-regulated products must have type approval before export. No exceptions', source_hint: 'Apply at kebs.org or through appointed verification agency' },
@@ -186,7 +186,7 @@ const KENYA: CountryProfile = {
       ],
       escalation_path: 'KEBS Imports: +254 020 605 0400. PVOC Unit: pvoc@kebs.org. Port liaison office at KPA Mombasa: +254 041 222 1060',
       notes: 'KEBS PVoC (Pre-export Verification of Conformity) is a PRE-SHIPMENT inspection — it must be completed at origin before the goods leave the exporting country. Appointed agencies are SGS, Bureau Veritas, and Intertek. If a shipment arrives at Mombasa WITHOUT a valid PVoC certificate, KEBS will detain the goods for port-based re-testing — typically USD 1,500–5,000 and 14–21 additional days. The SLA clock shown in KRUX reflects the full clearance cycle including pre-shipment PVoC; if your PVoC cert is already in hand on arrival, port clearance is typically 3–5 working days.',
-      last_verified: 'April 2026',
+      last_verified: 'May 2026 — 5-6 working day figure is inspection step only. 30d is correct full lead time before vessel departure',
     },
     {
       code: 'PCPB',
@@ -287,7 +287,7 @@ const KENYA: CountryProfile = {
       ],
       escalation_path: 'EPRA Petroleum Licensing: +254 020 362 0000. licensing@epra.go.ke. For energy products: EPRA Standards +254 020 362 0100.',
       notes: 'EPRA has two distinct mandates: (1) Petroleum import licensing — all fuels, LPG, and lubricants require an import permit before customs clearance. Processing is 25 days minimum — plan accordingly. (2) Energy efficiency compliance — LEDs, motors, appliances, and transformers must meet Kenya MEPS. Products below MEPS cannot be imported regardless of documentation.',
-      last_verified: 'April 2026',
+      last_verified: 'May 2026 — 30d official SLA confirmed via EPRA licensing documents',
     },
     {
       code: 'NEMA',
@@ -316,7 +316,7 @@ const KENYA: CountryProfile = {
       ],
       escalation_path: 'NEMA Compliance: +254 020 605 5200. Chemicals Unit: chemicals@nema.go.ke',
       notes: 'NEMA primarily affects industrial chemicals, refrigerants, and specific agricultural chemicals. Most standard commercial shipments are not NEMA-regulated unless they contain restricted substances.',
-      last_verified: 'April 2026',
+      last_verified: 'May 2026 — 45d applies to medium-risk CPR. Chemical mixture permits: 21 working days per NEMA Service Charter 2025-2027',
     },
     {
       code: 'KRA',
@@ -414,6 +414,75 @@ const KENYA: CountryProfile = {
       last_verified: 'April 2026',
     },
     {
+      code: 'CA',
+      full_name: 'Communications Authority of Kenya',
+      regulates: ['Mobile Phones', 'Smartphones', 'Routers & Network Equipment', 'Radio Equipment', 'Wireless Devices', 'Satellite Equipment', 'GPS Devices'],
+      sla_official_days: 60, // Verified May 2026 via CA licensing procedures — full type approval process is 60 calendar days (21d was a single-step reference, not the full SLA). Urgent processing request can reduce to 10 working days.
+      sla_actual_days: 45,  // Real-world estimate based on CA process steps: application review + lab testing + approval issuance. 60d is the official ceiling; most cases resolve in 4-8 weeks.
+      documents: [
+        { name: 'CA Type Approval Application Form', mandatory: true, rejection_reason: 'All radio communications equipment must have CA Type Approval before it can be sold or used in Kenya. No application = no clearance.', source_hint: 'Download from ca.go.ke/type-approval or submit at CA offices, Waiyaki Way, Nairobi' },
+        { name: 'Technical Specifications / Datasheet', mandatory: true, rejection_reason: 'CA engineers review frequency bands, output power, and standards compliance. Generic or incomplete specs = rejection.', source_hint: 'Request full technical datasheet from manufacturer — must show frequency bands (MHz/GHz), output power (dBm), modulation type' },
+        { name: 'FCC/CE/PTCRB Test Reports from accredited lab', mandatory: true, rejection_reason: 'CA accepts test reports from internationally accredited labs. Must cover the exact frequency bands used in Kenya (700, 800, 900, 1800, 2100, 2600 MHz for LTE)', source_hint: 'FCC ID report from FCC Equipment Authorization database. CE reports from notified body. PTCRB for 3GPP devices.' },
+        { name: 'Sample units for testing (if required)', mandatory: false, condition: 'Required for new product types or if CA has concerns about submitted test reports', rejection_reason: 'CA may require physical samples — 2-3 units per model. Must not be shipped back after testing.', source_hint: 'Factor sample units into initial shipment cost — CA testing fee: KES 25,000–50,000 per model' },
+        { name: 'Commercial Invoice showing model name and quantity', mandatory: true, rejection_reason: 'CA type approval is model-specific. Invoice must list exact model numbers that match the type approval certificate.', source_hint: 'Use manufacturer model names exactly as they appear on CA type approval' },
+        { name: 'KRA Import Declaration Form (IDF)', mandatory: true, rejection_reason: 'Standard customs requirement', source_hint: 'Filed on KRA iCMS by your licensed clearing agent' },
+      ],
+      penalty: {
+        type: 'seizure_risk',
+        fixed_cost_usd: 50000,
+        description: 'Kenya Information and Communications Act Section 23: importing or selling non-type-approved equipment — fine up to KES 5,000,000 (~USD 38,500) or 5 years imprisonment, or both. Goods forfeited.',
+        confidence: 'verified',
+      },
+      portal_url: 'https://ca.go.ke',
+      phone: '+254 020 242 4000',
+      fees_summary: 'Type Approval fee: KES 25,000–50,000 per device model (one-time, valid 3 years). Annual renewal: KES 10,000. Laboratory testing fee if samples required: KES 25,000–50,000.',
+      common_rejections: [
+        'Frequency bands in test report do not match Kenya\'s licensed spectrum (700/800/900/1800/2100/2600 MHz)',
+        'Test report from non-accredited laboratory (CA publishes list of accepted labs)',
+        'Type approval applied for after shipment has arrived at port (clearance blocked until approval issued)',
+        'Model number on invoice differs from type approval certificate (even minor variations rejected)',
+        'WiFi/Bluetooth equipment with no FCC/CE test report',
+      ],
+      escalation_path: 'CA Type Approval Unit: typeapproval@ca.go.ke | +254 020 242 4000. Physical office: CA Centre, Waiyaki Way, Nairobi. Urgent processing request can reduce timeline to 10 working days.',
+      notes: 'CA type approval is per model, not per unit — once approved, any quantity of that model can be imported freely for 3 years. Apply before shipping, not after. CA and KRA run joint inspections at Mombasa port for telecom equipment. Devices without type approval are seized by CA and either destroyed or re-exported at importer\'s cost. Waivers are rarely granted and take 30+ days.',
+      last_verified: 'May 2026 — CORRECTED: official SLA is 60 calendar days per CA licensing procedures, not 21d. Urgent processing: 10 working days',
+    },
+    {
+      code: 'DVS',
+      full_name: 'Directorate of Veterinary Services',
+      regulates: ['Meat Products', 'Poultry', 'Dairy Products', 'Animal Feeds', 'Live Animals', 'Animal-Derived Products', 'Fish & Seafood'],
+      sla_official_days: 10,
+      sla_actual_days: 21, // SIP processing takes 14–21 days and must be obtained BEFORE vessel departure. Prior value of 7d was port inspection time only — not the full process. Verified from DVS notes: "Apply for SIP minimum 21 days before departure."
+      documents: [
+        { name: 'DVS Sanitary Import Permit (SIP)', mandatory: true, rejection_reason: 'No SIP = consignment refused at port of entry. SIP must be obtained BEFORE shipment departs origin country.', source_hint: 'Apply at DVS offices, Kabete, Nairobi. Online: dvs.go.ke. Processing: 14-21 days. Include: product type, origin country, exporting establishment registration number.' },
+        { name: 'Veterinary Health Certificate from exporting country', mandatory: true, rejection_reason: 'Must be issued by the official veterinary authority of the exporting country. Private lab certificates not accepted.', source_hint: 'Request from exporting country\'s government veterinary authority. Must be endorsed by official government vet.' },
+        { name: 'Certificate of Origin', mandatory: true, rejection_reason: 'DVS origin country requirements vary — some origins are restricted or banned. Must declare exact country of slaughter/processing, not just country of export.', source_hint: 'Issued by exporting country chamber of commerce or government authority' },
+        { name: 'Cold Chain Documentation / Temperature Logs', mandatory: true, condition: 'For frozen and chilled products', rejection_reason: 'DVS rejects any consignment where cold chain has been broken. Temperature must be maintained at -18°C (frozen) or 0–4°C (chilled) throughout transit.', source_hint: 'Data logger report from origin to Mombasa. Must show no temperature excursions.' },
+        { name: 'Establishment Registration Certificate', mandatory: true, rejection_reason: 'The specific slaughter/processing facility must be registered with DVS Kenya. Not all foreign establishments are approved.', source_hint: 'Check DVS approved establishment list at dvs.go.ke before contracting supplier. If not listed, supplier must apply for DVS listing — allow 60+ days.' },
+        { name: 'KRA Import Declaration Form (IDF)', mandatory: true, rejection_reason: 'Standard customs requirement', source_hint: 'Filed on KRA iCMS by licensed clearing agent' },
+      ],
+      penalty: {
+        type: 'seizure_risk',
+        fixed_cost_usd: 5000,
+        description: 'Animal Diseases Act Cap 364: importing animal products without SIP — fine up to KES 500,000 + imprisonment. Consignment destroyed at importer\'s expense. No compensation.',
+        confidence: 'verified',
+      },
+      portal_url: 'https://www.dvs.go.ke',
+      phone: '+254 020 377 2370',
+      fees_summary: 'SIP application fee: KES 3,000–10,000 depending on product and quantity. Port inspection fee: KES 5,000. Lab testing (if required): KES 15,000–30,000.',
+      common_rejections: [
+        'Sanitary Import Permit not obtained before shipment (most common — vessel arrives, permit not ready)',
+        'Veterinary health certificate signed by private vet, not official government vet',
+        'Cold chain broken — temperature excursion shown in data logger',
+        'Processing establishment not on DVS approved list',
+        'Country of origin is on DVS restricted list (varies — currently some origins restricted for Foot and Mouth Disease)',
+        'Product contains antibiotics above Kenya maximum residue levels (MRL)',
+      ],
+      escalation_path: 'DVS Director: +254 020 377 2370 | info@dvs.go.ke. Port inspection office at Mombasa Port: +254 041 222 6060. SIP urgent processing (documented emergency): DVS may issue within 7 days.',
+      notes: 'DVS is the gatekeeper for all animal-origin food products. Apply for SIP at minimum 21 days before vessel departure. DVS maintains a list of approved foreign establishments — your specific supplier must be on this list. Not all origins are approved for all products: check current status at dvs.go.ke. DVS port inspector physically inspects every consignment — no inspector, no clearance. Inspector must be pre-booked. Seafood imports also require KEPHIS phytosanitary certificate in addition to DVS SIP.',
+      last_verified: 'April 2026',
+    },
+    {
       code: 'WHO-GMP',
       full_name: 'WHO Good Manufacturing Practice Certification',
       regulates: ['Pharmaceutical Manufacturers', 'Medical Device Manufacturers'],
@@ -443,13 +512,311 @@ const KENYA: CountryProfile = {
   ],
 }
 
+// ─── Tanzania ─────────────────────────────────────────────────
+
+const TANZANIA: CountryProfile = {
+  country_code: 'TZ',
+  country_name: 'Tanzania',
+  currency: 'TZS',
+  port_of_entry: 'Dar es Salaam',
+  usd_rate: 2600,
+  kpa_demurrage: {
+    free_days: 4,
+    daily_rate_usd: 80,
+    doubles_after_days: 14,
+    confidence: 'estimated',
+    // Tanzania Ports Authority (TPA) charges port storage; shipping lines charge demurrage separately.
+    // Free period at Dar es Salaam: typically 4 days from vessel discharge. Rates approximate.
+  },
+  regulators: [
+    {
+      code: 'TBS',
+      full_name: 'Tanzania Bureau of Standards',
+      regulates: ['Manufactured Goods', 'Electronics', 'Construction Materials', 'Food Products', 'Textiles', 'Chemicals'],
+      sla_official_days: 30,
+      sla_actual_days: 45,
+      documents: [
+        { name: 'TBS Import Permit / Certificate of Conformity (CoC)', mandatory: true, rejection_reason: 'TBS requires a valid CoC from an accredited inspection body at origin before shipment. Goods without CoC are stopped at port.', source_hint: 'Apply at tbs.go.tz/pvoc. Accredited bodies include SGS, Bureau Veritas, Intertek, COTECNA at origin.' },
+        { name: 'Test Report from accredited laboratory', mandatory: true, rejection_reason: 'Lab results must confirm compliance with Tanzania standard (TZS) or EAC equivalent. Results from non-accredited labs are rejected.', source_hint: 'Laboratory must be ILAC-accredited. Include full product specification vs. standard comparison.' },
+        { name: 'Commercial Invoice + Packing List', mandatory: true, rejection_reason: 'Must match BoL exactly. Quantity or value discrepancy triggers TRA review and TBS re-inspection.', source_hint: 'Ensure product descriptions match TBS product category nomenclature.' },
+        { name: 'Bill of Lading / Airway Bill', mandatory: true, rejection_reason: 'Required for TPA customs entry. Original or telex release accepted.', source_hint: 'Obtain from shipping agent.' },
+        { name: 'Manufacturer\'s Declaration of Conformity', mandatory: false, condition: 'Required for self-certified product categories under EAC harmonized standards', rejection_reason: 'Must reference specific Tanzania or EAC standard by number.', source_hint: 'Manufacturer must be ISO 9001 certified or equivalent for declaration to be accepted.' },
+        { name: 'TRA Import Declaration (ID)', mandatory: true, rejection_reason: 'Tanzania Revenue Authority customs entry. Required before port release.', source_hint: 'Filed through TANCIS (Tanzania Customs Integrated System) by licensed clearing agent.' },
+      ],
+      penalty: {
+        type: 'seizure_risk',
+        description: 'Goods without valid TBS CoC are seized at Dar es Salaam port and held pending re-inspection. Reinspection fee: TZS 500,000–2,000,000. Goods failing inspection: compulsory re-export or destruction at importer\'s cost. Storage accrues throughout.',
+        confidence: 'estimated',
+      },
+      portal_url: 'https://www.tbs.go.tz',
+      phone: '+255 22 245 0206',
+      fees_summary: 'PVoC CoC at origin: charged by inspection body (USD 300–800 depending on product/volume). TBS port inspection fee: TZS 200,000–500,000. Re-inspection: TZS 500,000–2,000,000.',
+      common_rejections: [
+        'CoC issued by non-accredited inspection body',
+        'Product description on CoC does not match BoL',
+        'Standard referenced on CoC superseded by newer TZS/EAS version',
+        'Lab results missing key parameters required by the applicable standard',
+        'CoC expired (validity typically 6 months from issue)',
+      ],
+      escalation_path: 'TBS Headquarters — Morogoro Road, Dar es Salaam. Director of Certification: dg@tbs.go.tz. For urgent port release: Contact TBS Port Office at Dar es Salaam port directly (+255 22 211 7532).',
+      notes: 'Tanzania operates a mandatory PVoC (Pre-Verification of Conformity) scheme for products on the TBS Mandatory Certification list. Products on this list cannot clear customs without a valid CoC from a TBS-accredited inspection body at the country of origin. The list is updated periodically — verify at tbs.go.tz before shipment. EAC harmonized standards (EAS) are increasingly replacing TZS standards — both are accepted.',
+      last_verified: 'May 2026',
+    },
+    {
+      code: 'TFDA',
+      full_name: 'Tanzania Food and Drugs Authority',
+      regulates: ['Pharmaceuticals', 'Medical Devices', 'Food Products', 'Cosmetics', 'Herbal Medicines', 'Veterinary Products'],
+      sla_official_days: 45,
+      sla_actual_days: 60,
+      documents: [
+        { name: 'TFDA Import Permit', mandatory: true, rejection_reason: 'All regulated products require a TFDA import permit before the shipment departs origin. Retroactive permits are not issued.', source_hint: 'Apply online at tfda.go.tz. Permit number must appear on the shipping documents.' },
+        { name: 'Product Registration Certificate (TFDA)', mandatory: true, rejection_reason: 'Pharmaceuticals and medical devices must be registered with TFDA before importation. Unregistered products are detained.', source_hint: 'Registration takes 6–18 months for new products. Confirm existing registration status before ordering.' },
+        { name: 'Certificate of Analysis (batch-specific)', mandatory: true, rejection_reason: 'Must match the specific batch shipped. Product-level CoA without batch number is rejected.', source_hint: 'Request from manufacturer with lot number matching BoL.' },
+        { name: 'Free Sale Certificate', mandatory: true, rejection_reason: 'Confirms the product is licensed for sale in the country of manufacture.', source_hint: 'Issued by health/medicines authority of exporting country. TFDA accepts NMRAs from WHO-listed countries.' },
+        { name: 'WHO-GMP Certificate or equivalent', mandatory: true, rejection_reason: 'TFDA requires manufacturer GMP certification from a recognized authority (WHO, PIC/S, EU GMP).', source_hint: 'Verify certificate validity — TFDA requires issued within 3 years.' },
+        { name: 'Cold Chain Documentation', mandatory: false, condition: 'Required for temperature-sensitive products (vaccines, biologics, insulin)', rejection_reason: 'TFDA requires continuous temperature log from manufacturer to port. Gaps in log result in product rejection and destruction.', source_hint: 'Use calibrated data loggers. Include min/max temperatures throughout transit.' },
+      ],
+      penalty: {
+        type: 'seizure_risk',
+        description: 'Unregistered or improperly documented pharmaceuticals are seized and may be destroyed at importer\'s cost. TFDA does not negotiate on unregistered products. Criminal penalties under the Tanzania Food, Drugs and Cosmetics Act apply to repeat violations.',
+        confidence: 'estimated',
+      },
+      portal_url: 'https://www.tfda.go.tz',
+      phone: '+255 22 245 0512',
+      fees_summary: 'Import permit: TZS 100,000–500,000 per product category. Product registration: TZS 1,000,000–5,000,000 (one-time). Annual renewal: TZS 500,000. Lab testing fee (where required): TZS 200,000–1,000,000.',
+      common_rejections: [
+        'Product not registered with TFDA (most common — and most expensive)',
+        'Import permit expired or covers different quantity than shipped',
+        'Cold chain integrity documentation missing for temperature-sensitive goods',
+        'Certificate of Analysis not batch-specific',
+        'Labeling not in English (TFDA requires English or Swahili)',
+      ],
+      escalation_path: 'TFDA Director General — Plot 2686 Kibaha/Mlandizi Road, Dar es Salaam. dg@tfda.go.tz. For expedited review: written request to Directorate of Human Medicines with evidence of medical urgency.',
+      notes: 'TFDA registration is mandatory before any pharmaceutical or medical device shipment is ordered. Unlike PPB Kenya, TFDA does not offer conditional clearance for unregistered products in any circumstance. Product registration for new pharmaceutical products takes 6–18 months and requires a full technical dossier including clinical data. Plan registration well ahead of any new product launch in Tanzania.',
+      last_verified: 'May 2026',
+    },
+    {
+      code: 'EWURA',
+      full_name: 'Energy and Water Utilities Regulatory Authority',
+      regulates: ['Petroleum Products', 'LPG', 'Natural Gas', 'Electricity Equipment', 'Water Treatment Chemicals'],
+      sla_official_days: 30,
+      sla_actual_days: 35,
+      documents: [
+        { name: 'EWURA Import Licence', mandatory: true, rejection_reason: 'Petroleum and LPG products cannot be cleared without a valid EWURA import licence. TRA will not release goods without EWURA clearance number.', source_hint: 'Apply at ewura.go.tz. Licence is product-specific (e.g., AGO, PMS, Jet A-1). Separate licence for each product type.' },
+        { name: 'Product Quality Certificate from origin', mandatory: true, rejection_reason: 'EWURA requires third-party quality certification at loading port. Accepted bodies: SGS, Bureau Veritas, Intertek.', source_hint: 'Certificate must confirm product meets TBS/EAC quality standard for the specific fuel grade.' },
+        { name: 'Bill of Lading + Vessel Details', mandatory: true, rejection_reason: 'EWURA tracks vessel manifest. Discrepancies between declared and actual cargo trigger EWURA investigation.', source_hint: 'Include vessel name, IMO number, loading port, and ETA.' },
+        { name: 'Tank Calibration Certificate', mandatory: false, condition: 'Required for bulk liquid petroleum imports', rejection_reason: 'EWURA requires certified tank calibration for accurate quantity measurement at receipt.', source_hint: 'Certificate must be from EWURA-approved calibration facility.' },
+      ],
+      penalty: {
+        type: 'pct_cif',
+        rate_pct_per_week: 2,
+        cap_pct: 20,
+        description: 'Operating without EWURA licence: TZS 10,000,000+ fine plus product seizure. Quantity discrepancy: pro-rata duty adjustment + 2% penalty of declared CIF per week of delay. Petroleum products are strategically controlled — EWURA enforcement is strict.',
+        confidence: 'estimated',
+      },
+      portal_url: 'https://www.ewura.go.tz',
+      phone: '+255 22 219 4376',
+      fees_summary: 'Import licence fee: TZS 500,000–2,000,000 depending on product volume. Annual petroleum dealer licence: TZS 5,000,000+. Quality testing at arrival: TZS 200,000–500,000 per sample.',
+      common_rejections: [
+        'Licence covers different fuel grade than shipped (e.g., licensed for AGO, shipped Jet A-1)',
+        'Product quality certificate from non-EWURA-approved body',
+        'Volume shipped exceeds licensed quantity',
+        'Licence expired during transit',
+      ],
+      escalation_path: 'EWURA Director General — Harbour View Towers, Dar es Salaam. +255 22 219 4376. For emergency petroleum imports: written request to Director of Petroleum for expedited review.',
+      notes: 'Tanzania operates a liberalised petroleum market but all imports are strictly licensed. EWURA maintains a real-time import tracking system. Discrepancies between declared and actual volumes are flagged immediately on arrival. Petroleum importers must hold a valid OMC (Oil Marketing Company) licence from EWURA in addition to the import licence.',
+      last_verified: 'May 2026',
+    },
+    {
+      code: 'TRA',
+      full_name: 'Tanzania Revenue Authority',
+      regulates: ['All Import Customs Clearance', 'Duty Assessment', 'Import Declaration'],
+      sla_official_days: 5,
+      sla_actual_days: 7,
+      documents: [
+        { name: 'Tanzania Customs Import Declaration (CID)', mandatory: true, rejection_reason: 'All imports require a customs declaration filed on TANCIS before port release.', source_hint: 'Filed by licensed clearing agent through TANCIS (Tanzania Customs Integrated System).' },
+        { name: 'Import Declaration Form (IDF)', mandatory: true, rejection_reason: 'Required for all commercial imports.', source_hint: 'IDF is the Tanzania equivalent of Kenya\'s IDF. Must match BoL and invoice.' },
+        { name: 'Certificate of Origin (where applicable)', mandatory: false, condition: 'Required to claim EAC Common Market or COMESA preferential tariff rates', rejection_reason: 'Without valid CoO, TRA applies standard Most Favoured Nation (MFN) rate. EAC goods attract 0% duty; COMESA goods attract reduced rates.', source_hint: 'For Kenya-origin goods: CoO issued by KEBS or KAM. Must be issued before shipment departs.' },
+      ],
+      penalty: {
+        type: 'pct_cif',
+        rate_pct_per_week: 2,
+        cap_pct: 50,
+        description: 'Misdeclaration: 100% of under-assessed duty + TZS 500,000 minimum fine. Late clearance: 2% of CIF per week (up to 50%). Abandoned goods (>60 days): auctioned by TRA at importer\'s loss.',
+        confidence: 'estimated',
+      },
+      portal_url: 'https://www.tra.go.tz',
+      phone: '+255 800 750 075',
+      fees_summary: 'Import duty: varies by HS code (EAC CET: 0%/10%/25%). VAT: 18% on (CIF + duty). Withholding tax on imports: 2% (WHT). Port levy: 0.5% of CIF. IDF processing levy: 0.6% of CIF (minimum TZS 50,000).',
+      common_rejections: [
+        'HS code mismatch — TRA reclassification adds duty',
+        'Invoice value deemed undervalued — TRA uses WTO customs valuation',
+        'CoO not accepted for EAC preference (missing required fields)',
+        'Clearing agent not licensed with TRA',
+      ],
+      escalation_path: 'TRA Commissioner General — TRA House, Maktaba Street, Dar es Salaam. Post-release audit disputes: TRA Tax Appeals Board (TAB). Pre-clearance disputes: TRA Regional Manager (Ports).',
+      notes: 'Tanzania uses the EAC Common External Tariff (CET). Goods from Kenya, Uganda, Rwanda, Burundi, and South Sudan attract 0% intra-EAC duty when accompanied by a valid EAC Certificate of Origin. COMESA preferential rates also apply for eligible goods. Tanzania imposes a 2% WHT on all commercial imports — this is separate from import duty and is often overlooked in landed cost calculations.',
+      last_verified: 'May 2026',
+    },
+  ],
+}
+
+// ─── Uganda ───────────────────────────────────────────────────
+
+const UGANDA: CountryProfile = {
+  country_code: 'UG',
+  country_name: 'Uganda',
+  currency: 'UGX',
+  port_of_entry: 'Mombasa (transit via Kenya) / Malaba / Busia / Entebbe (air)',
+  usd_rate: 3700,
+  kpa_demurrage: {
+    // Uganda is landlocked — goods transit through Mombasa (Kenya) or Dar es Salaam (Tanzania).
+    // KPA demurrage at Mombasa applies to Uganda-bound goods on transit. Same rates as Kenya profile.
+    // Additional Uganda-side transit charges apply at Malaba/Busia border crossing.
+    free_days: 5,
+    daily_rate_usd: 75,
+    doubles_after_days: 14,
+    confidence: 'estimated',
+  },
+  regulators: [
+    {
+      code: 'UNBS',
+      full_name: 'Uganda National Bureau of Standards',
+      regulates: ['Manufactured Goods', 'Food Products', 'Electronics', 'Construction Materials', 'Textiles', 'Chemicals', 'Cosmetics'],
+      sla_official_days: 21,
+      sla_actual_days: 30,
+      documents: [
+        { name: 'UNBS Certificate of Conformity (CoC) / Product Clearance Certificate', mandatory: true, rejection_reason: 'Products on the UNBS mandatory certification list cannot enter Uganda without a valid CoC. Goods are held at Malaba/Busia until CoC is produced.', source_hint: 'Apply through UNBS-accredited inspection body at origin: SGS, Bureau Veritas, Intertek, COTECNA. Check mandatory list at unbs.go.ug.' },
+        { name: 'Test Report from accredited laboratory', mandatory: true, rejection_reason: 'Laboratory must be accredited by UNAS (Uganda National Accreditation Service) or ILAC-equivalent. UNBS rejects results from non-accredited labs.', source_hint: 'Include parameter-by-parameter comparison against the applicable Uganda/EAS standard.' },
+        { name: 'Commercial Invoice + Packing List', mandatory: true, rejection_reason: 'URA requires exact match between invoice, BoL, and packing list. Discrepancy triggers physical inspection and delay.', source_hint: 'Ensure product descriptions match UNBS product classification exactly.' },
+        { name: 'Bill of Lading / Airway Bill', mandatory: true, rejection_reason: 'Required for URA customs entry at Malaba/Busia/Entebbe.', source_hint: 'For landlocked transit through Kenya: obtain transit bond documents from KRA at Mombasa in addition to the BoL.' },
+        { name: 'EAC Certificate of Origin (for intra-EAC trade)', mandatory: false, condition: 'Required to claim 0% EAC intra-community duty rate', rejection_reason: 'Without CoO, URA applies standard import duty (EAC CET: 0%/10%/25% depending on HS code).', source_hint: 'Kenya-origin goods: CoO from KEBS or KAM. Must accompany the shipment.' },
+      ],
+      penalty: {
+        type: 'seizure_risk',
+        description: 'Non-conforming goods seized at border and held at importer\'s cost. Re-export or destruction ordered for goods that fail UNBS testing. UNBS border inspection: USD 50–200 per consignment. Goods without CoC for mandatory products: denied entry entirely.',
+        confidence: 'estimated',
+      },
+      portal_url: 'https://www.unbs.go.ug',
+      phone: '+256 417 333 250',
+      fees_summary: 'PVoC CoC at origin: USD 200–600 (charged by inspection body). UNBS port-of-entry inspection: UGX 200,000–500,000. Market surveillance testing (if selected): UGX 100,000–400,000 per sample.',
+      common_rejections: [
+        'CoC from non-UNBS-accredited inspection body',
+        'Product on mandatory certification list with no CoC',
+        'Test parameters do not cover all requirements of applicable EAS/US standard',
+        'CoC covers different product model than shipped',
+        'Expired CoC (UNBS CoC validity: typically 6–12 months)',
+      ],
+      escalation_path: 'UNBS Executive Director — Plot M217 Nakawa Industrial Area, Kampala. ed@unbs.go.ug. Border clearance disputes: UNBS Regional Offices at Malaba (+256 454 444 006) and Busia (+256 454 440 182).',
+      notes: 'Uganda operates a mandatory PVoC (Pre-Export Verification of Conformity) scheme for products on the UNBS Compulsory List. The list includes: electrical equipment, steel products, food products, LPG cylinders, textiles, cosmetics, and building materials. Check the current list at unbs.go.ug before ordering. Uganda and Kenya are both EAC members — Kenya-origin goods travel under EAC rules with 0% duty and simplified documentation. Chinese/Indian/UAE origin goods require full PVoC CoC.',
+      last_verified: 'May 2026',
+    },
+    {
+      code: 'NDA',
+      full_name: 'National Drug Authority',
+      regulates: ['Pharmaceuticals', 'Medical Devices', 'Veterinary Drugs', 'Herbal Medicines', 'Biological Products'],
+      sla_official_days: 30,
+      sla_actual_days: 45,
+      documents: [
+        { name: 'NDA Import Permit', mandatory: true, rejection_reason: 'All pharmaceutical products require an NDA import permit before the shipment departs origin. Retroactive permits not issued. Goods without permit are seized at border.', source_hint: 'Apply at nda.or.ug. Permit is product and quantity specific. Processing: 14–21 working days.' },
+        { name: 'NDA Product Registration Certificate', mandatory: true, rejection_reason: 'Pharmaceuticals must be registered with NDA before importation. Unregistered products cannot be cleared under any circumstances.', source_hint: 'Registration for new products: 6–24 months. Check existing registration status at nda.or.ug product database before ordering.' },
+        { name: 'Certificate of Analysis (batch-specific)', mandatory: true, rejection_reason: 'NDA requires batch-specific CoA. Product-level CoA without lot number rejected.', source_hint: 'Request from manufacturer. Lot number must match BoL.' },
+        { name: 'Free Sale Certificate', mandatory: true, rejection_reason: 'Confirms the product is authorised for sale in the country of manufacture.', source_hint: 'Issued by NMRA (National Medicines Regulatory Authority) of exporting country.' },
+        { name: 'WHO-GMP Certificate or PIC/S GMP', mandatory: true, rejection_reason: 'NDA requires manufacturer GMP certification. Certificates older than 3 years are not accepted.', source_hint: 'Accepted authorities: WHO, EMA, FDA, MHRA, TGA, CDSCO, NMPA.' },
+        { name: 'Cold Chain Documentation', mandatory: false, condition: 'Required for temperature-sensitive products', rejection_reason: 'NDA requires continuous temperature monitoring from manufacturer to Entebbe/Malaba. Gaps in log trigger product rejection.', source_hint: 'Use WHO-qualified data loggers. Include excursion report if any temperature event occurred.' },
+      ],
+      penalty: {
+        type: 'seizure_risk',
+        description: 'Unregistered pharmaceuticals: seized and destroyed at importer\'s cost. Criminal charges under the National Drug Policy and Authority Act possible for repeat violations. Substandard or counterfeit medicines: mandatory recall + destruction + criminal prosecution. NDA maintains a public database of seized/recalled products.',
+        confidence: 'estimated',
+      },
+      portal_url: 'https://www.nda.or.ug',
+      phone: '+256 414 255 665',
+      fees_summary: 'Import permit: UGX 100,000–500,000. Product registration: UGX 2,000,000–8,000,000 (one-time, varies by category). Annual registration renewal: UGX 500,000–2,000,000. Lab testing fee (if required): UGX 200,000–1,000,000.',
+      common_rejections: [
+        'Product not registered with NDA (most common and most serious)',
+        'Import permit quantity does not match actual shipment',
+        'CoA not batch-specific',
+        'GMP certificate expired or covers different manufacturing site',
+        'Labeling not compliant with NDA requirements (English required, dosage + storage conditions mandatory)',
+      ],
+      escalation_path: 'NDA Executive Director — Plot 46–48 Lumumba Avenue, Kampala. director@nda.or.ug. For emergency medicines: written request to NDA Board for expedited review with Ministry of Health support letter.',
+      notes: 'NDA registration is the critical long-lead item for Uganda pharmaceutical imports — 6–24 months for new products. Budget this timeline before committing to a product. NDA has reciprocal recognition agreements with some East African regulators — products registered with PPB Kenya, TFDA Tanzania, or WHO prequalified products may qualify for expedited NDA registration (3–6 months). Confirm eligibility at nda.or.ug before applying.',
+      last_verified: 'May 2026',
+    },
+    {
+      code: 'ERA',
+      full_name: 'Electricity Regulatory Authority',
+      regulates: ['Electrical Equipment', 'Solar Panels', 'Generators', 'Transformers', 'Petroleum Products', 'LPG'],
+      sla_official_days: 21,
+      sla_actual_days: 28,
+      documents: [
+        { name: 'ERA Import Permit', mandatory: true, rejection_reason: 'Electrical equipment and petroleum products require ERA import permit before clearance. URA will not release without ERA permit number.', source_hint: 'Apply at era.or.ug. Specify product category — electrical equipment and petroleum products have different permit types.' },
+        { name: 'Product Technical Specifications', mandatory: true, rejection_reason: 'ERA requires full technical datasheet confirming compliance with Uganda/EAC electrical safety standards.', source_hint: 'Include voltage rating, frequency (Uganda: 240V/50Hz), protection class, and applicable IEC standards.' },
+        { name: 'Test Certificate from accredited laboratory', mandatory: false, condition: 'Required for all electrical equipment on ERA mandatory certification list', rejection_reason: 'ERA rejects test certificates from non-UNAS-accredited labs. IEC/CB scheme certificates from CB members are accepted.', source_hint: 'IEC CB scheme test reports from any CB test laboratory are accepted globally — fastest path for electrical equipment.' },
+      ],
+      penalty: {
+        type: 'pct_cif',
+        rate_pct_per_week: 2,
+        cap_pct: 25,
+        description: 'Non-compliant electrical equipment: seizure + mandatory return to sender. Operating unlicensed petroleum import business: UGX 10,000,000+ fine. Substandard electrical equipment causing harm: criminal liability under the Electricity Act.',
+        confidence: 'estimated',
+      },
+      portal_url: 'https://www.era.or.ug',
+      phone: '+256 414 558 800',
+      fees_summary: 'Electrical equipment import permit: UGX 200,000–800,000. Petroleum import licence: UGX 2,000,000–5,000,000 annually. ERA compliance testing: UGX 100,000–500,000 per product type.',
+      common_rejections: [
+        'Voltage/frequency mismatch (Uganda 240V/50Hz — products rated 110V/60Hz are rejected)',
+        'Solar inverters without ERA compliance mark',
+        'Generators without ERA registration',
+        'Petroleum import without valid OMC (Oil Marketing Company) licence',
+      ],
+      escalation_path: 'ERA Chief Executive Officer — Plot 15 Shimba Hills Road, Nakasero, Kampala. info@era.or.ug. Dispute on import permit: written request to ERA Licensing Department.',
+      notes: 'Uganda\'s electrical grid is 240V/50Hz — same as Kenya and Tanzania. This is EAC-harmonized. However, many products from China and the USA are rated 110V/60Hz and will fail ERA compliance checks. Importers must explicitly verify voltage rating before purchase. Solar equipment (panels, inverters, batteries) is a major growth category in Uganda but ERA compliance certification is strictly enforced at Malaba/Entebbe.',
+      last_verified: 'May 2026',
+    },
+    {
+      code: 'URA',
+      full_name: 'Uganda Revenue Authority',
+      regulates: ['All Import Customs Clearance', 'Duty Assessment', 'Transit Bond Management'],
+      sla_official_days: 5,
+      sla_actual_days: 7,
+      documents: [
+        { name: 'Single Goods Declaration (SGD)', mandatory: true, rejection_reason: 'All imports require an SGD filed on ASYCUDA World before goods are released. Missing or incorrect SGD blocks clearance.', source_hint: 'Filed by URA-licensed clearing agent on ASYCUDA World system. Uganda uses ASYCUDA (not a bespoke system).' },
+        { name: 'Transit Declaration (T1) — for Mombasa-transited goods', mandatory: false, condition: 'Required when goods enter Uganda via Kenya (Mombasa transit)', rejection_reason: 'Transit bond must be cancelled at Malaba/Busia. Failure to cancel bond triggers KRA enforcement against the bond guarantor.', source_hint: 'KRA issues T1 at Mombasa. Bond is cancelled by URA officer at the Uganda border post. Ensure this step is completed — it is the most common source of complications for Uganda transit goods.' },
+        { name: 'EAC Certificate of Origin', mandatory: false, condition: 'For goods from EAC partner states (Kenya, Tanzania, Rwanda, Burundi, South Sudan)', rejection_reason: 'Without CoO, standard EAC CET rates apply. Kenya-origin goods qualify for 0% duty with valid CoO.', source_hint: 'CoO must be issued before departure. Post-shipment CoOs are not accepted by URA.' },
+      ],
+      penalty: {
+        type: 'pct_cif',
+        rate_pct_per_week: 2,
+        cap_pct: 50,
+        description: 'Misdeclaration: 100% of under-assessed duty + UGX 2,000,000 minimum fine. Transit bond not cancelled: full bond value called. Abandoned goods (>30 days at Malaba): seized and auctioned by URA.',
+        confidence: 'estimated',
+      },
+      portal_url: 'https://www.ura.go.ug',
+      phone: '+256 800 117 000',
+      fees_summary: 'Import duty: EAC CET (0%/10%/25% by HS code). VAT: 18% on (CIF + duty). Withholding tax: 6% for non-resident suppliers. Infrastructure levy: 1.5% of CIF. Railway Development Levy: 1.5% of CIF.',
+      common_rejections: [
+        'Transit bond not properly cancelled at Malaba — most common complication for Kenya-transited goods',
+        'HS code misclassification — URA reclassification adds duty retroactively',
+        'Invoice undervaluation — URA uses WTO customs valuation and EAC reference prices',
+        'CoO not accepted for EAC preference (missing MFN stamp or incorrect consignee)',
+      ],
+      escalation_path: 'URA Commissioner General — Nakawa, Kampala. +256 800 117 000. Malaba border disputes: URA Regional Manager (Eastern Uganda). Post-clearance audit disputes: Tax Appeals Tribunal (TAT).',
+      notes: 'Uganda is landlocked. Most goods enter via Mombasa (Kenya) with a KRA transit bond, then road transit to Malaba/Busia border. The transit bond cancellation at the border is a critical step — failure to complete this creates KRA enforcement exposure against the Kenyan bond guarantor and blocks future transit. Use only URA-licensed clearing agents with cross-border transit experience. Uganda infrastructure levy (1.5% of CIF) and railway development levy (1.5% of CIF) are often missed in landed cost calculations.',
+      last_verified: 'May 2026',
+    },
+  ],
+}
+
 // ─── Country registry ─────────────────────────────────────────
-// Africa expansion: add Uganda (UG), Tanzania (TZ), Nigeria (NG),
-// Ghana (GH), Ethiopia (ET), Rwanda (RW), South Africa (ZA) here.
-// No code changes needed — just add the country profile.
+// Africa expansion: add Nigeria (NG), Ghana (GH), Ethiopia (ET),
+// Rwanda (RW), South Africa (ZA) here. No code changes needed.
 
 const COUNTRY_REGISTRY: Record<string, CountryProfile> = {
   KE: KENYA,
+  TZ: TANZANIA,
+  UG: UGANDA,
 }
 
 // ─── Accessor functions ───────────────────────────────────────
@@ -461,6 +828,31 @@ export function getCountry(code: string): CountryProfile {
 export function getRegulator(countryCode: string, regulatorCode: string): RegulatorProfile | undefined {
   const country = getCountry(countryCode)
   return country.regulators.find((r) => r.code === regulatorCode)
+}
+
+export interface WindowStatus {
+  status: 'IMPOSSIBLE' | 'TIGHT' | 'OK'
+  daysRemaining: number
+  slaRequired: number
+  daysShort: number   // > 0 = over budget; for TIGHT this is the buffer (how much slack you have)
+  useETA: boolean     // true = calculated from ETA (arrival), false = from pvoc_deadline
+}
+
+export function getWindowStatus(
+  shipment: { pvoc_deadline?: string | null; eta?: string | null },
+  regProfile: RegulatorProfile | null | undefined
+): WindowStatus | null {
+  if (!regProfile || regProfile.sla_actual_days === 0) return null
+  const deadlineStr = shipment.pvoc_deadline || shipment.eta
+  if (!deadlineStr) return null
+  const daysRemaining = Math.ceil((new Date(deadlineStr).getTime() - Date.now()) / 86400000)
+  if (daysRemaining <= 0) return null
+  const slaRequired = regProfile.sla_actual_days
+  const gap = slaRequired - daysRemaining
+  const useETA = !shipment.pvoc_deadline
+  if (gap > 0)  return { status: 'IMPOSSIBLE', daysRemaining, slaRequired, daysShort: gap,          useETA }
+  if (gap >= -4) return { status: 'TIGHT',     daysRemaining, slaRequired, daysShort: Math.abs(gap), useETA }
+  return               { status: 'OK',         daysRemaining, slaRequired, daysShort: 0,             useETA }
 }
 
 // ─── System prompt builder ────────────────────────────────────

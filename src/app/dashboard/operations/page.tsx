@@ -6,7 +6,7 @@ import { RiskBadge, StatusBadge, RegulatorBadge } from '@/components/RiskBadge'
 import { computeAlerts } from '@/lib/alerts'
 import AlertBanner from '@/components/AlertBanner'
 import PortalStatusModal from '@/components/PortalStatusModal'
-import { AlertTriangle, Clock, Search, Globe, Plus, Bell, Loader2, ChevronDown, CheckCircle2, X, Copy, FileDown, Truck, Lock, Pencil } from 'lucide-react'
+import { AlertTriangle, Clock, Search, Globe, Plus, Bell, Loader2, ChevronDown, CheckCircle2, X, Copy, FileDown, Lock, Pencil } from 'lucide-react'
 import { useRole } from '@/hooks/useRole'
 import AddShipmentModal from '@/components/AddShipmentModal'
 import EditShipmentModal from '@/components/EditShipmentModal'
@@ -16,7 +16,7 @@ import { DemoGateModal } from '@/components/DemoGateModal'
 import { useDemo } from '@/context/demo'
 import { trackDemo } from '@/lib/demo-analytics'
 import { supabase } from '@/lib/supabase'
-import { getRegulator } from '@/lib/regulatory-intelligence'
+import { getRegulator, getWindowStatus } from '@/lib/regulatory-intelligence'
 
 const priorityColors: Record<PriorityLevel, string> = {
   CRITICAL: 'bg-red-500/15 text-red-400 border border-red-500/30',
@@ -49,16 +49,20 @@ function PriorityBadge({ level, score, compositeScore }: { level?: PriorityLevel
   )
 }
 
-function ImpossibleWindowBadge({ regCode, daysLeft }: { regCode?: string; daysLeft: number }) {
-  if (!regCode || daysLeft <= 0) return null
-  const profile = getRegulator('KE', regCode)
-  if (!profile) return null
-  const sla = profile.sla_actual_days
-  if (sla === 0 || daysLeft >= sla) return null
-  return (
+function ImpossibleWindowBadge({ shipment }: { shipment: any }) {
+  const profile = shipment.regulatory_body?.code ? getRegulator('KE', shipment.regulatory_body.code) : null
+  const ws = getWindowStatus({ pvoc_deadline: shipment.pvoc_deadline, eta: shipment.eta }, profile ?? null)
+  if (!ws || ws.status === 'OK') return null
+  if (ws.status === 'IMPOSSIBLE') return (
     <div className="flex items-center gap-1 mt-1 text-[10px] font-semibold text-red-400 leading-tight">
+      <AlertTriangle size={9} className="flex-shrink-0 mt-px animate-pulse" />
+      <span>{ws.slaRequired}d needed · {ws.daysRemaining}d left · {ws.daysShort}d short</span>
+    </div>
+  )
+  return (
+    <div className="flex items-center gap-1 mt-1 text-[10px] font-semibold text-amber-400 leading-tight">
       <AlertTriangle size={9} className="flex-shrink-0 mt-px" />
-      <span>{regCode}: {sla}d needed, {daysLeft}d left</span>
+      <span>Tight — {ws.daysShort}d buffer only</span>
     </div>
   )
 }
@@ -365,34 +369,46 @@ const STAGE_COLORS: Record<string, string> = {
   AT_PORT: 'text-amber-400', CUSTOMS: 'text-purple-400', CLEARED: 'text-emerald-400',
 }
 
-function StagePill({ shipmentId, currentStage }: { shipmentId: string; currentStage: string }) {
+function StagePipeline({ shipmentId, currentStage }: { shipmentId: string; currentStage: string }) {
   const [stage, setStage] = useState(currentStage)
-  const [open, setOpen]   = useState(false)
+  const currentIdx = STAGES.indexOf(stage)
 
   async function updateStage(s: string) {
     setStage(s)
-    setOpen(false)
     await fetch(`/api/shipments/${shipmentId}/stage`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stage: s }),
     })
   }
 
   return (
-    <div className="relative">
-      <button onClick={() => setOpen(!open)}
-        className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide ${STAGE_COLORS[stage] ?? 'text-[#64748B]'}`}>
-        <Truck size={10} /> {STAGE_LABELS[stage] ?? stage}
-      </button>
-      {open && (
-        <div className="absolute z-20 top-5 left-0 bg-[#0A1628] border border-[#1E3A5F] rounded-lg shadow-xl min-w-[110px] overflow-hidden">
-          {STAGES.map((s) => (
-            <button key={s} onClick={() => updateStage(s)}
-              className={`w-full text-left px-3 py-2 text-[10px] font-bold uppercase transition-colors hover:bg-[#1E3A5F] ${s === stage ? STAGE_COLORS[s] : 'text-[#64748B]'}`}>
-              {STAGE_LABELS[s]}
-            </button>
-          ))}
-        </div>
-      )}
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center">
+        {STAGES.map((s, i) => {
+          const isDone   = i < currentIdx
+          const isActive = i === currentIdx
+          return (
+            <div key={s} className="flex items-center">
+              {i > 0 && (
+                <div className={`h-px w-4 transition-colors ${i <= currentIdx ? 'bg-[#00C896]/50' : 'bg-[#1E3A5F]'}`} />
+              )}
+              <button
+                onClick={() => updateStage(s)}
+                title={STAGE_LABELS[s]}
+                className={`rounded-full transition-all duration-200 ${
+                  isActive
+                    ? 'w-3 h-3 bg-[#00C896] shadow-[0_0_6px_#00C896] ring-2 ring-[#00C896]/20 ring-offset-1 ring-offset-[#0A1628]'
+                    : isDone
+                    ? 'w-2 h-2 bg-[#00C896]/55 hover:bg-[#00C896]/80'
+                    : 'w-2 h-2 bg-[#1E3A5F] hover:bg-[#2E4A6F]'
+                }`}
+              />
+            </div>
+          )
+        })}
+      </div>
+      <div className={`text-[9px] font-bold uppercase tracking-widest leading-none ${STAGE_COLORS[stage] ?? 'text-[#64748B]'}`}>
+        {STAGE_LABELS[stage] ?? stage}
+      </div>
     </div>
   )
 }
@@ -411,15 +427,31 @@ export default function OperationsPage() {
   const [eventsRunning, setEventsRunning] = useState(false)
   const [eventsResult, setEventsResult]   = useState<string | null>(null)
   const [kesRate, setKesRate]             = useState(130)
+  const [filterStage, setFilterStage]     = useState('ALL')
   const [closeTarget, setCloseTarget]     = useState<Shipment | null>(null)
   const [editTarget, setEditTarget]       = useState<Shipment | null>(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [showDemoGate, setShowDemoGate]       = useState(false)
   const [demoGatePassed, setDemoGatePassed]   = useState(false)
+  const [valueData, setValueData] = useState<{ kes_protected: number; windows_caught: number; actions_completed: number } | null>(null)
   const [tooltipDismissed, setTooltipDismissed] = useState(false)
-  const [demoBannerDismissed, setDemoBannerDismissed] = useState(true)
+  const [seedingDemo, setSeedingDemo] = useState(false)
   const { canWrite } = useRole()
   const isDemo = useDemo()
+
+  // Auto-open shipment drawer when ?open=<id> is in the URL (e.g. from portfolio or today page)
+  useEffect(() => {
+    if (!shipments.length) return
+    const params = new URLSearchParams(window.location.search)
+    const openId = params.get('open')
+    if (openId) {
+      const target = shipments.find(s => s.id === openId)
+      if (target) {
+        setDrawerShipment(target)
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+    }
+  }, [shipments])
 
   // Auto-open gate modal when ?gate=1 is in the URL (e.g. from DemoBanner CTA)
   useEffect(() => {
@@ -428,11 +460,18 @@ export default function OperationsPage() {
       setShowDemoGate(true)
       window.history.replaceState({}, '', window.location.pathname)
     }
-    // Show demo-data banner only for real (non-demo) users who were auto-seeded
-    if (!isDemo && localStorage.getItem('krux_auto_seeded') === '1' && localStorage.getItem('krux_demo_banner_dismissed') !== '1') {
-      setDemoBannerDismissed(false)
-    }
   }, [isDemo])
+
+  async function loadSampleData() {
+    setSeedingDemo(true)
+    try {
+      await fetch('/api/seed-demo', { method: 'POST' })
+      const refreshed = await fetch('/api/shipments').then(r => r.json())
+      setShipments(Array.isArray(refreshed) ? refreshed : [])
+      setShowOnboarding(false)
+    } catch {}
+    finally { setSeedingDemo(false) }
+  }
 
   async function runAlerts() {
     setAlertSending(true)
@@ -471,6 +510,12 @@ export default function OperationsPage() {
   }, [isDemo])
 
   useEffect(() => {
+    if (!isDemo) {
+      fetch('/api/value-delivered').then(r => r.json()).then(d => { if (!d.error) setValueData(d) }).catch(() => {})
+    }
+  }, [isDemo])
+
+  useEffect(() => {
     Promise.all([
       fetch('/api/shipments').then((r) => r.json()),
       fetch('/api/fx/rate').then((r) => r.json()).catch(() => ({ usd_kes: 130 })),
@@ -478,26 +523,7 @@ export default function OperationsPage() {
       .then(async ([shipsRaw, fx]) => {
         setKesRate(fx.usd_kes ?? 130)
         const ships = Array.isArray(shipsRaw) ? shipsRaw : []
-
-        // Auto-seed demo data for brand-new orgs (non-demo users only)
-        if (!isDemo && ships.length === 0 && !localStorage.getItem('krux_auto_seeded')) {
-          try {
-            await fetch('/api/seed-demo', { method: 'POST' })
-            localStorage.setItem('krux_auto_seeded', '1')
-            const refreshed = await fetch('/api/shipments').then((r) => r.json())
-            setShipments(Array.isArray(refreshed) ? refreshed : [])
-          } catch {
-            setShipments(ships)
-          }
-        } else {
-          // Mark as auto-seeded if all shipments are demo entries (server-seeded during signup)
-          if (!isDemo && ships.length > 0 && !localStorage.getItem('krux_auto_seeded')) {
-            const allDemo = ships.every((s: any) => /^KRUX-\d{4}-[A-Z]{2,}-/.test(s.reference_number ?? ''))
-            if (allDemo) localStorage.setItem('krux_auto_seeded', '1')
-          }
-          setShipments(ships)
-        }
-
+        setShipments(ships)
         if (ships.length === 0) setShowOnboarding(true)
       })
       .catch((e) => setError(e.message))
@@ -522,8 +548,9 @@ export default function OperationsPage() {
       const matchSearch =
         s.name?.toLowerCase().includes(search.toLowerCase()) ||
         regCode.toLowerCase().includes(search.toLowerCase())
-      const matchRisk = filterRisk === 'ALL' || s.risk_flag_status === filterRisk
-      return matchSearch && matchRisk
+      const matchRisk  = filterRisk  === 'ALL' || s.risk_flag_status === filterRisk
+      const matchStage = filterStage === 'ALL' || (s as any).shipment_stage === filterStage
+      return matchSearch && matchRisk && matchStage
     })
     .sort((a, b) => (b.risk?.risk_score ?? 0) - (a.risk?.risk_score ?? 0))
 
@@ -557,36 +584,21 @@ export default function OperationsPage() {
       {showOnboarding && <OnboardingWizard onDismiss={() => setShowOnboarding(false)} />}
       <AlertBanner alerts={alerts} />
 
-      {!demoBannerDismissed && (
-        <div className="flex items-center justify-between gap-4 bg-[#0F2040] border border-[#00C896]/25 rounded-xl px-4 py-3">
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-[#00C896] flex-shrink-0" />
-            <p className="text-sm text-[#94A3B8]">
-              Your workspace has <span className="text-white font-semibold">5 pre-loaded demo shipments</span>. Add your first real import when you're ready — or clear the demo data in{' '}
-              <a href="/dashboard/settings" className="text-[#00C896] hover:underline">Settings</a>.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {canWrite && (
-              <button
-                onClick={() => { setShowAddModal(true) }}
-                className="px-3 py-1.5 bg-[#00C896] text-[#0A1628] rounded-lg text-xs font-bold hover:bg-[#00A87E] transition-colors"
-              >
-                + Add real shipment
-              </button>
-            )}
-            <button
-              onClick={() => {
-                localStorage.setItem('krux_demo_banner_dismissed', '1')
-                setDemoBannerDismissed(true)
-              }}
-              className="text-[#334155] hover:text-[#64748B] transition-colors"
-            >
-              <X size={14} />
-            </button>
-          </div>
+      {valueData && (valueData.kes_protected > 0 || valueData.windows_caught > 0) && (
+        <div className="hidden lg:flex items-center gap-4 bg-[#0F2040] border border-[#1E3A5F] rounded-xl px-4 py-2.5 text-xs">
+          <span className="text-[#64748B]">This month KRUX has</span>
+          {valueData.windows_caught > 0 && (
+            <span className="text-white font-semibold">flagged <span className="text-amber-400">{valueData.windows_caught}</span> compliance window{valueData.windows_caught !== 1 ? 's' : ''}</span>
+          )}
+          {valueData.kes_protected > 0 && (
+            <span className="text-white font-semibold">· protected <span className="text-[#00C896]">KES {valueData.kes_protected.toLocaleString()}</span> in potential exposure</span>
+          )}
+          {valueData.actions_completed > 0 && (
+            <span className="text-white font-semibold">· <span className="text-[#00C896]">{valueData.actions_completed}</span> action{valueData.actions_completed !== 1 ? 's' : ''} completed</span>
+          )}
         </div>
       )}
+
 
       {/* ── Mobile triage header (hidden on lg+) ── */}
       <div className="lg:hidden">
@@ -675,32 +687,128 @@ export default function OperationsPage() {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-2">
-        <div className="flex-1 relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]" />
-          <input
-            className="w-full pl-9 pr-4 py-2 bg-[#0F2040] border border-[#1E3A5F] rounded-lg text-sm text-white placeholder-[#64748B] focus:outline-none focus:border-[#00C896]"
-            placeholder="Search shipments or regulators..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex-1 relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]" />
+            <input
+              className="w-full pl-9 pr-4 py-2 bg-[#0F2040] border border-[#1E3A5F] rounded-lg text-sm text-white placeholder-[#64748B] focus:outline-none focus:border-[#00C896]"
+              placeholder="Search shipments or regulators..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-1.5">
+            {['ALL', 'RED', 'AMBER', 'GREEN'].map((r) => (
+              <button
+                key={r}
+                onClick={() => setFilterRisk(r)}
+                className={`flex-1 sm:flex-none px-3 py-2 rounded-lg text-xs font-semibold border transition-all ${
+                  filterRisk === r
+                    ? 'bg-[#00C896]/10 text-[#00C896] border-[#00C896]/30'
+                    : 'text-[#64748B] border-[#1E3A5F] hover:border-[#00C896]/30'
+                }`}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex gap-1.5">
-          {['ALL', 'RED', 'AMBER', 'GREEN'].map((r) => (
-            <button
-              key={r}
-              onClick={() => setFilterRisk(r)}
-              className={`flex-1 sm:flex-none px-3 py-2 rounded-lg text-xs font-semibold border transition-all ${
-                filterRisk === r
-                  ? 'bg-[#00C896]/10 text-[#00C896] border-[#00C896]/30'
-                  : 'text-[#64748B] border-[#1E3A5F] hover:border-[#00C896]/30'
-              }`}
-            >
-              {r}
-            </button>
-          ))}
+
+        {/* Stage filter */}
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+          {[
+            { key: 'ALL',          label: 'All Stages' },
+            { key: 'PRE_SHIPMENT', label: 'Pre-Ship' },
+            { key: 'IN_TRANSIT',   label: 'In Transit' },
+            { key: 'AT_PORT',      label: 'At Port' },
+            { key: 'CUSTOMS',      label: 'Customs' },
+            { key: 'CLEARED',      label: 'Cleared' },
+          ].map(({ key, label }) => {
+            const count = key === 'ALL' ? shipments.length : shipments.filter(s => (s as any).shipment_stage === key).length
+            return (
+              <button
+                key={key}
+                onClick={() => setFilterStage(key)}
+                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                  filterStage === key
+                    ? 'bg-[#00C896]/10 text-[#00C896] border-[#00C896]/30'
+                    : 'text-[#64748B] border-[#1E3A5F] hover:border-[#00C896]/20 hover:text-[#94A3B8]'
+                }`}
+              >
+                {label}
+                {count > 0 && (
+                  <span className={`text-[10px] px-1 rounded ${filterStage === key ? 'bg-[#00C896]/20 text-[#00C896]' : 'bg-[#1E3A5F] text-[#64748B]'}`}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
         </div>
       </div>
+
+      {/* ── Window Intelligence Banner ── */}
+      {(() => {
+        const atRisk = shipments.filter(s => {
+          if (s.remediation_status === 'CLOSED') return false
+          const regProfile = s.regulatory_body?.code ? getRegulator('KE', s.regulatory_body.code) : null
+          const ws = getWindowStatus({ pvoc_deadline: s.pvoc_deadline, eta: (s as any).eta }, regProfile ?? null)
+          return ws && (ws.status === 'IMPOSSIBLE' || ws.status === 'TIGHT')
+        })
+        if (atRisk.length === 0) return null
+        const impossible = atRisk.filter(s => {
+          const regProfile = s.regulatory_body?.code ? getRegulator('KE', s.regulatory_body.code) : null
+          return getWindowStatus({ pvoc_deadline: s.pvoc_deadline, eta: (s as any).eta }, regProfile ?? null)?.status === 'IMPOSSIBLE'
+        })
+        const isAllImpossible = impossible.length === atRisk.length
+        return (
+          <div className="mx-3 lg:mx-0 mb-3 rounded-xl border border-red-500/40 bg-red-500/5 p-3 sm:p-4">
+            <div className="flex items-center gap-2 mb-2.5">
+              <AlertTriangle size={14} className="text-red-400 flex-shrink-0 animate-pulse" />
+              <span className="text-sm font-bold text-red-400">
+                {impossible.length > 0
+                  ? `${impossible.length} impossible clearance window${impossible.length > 1 ? 's' : ''}`
+                  : `${atRisk.length} tight clearance window${atRisk.length > 1 ? 's' : ''}`
+                }
+                {!isAllImpossible && impossible.length > 0 && atRisk.length > impossible.length
+                  ? ` + ${atRisk.length - impossible.length} tight`
+                  : ''
+                }
+              </span>
+            </div>
+            <div className="space-y-2">
+              {atRisk.map(s => {
+                const regProfile = s.regulatory_body?.code ? getRegulator('KE', s.regulatory_body.code) : null
+                const ws = getWindowStatus({ pvoc_deadline: s.pvoc_deadline, eta: (s as any).eta }, regProfile ?? null)!
+                const isImpossible = ws.status === 'IMPOSSIBLE'
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => setDrawerShipment(s)}
+                    className="w-full text-left flex items-center justify-between gap-3 group py-1.5 border-b border-red-500/10 last:border-0"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs text-white font-medium group-hover:text-red-300 transition-colors truncate block">{s.name}</span>
+                      <span className="text-[10px] text-[#64748B]">
+                        {s.regulatory_body?.code} · {ws.slaRequired}d needed · {ws.daysRemaining}d until {ws.useETA ? 'arrival' : 'deadline'}
+                      </span>
+                    </div>
+                    <span className={`text-[10px] font-bold flex-shrink-0 whitespace-nowrap px-2 py-0.5 rounded ${
+                      isImpossible
+                        ? 'text-red-400 bg-red-500/15 border border-red-500/30'
+                        : 'text-amber-400 bg-amber-500/10 border border-amber-500/20'
+                    }`}>
+                      {isImpossible ? `${ws.daysShort}d short` : `${ws.daysShort}d buffer`}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+            <p className="text-[10px] text-red-400/60 mt-2">Click any shipment to see the Brief and next steps.</p>
+          </div>
+        )
+      })()}
 
       {/* ── Mobile triage view (hidden on lg+) ── */}
       {(() => {
@@ -771,9 +879,9 @@ export default function OperationsPage() {
                   <RegulatorBadge body={s.regulatory_body?.code ?? '—'} />
                 </div>
 
-                {/* Stage + priority + bond type */}
+                {/* Stage + priority + bond type + window status */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <StagePill shipmentId={s.id} currentStage={(s as any).shipment_stage ?? 'PRE_SHIPMENT'} />
+                  <StagePipeline shipmentId={s.id} currentStage={(s as any).shipment_stage ?? 'PRE_SHIPMENT'} />
                   {s.risk?.priority_level && (
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${priorityColors[s.risk.priority_level as PriorityLevel]}`}>
                       {s.risk.priority_level}
@@ -785,6 +893,14 @@ export default function OperationsPage() {
                   {(s as any).shipment_type === 'TRANSIT' && (
                     <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-400/10 text-blue-400 border border-blue-400/30">TRANSIT</span>
                   )}
+                  {(() => {
+                    const regProfile = s.regulatory_body?.code ? getRegulator('KE', s.regulatory_body.code) : null
+                    const ws = getWindowStatus({ pvoc_deadline: s.pvoc_deadline, eta: (s as any).eta }, regProfile ?? null)
+                    if (!ws || ws.status === 'OK') return null
+                    return ws.status === 'IMPOSSIBLE'
+                      ? <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/30 animate-pulse">WINDOW CLOSED</span>
+                      : <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">TIGHT WINDOW</span>
+                  })()}
                 </div>
 
                 {/* Bottom bar: cost + status + actions */}
@@ -849,6 +965,16 @@ export default function OperationsPage() {
                     <Plus size={14} /> Add your first shipment
                   </button>
                 )}
+                {canWrite && !isDemo && (
+                  <button
+                    onClick={loadSampleData}
+                    disabled={seedingDemo}
+                    className="mt-3 flex items-center gap-2 px-4 py-2 border border-[#1E3A5F] text-[#64748B] rounded-xl text-xs mx-auto hover:border-[#2E4A6F] hover:text-white transition-all disabled:opacity-40"
+                  >
+                    {seedingDemo ? <Loader2 size={11} className="animate-spin" /> : null}
+                    {seedingDemo ? 'Loading...' : 'Explore with sample data'}
+                  </button>
+                )}
               </div>
             ) : (
               <>
@@ -907,6 +1033,16 @@ export default function OperationsPage() {
                         className="flex items-center gap-2 px-4 py-2 bg-[#00C896] text-[#0A1628] rounded-lg text-sm font-bold hover:bg-[#00A87E] transition-colors"
                       >
                         <Plus size={13} /> Add your first shipment
+                      </button>
+                    )}
+                    {canWrite && !isDemo && (
+                      <button
+                        onClick={loadSampleData}
+                        disabled={seedingDemo}
+                        className="flex items-center gap-2 px-3 py-1.5 border border-[#1E3A5F] text-[#64748B] rounded-lg text-xs hover:border-[#2E4A6F] hover:text-white transition-all disabled:opacity-40"
+                      >
+                        {seedingDemo ? <Loader2 size={11} className="animate-spin" /> : null}
+                        {seedingDemo ? 'Loading...' : 'Explore with sample data'}
                       </button>
                     )}
                   </div>
@@ -991,7 +1127,7 @@ export default function OperationsPage() {
 
                   {/* Stage */}
                   <td className="px-2 py-3">
-                    <StagePill shipmentId={s.id} currentStage={(s as any).shipment_stage ?? 'PRE_SHIPMENT'} />
+                    <StagePipeline shipmentId={s.id} currentStage={(s as any).shipment_stage ?? 'PRE_SHIPMENT'} />
                   </td>
 
                   {/* Regulator */}
@@ -1007,7 +1143,7 @@ export default function OperationsPage() {
                       <Clock size={10} />
                       {days > 0 ? `${days}d left` : `${Math.abs(days)}d over`}
                     </div>
-                    <ImpossibleWindowBadge regCode={s.regulatory_body?.code} daysLeft={days} />
+                    <ImpossibleWindowBadge shipment={s} />
                   </td>
 
                   {/* CIF */}

@@ -1,504 +1,454 @@
 'use client'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import {
-  Shield, Bot, Bell, FileText, Factory, TrendingUp,
-  CheckCircle2, ArrowRight, AlertTriangle, Users, Globe,
-  Clock, Zap, ChevronRight, DollarSign, X,
-} from 'lucide-react'
+import { ArrowRight, CheckCircle2 } from 'lucide-react'
 
-// ── Data ─────────────────────────────────────────────────────
+type WindowResult = {
+  status: 'OPEN' | 'TIGHT' | 'IMPOSSIBLE'
+  regulator: string
+  regulator_name: string
+  sla_days: number
+  days_remaining: number
+  days_short: number
+  buffer_days: number
+  kes_exposure: number
+  message: string
+}
 
-const FEATURES = [
-  {
-    icon: Shield,
-    title: 'Shipment Compliance Tracking',
-    desc: 'Monitor every shipment across PPB, KEBS, KRA, PCPB, KEPHIS, EPRA, NEMA, and WHO-GMP. Automatic risk scoring from day one.',
-  },
-  {
-    icon: Bot,
-    title: 'AI Compliance Assistant',
-    desc: 'Generate compliance briefs, document checklists, remediation steps, and landed cost breakdowns in seconds using Claude AI.',
-  },
-  {
-    icon: Bell,
-    title: 'Automated Deadline Alerts',
-    desc: 'Email and WhatsApp alerts at 14, 7, and 3 days before PVoC deadlines. License expiry alerts at 60, 30, and 7 days.',
-  },
-  {
-    icon: Factory,
-    title: 'Manufacturer Vault',
-    desc: 'Vet suppliers with license tracking, factory audit scores, and financial risk signals — all in one place.',
-  },
-  {
-    icon: FileText,
-    title: 'Landed Cost Calculator',
-    desc: 'Instant KRA duty, 16% VAT, 2% IDF, 1.5% RDL, and PVoC fee calculations in both USD and KES.',
-  },
-  {
-    icon: TrendingUp,
-    title: 'Action Intelligence',
-    desc: 'System generates the right compliance action at the right time — submit, escalate, follow up — with effectiveness tracking.',
-  },
+type NetworkStats = {
+  registered_entities: number
+  shipments_tracked: number
+  events_logged: number
+  last_activity: string | null
+}
+
+const REGULATORS = [
+  { code: 'PPB',    name: 'PPB — Pharmacy & Poisons Board',           sla: 52 },
+  { code: 'KEBS',   name: 'KEBS — Kenya Bureau of Standards',         sla: 35 },
+  { code: 'KEPHIS', name: 'KEPHIS — Plant Health Inspectorate',       sla: 7  },
+  { code: 'EPRA',   name: 'EPRA — Energy & Petroleum Regulatory',     sla: 25 },
+  { code: 'PCPB',   name: 'PCPB — Pest Control Products Board',       sla: 18 },
+  { code: 'NEMA',   name: 'NEMA — National Environment Management',   sla: 40 },
+  { code: 'CA',     name: 'CA — Communications Authority',            sla: 45 },
+  { code: 'DVS',    name: 'DVS — Directorate of Veterinary Services', sla: 21 },
 ]
 
-const PRICING = [
-  {
-    name: 'Basic',
-    price: 299,
-    desc: 'For SME importers managing up to 25 shipments/month',
-    features: [
-      'Up to 25 shipments/month',
-      'All 8 Kenya regulators',
-      'AI compliance briefs & checklists',
-      'Email deadline alerts',
-      'Manufacturer vault (10)',
-      '3 team members',
-    ],
-    cta: 'Request access',
-    highlight: false,
-  },
-  {
-    name: 'Pro',
-    price: 499,
-    desc: 'For growing operations with high shipment volumes',
-    features: [
-      'Up to 100 shipments/month',
-      'Everything in Basic',
-      'WhatsApp alerts',
-      'AI document extraction',
-      'Unlimited manufacturers',
-      '10 team members',
-      'Audit export reports',
-      'Priority support',
-    ],
-    cta: 'Request access',
-    highlight: true,
-  },
-  {
-    name: 'Enterprise',
-    price: 1500,
-    desc: 'For clearing agent firms managing multiple importers',
-    features: [
-      'Unlimited shipments',
-      'Everything in Pro',
-      'Multi-client management',
-      'Dedicated clearing agent portal',
-      'API access',
-      'Unlimited team members',
-      'Custom onboarding',
-      'SLA guarantee',
-    ],
-    cta: 'Contact us',
-    highlight: false,
-  },
+const REGULATOR_SCOPE = [
+  { code: 'PPB',    scope: 'Pharma · Medical Devices · Cosmetics' },
+  { code: 'KEBS',   scope: 'Electronics · Standards · PVoC' },
+  { code: 'KEPHIS', scope: 'Agricultural Inputs · Plants · Seeds' },
+  { code: 'EPRA',   scope: 'Petroleum · LPG · Energy Equipment' },
+  { code: 'PCPB',   scope: 'Pesticides · Herbicides · Fungicides' },
+  { code: 'NEMA',   scope: 'Chemicals · Environmental Permits' },
+  { code: 'CA',     scope: 'Mobile · Routers · Radio Equipment' },
+  { code: 'DVS',    scope: 'Meat · Poultry · Dairy · Animal Feed' },
+  { code: 'KRA',    scope: 'Customs · HS Classification · Duties' },
 ]
 
-const REGULATORS = ['PPB', 'KEBS', 'PCPB', 'KEPHIS', 'EPRA', 'NEMA', 'KRA', 'WHO-GMP']
+// ETA delta must keep gap = (sla - daysRemaining) in the correct zone regardless of load date:
+// PPB sla=52  → +20d → gap=+32 → IMPOSSIBLE
+// EPRA sla=25 → +10d → gap=+15 → IMPOSSIBLE
+// KEBS sla=35 → +37d → gap=−2  → TIGHT (−4 ≤ gap ≤ 0)
+const EXAMPLES = [
+  { label: 'PPB · Pharma',       regulator: 'PPB',  etaDays: 20 },
+  { label: 'EPRA · Petroleum',   regulator: 'EPRA', etaDays: 10 },
+  { label: 'KEBS · Electronics', regulator: 'KEBS', etaDays: 37 },
+]
 
-// ── Cost Calculator ──────────────────────────────────────────
+function etaFromToday(days: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() + days)
+  return d.toISOString().split('T')[0]
+}
 
-function CostCalculator() {
-  const [cif, setCif]         = useState('')
-  const [days, setDays]       = useState('')
-  const [dutyRate, setDutyRate] = useState('25')
-  const [storageDay, setStorageDay] = useState('50')
-  const [kesRate, setKesRate] = useState(130)
-  const [leadEmail, setLeadEmail] = useState('')
-  const [leadSent, setLeadSent]   = useState(false)
-  const [leadSending, setLeadSending] = useState(false)
+function WindowChecker() {
+  const [regulator, setRegulator]       = useState('')
+  const [eta, setEta]                   = useState('')
+  const [loading, setLoading]           = useState(false)
+  const [result, setResult]             = useState<WindowResult | null>(null)
+  const [error, setError]               = useState('')
+  const [captureEmail, setCaptureEmail] = useState('')
+  const [captureSent, setCaptureSent]   = useState(false)
+  const [captureLoading, setCaptureLoading] = useState(false)
+
+  async function submitCapture() {
+    if (!captureEmail.trim() || captureSent) return
+    setCaptureLoading(true)
+    try {
+      await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: captureEmail.trim(), company: result?.regulator ?? '', role: 'window_check' }),
+      })
+      setCaptureSent(true)
+    } catch {}
+    finally { setCaptureLoading(false) }
+  }
+
+  const minDate = new Date()
+  minDate.setDate(minDate.getDate() + 1)
+  const minDateStr = minDate.toISOString().split('T')[0]
+
+  async function check(override?: { regulator: string; eta: string }) {
+    const r = override?.regulator ?? regulator
+    const e = override?.eta       ?? eta
+    if (!r || !e) return
+    setLoading(true)
+    setResult(null)
+    setError('')
+    try {
+      const res  = await fetch(`/api/window-check?regulator=${r}&eta=${e}`)
+      const data = await res.json()
+      if (!res.ok) { setError(data.error ?? 'Check failed'); return }
+      setResult(data)
+    } catch {
+      setError('Network error — try again')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function tryExample(ex: typeof EXAMPLES[0]) {
+    const etaStr = etaFromToday(ex.etaDays)
+    setRegulator(ex.regulator)
+    setEta(etaStr)
+    setResult(null)
+    setError('')
+    setCaptureEmail('')
+    setCaptureSent(false)
+    check({ regulator: ex.regulator, eta: etaStr })
+  }
+
+  const statusConfig = {
+    OPEN:       { bg: 'bg-[#00C896]/10', border: 'border-[#00C896]/40', icon: '✓', label: 'WINDOW OPEN',   color: 'text-[#00C896]' },
+    TIGHT:      { bg: 'bg-amber-500/10', border: 'border-amber-500/40', icon: '⚠', label: 'WINDOW TIGHT',  color: 'text-amber-400' },
+    IMPOSSIBLE: { bg: 'bg-red-500/10',   border: 'border-red-500/40',   icon: '✕', label: 'WINDOW CLOSED', color: 'text-red-400'   },
+  }
+
+  return (
+    <div className="bg-[#0A1628] border border-[#1E3A5F] overflow-hidden">
+      <div className="flex items-center gap-2 px-5 py-3 bg-[#060E1A] border-b border-[#1E3A5F]">
+        <div className="flex gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-[#1E3A5F]" />
+          <div className="w-2 h-2 rounded-full bg-[#1E3A5F]" />
+          <div className="w-2 h-2 rounded-full bg-[#1E3A5F]" />
+        </div>
+        <span className="text-[10px] text-[#334155] ml-2 font-mono tracking-widest">KRUX · WINDOW QUERY</span>
+        <div className="ml-auto flex items-center gap-1.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#00C896] animate-pulse" />
+          <span className="text-[10px] text-[#00C896] font-mono">LIVE</span>
+        </div>
+      </div>
+
+      <div className="p-5 space-y-4">
+        <p className="text-[10px] text-[#334155] font-mono tracking-widest uppercase">No account needed</p>
+
+        <div className="space-y-2 pb-1">
+          <p className="text-[10px] text-[#334155] font-mono tracking-widest uppercase">Try an example</p>
+          <div className="flex gap-2 flex-wrap">
+            {EXAMPLES.map(ex => (
+              <button
+                key={ex.label}
+                type="button"
+                onClick={() => tryExample(ex)}
+                disabled={loading}
+                className="px-3 py-1.5 border border-[#1E3A5F] text-[10px] font-mono text-[#64748B] hover:border-[#00C896]/40 hover:text-[#94A3B8] transition-all disabled:opacity-40 tracking-wide"
+              >
+                {ex.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <label className="text-[10px] text-[#64748B] uppercase tracking-widest block mb-1.5 font-mono">Regulatory body</label>
+            <select
+              value={regulator}
+              onChange={e => { setRegulator(e.target.value); setResult(null) }}
+              className="w-full bg-[#0F2040] border border-[#1E3A5F] px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#00C896]/50 appearance-none font-mono"
+            >
+              <option value="">Select regulator</option>
+              {REGULATORS.map(r => (
+                <option key={r.code} value={r.code} className="bg-[#0F2040]">{r.name} · {r.sla}d SLA</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="text-[10px] text-[#64748B] uppercase tracking-widest block mb-1.5 font-mono">Expected arrival date</label>
+            <input
+              type="date"
+              value={eta}
+              min={minDateStr}
+              onChange={e => { setEta(e.target.value); setResult(null) }}
+              className="w-full bg-[#0F2040] border border-[#1E3A5F] px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#00C896]/50 font-mono"
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={() => check()}
+          disabled={!regulator || !eta || loading}
+          className="w-full flex items-center justify-center gap-2 py-3 bg-[#00C896] text-[#0A1628] font-bold text-sm hover:bg-[#00C896]/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-mono tracking-widest uppercase"
+        >
+          {loading ? 'Calculating...' : 'Check window →'}
+        </button>
+
+        {error && (
+          <div className="border border-red-500/30 p-3 text-xs text-red-400 font-mono bg-red-500/5">
+            {error}
+          </div>
+        )}
+
+        {result && (() => {
+          const cfg = statusConfig[result.status]
+          return (
+            <div className={`border p-4 space-y-3 ${cfg.bg} ${cfg.border}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className={`font-black ${cfg.color}`}>{cfg.icon}</span>
+                  <span className={`text-sm font-black ${cfg.color} tracking-widest font-mono`}>{cfg.label}</span>
+                </div>
+                {result.status === 'IMPOSSIBLE' && result.kes_exposure > 0 && (
+                  <span className="text-xs font-bold text-red-400 font-mono">KES {result.kes_exposure.toLocaleString()} at risk</span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { label: 'SLA needed',  value: `${result.sla_days}d`,       color: 'text-white' },
+                  { label: 'Days to ETA', value: `${result.days_remaining}d`,  color: result.status === 'IMPOSSIBLE' ? 'text-red-400' : 'text-white' },
+                  { label: result.status === 'OPEN' ? 'Buffer' : 'Short',
+                    value: result.status === 'OPEN' ? `${result.buffer_days}d` : `${result.days_short}d`,
+                    color: result.status === 'OPEN' ? 'text-[#00C896]' : 'text-red-400' },
+                ].map(s => (
+                  <div key={s.label} className="bg-[#0A1628]/60 p-3 text-center">
+                    <div className={`text-2xl font-black ${s.color} font-mono leading-none`}>{s.value}</div>
+                    <div className="text-[10px] text-[#64748B] uppercase tracking-wider mt-1 font-mono">{s.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-xs text-[#94A3B8] font-mono leading-relaxed">{result.message}</p>
+
+              {result.status === 'IMPOSSIBLE' && (
+                <div className="border border-red-500/20 bg-red-500/5 p-3 space-y-1.5">
+                  <p className="font-mono text-[10px] text-red-400/70 uppercase tracking-widest">What to do now</p>
+                  {[
+                    'Contact your clearing agent — do not wait for the vessel',
+                    'Request expedited track directly from the regulatory body',
+                    'Calculate daily storage cost — your exposure grows until cleared',
+                  ].map((step, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <span className="font-mono text-[10px] text-red-400/50 font-bold flex-shrink-0 mt-0.5">{i + 1}.</span>
+                      <span className="font-mono text-xs text-[#94A3B8]">{step}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <a
+                  href="/signup"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#00C896] text-[#0A1628] text-xs font-bold font-mono tracking-widest uppercase hover:bg-[#00C896]/90 transition-colors"
+                >
+                  Apply for KTIN — track all shipments →
+                </a>
+                {(result.status === 'IMPOSSIBLE' || result.status === 'TIGHT') && (
+                  <div className="border border-[#1E3A5F] bg-[#0A1628]/60 p-3">
+                    {captureSent ? (
+                      <p className="font-mono text-[10px] text-[#00C896] text-center tracking-widest">✓ We&#39;ll send you deadline alerts</p>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="email"
+                          value={captureEmail}
+                          onChange={e => setCaptureEmail(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && submitCapture()}
+                          placeholder="your@email.com"
+                          className="flex-1 bg-[#0F2040] border border-[#1E3A5F] px-3 py-2 text-xs text-white font-mono placeholder-[#334155] focus:outline-none focus:border-[#00C896]/50 min-w-0"
+                        />
+                        <button
+                          onClick={submitCapture}
+                          disabled={!captureEmail.trim() || captureLoading}
+                          className="px-3 py-2 bg-[#1E3A5F] text-[#94A3B8] text-[10px] font-mono font-bold tracking-widest uppercase hover:bg-[#2E4A6F] hover:text-white transition-colors disabled:opacity-40 flex-shrink-0"
+                        >
+                          {captureLoading ? '...' : 'Alert me'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })()}
+      </div>
+    </div>
+  )
+}
+
+function NetworkPulse() {
+  const [stats, setStats] = useState<NetworkStats | null>(null)
 
   useEffect(() => {
-    fetch('/api/fx/rate').then(r => r.json()).then(d => {
-      if (d.usd_kes) setKesRate(d.usd_kes)
-    }).catch(() => { /* use fallback 130 */ })
+    fetch('/api/network-stats').then(r => r.json()).then(setStats).catch(() => {})
   }, [])
 
-  const cifNum     = parseFloat(cif)        || 0
-  const daysNum    = parseFloat(days)       || 0
-  const dutyNum    = parseFloat(dutyRate)   || 25
-  const storageNum = parseFloat(storageDay) || 50
+  function timeAgo(iso: string) {
+    const diff = Date.now() - new Date(iso).getTime()
+    const m = Math.floor(diff / 60000)
+    const h = Math.floor(m / 60)
+    if (h > 0) return `${h}h ago`
+    if (m > 0) return `${m}m ago`
+    return 'just now'
+  }
 
-  // Real costs: storage accumulates daily, KRA imposes 2% late surcharge after 7 free days
-  const storage    = storageNum * daysNum
-  const duty       = cifNum * (dutyNum / 100)
-  const vat        = (cifNum + duty) * 0.16
-  const idf        = cifNum * 0.02
-  const rdl        = cifNum * 0.015
-  const surcharge  = daysNum > 7 ? (duty + vat) * 0.02 : 0   // KRA 2% late surcharge
-  const totalUSD   = storage + duty + vat + idf + rdl + surcharge
-  const totalKES   = totalUSD * kesRate
-
-  const hasResult = cifNum > 0 && daysNum > 0
+  if (!stats) return null
 
   return (
-    <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-6 max-w-lg mx-auto">
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-2">
-          <DollarSign size={16} className="text-[#00C896]" />
-          <h3 className="text-white font-bold text-sm">Missed Deadline Cost Calculator</h3>
-        </div>
-        <span className="text-[10px] text-[#64748B]">1 USD = KES {kesRate}</span>
+    <div className="border border-[#1E3A5F] bg-[#060E1A]">
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-[#1E3A5F]">
+        <div className="w-1.5 h-1.5 rounded-full bg-[#00C896] animate-pulse" />
+        <span className="text-xs text-[#00C896] font-mono font-bold tracking-widest uppercase">Network</span>
+        {stats.last_activity && (
+          <span className="text-xs text-[#334155] font-mono ml-auto">{timeAgo(stats.last_activity)}</span>
+        )}
       </div>
-      <div className="grid grid-cols-2 gap-3 mb-5">
-        <div className="col-span-2">
-          <label className="text-[10px] text-[#64748B] uppercase tracking-wide block mb-1.5">CIF Value (USD)</label>
-          <input
-            type="number"
-            value={cif}
-            onChange={e => setCif(e.target.value)}
-            placeholder="e.g. 50000"
-            className="w-full bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#334155] focus:outline-none focus:border-[#00C896]/50"
-          />
-        </div>
-        <div>
-          <label className="text-[10px] text-[#64748B] uppercase tracking-wide block mb-1.5">Days at port</label>
-          <input
-            type="number"
-            value={days}
-            onChange={e => setDays(e.target.value)}
-            placeholder="e.g. 21"
-            className="w-full bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#334155] focus:outline-none focus:border-[#00C896]/50"
-          />
-        </div>
-        <div>
-          <label className="text-[10px] text-[#64748B] uppercase tracking-wide block mb-1.5">Storage rate (USD/day)</label>
-          <input
-            type="number"
-            value={storageDay}
-            onChange={e => setStorageDay(e.target.value)}
-            placeholder="50"
-            className="w-full bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#334155] focus:outline-none focus:border-[#00C896]/50"
-          />
-        </div>
-        <div className="col-span-2">
-          <label className="text-[10px] text-[#64748B] uppercase tracking-wide block mb-1.5">Import Duty Rate (%)</label>
-          <input
-            type="number"
-            value={dutyRate}
-            onChange={e => setDutyRate(e.target.value)}
-            placeholder="25"
-            className="w-full bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#334155] focus:outline-none focus:border-[#00C896]/50"
-          />
-        </div>
-      </div>
-
-      {hasResult ? (
-        <div className="bg-[#0A1628] border border-red-500/20 rounded-xl p-4 space-y-1.5">
-          {[
-            { label: `Port storage (${daysNum}d × $${storageNum}/day)`, value: storage, red: true },
-            { label: `Import duty (${dutyNum}%)`, value: duty },
-            { label: 'VAT (16%)', value: vat },
-            { label: 'IDF levy (2%)', value: idf },
-            { label: 'RDL levy (1.5%)', value: rdl },
-            ...(surcharge > 0 ? [{ label: 'KRA late surcharge (2%)', value: surcharge, red: true }] : []),
-          ].map(row => (
-            <div key={row.label} className="flex justify-between text-xs">
-              <span className="text-[#64748B]">{row.label}</span>
-              <span className={row.red ? 'text-red-400' : 'text-white'}>
-                USD {Math.round(row.value).toLocaleString()}
-              </span>
-            </div>
-          ))}
-          <div className="flex justify-between text-xs border-t border-[#1E3A5F] pt-2 mt-2">
-            <span className="text-[#94A3B8] font-semibold">Total at risk</span>
-            <span className="text-red-400 font-bold">KES {Math.round(totalKES).toLocaleString()}</span>
+      <div className="grid grid-cols-3 divide-x divide-[#1E3A5F]">
+        {[
+          { value: stats.registered_entities, label: 'Entities' },
+          { value: stats.shipments_tracked,   label: 'Shipments' },
+          { value: stats.events_logged,       label: 'Events' },
+        ].map(s => (
+          <div key={s.label} className="px-4 py-3 text-center">
+            <div className="font-mono text-2xl font-black text-white">{s.value}</div>
+            <div className="font-mono text-xs text-[#334155] uppercase tracking-widest mt-0.5">{s.label}</div>
           </div>
-          <p className="text-[10px] text-[#334155] mt-1">KRUX Basic ($299/mo) would have flagged this weeks before it cost you anything.</p>
-
-          {/* Lead capture */}
-          {!leadSent ? (
-            <div className="mt-4 pt-4 border-t border-[#1E3A5F]">
-              <p className="text-[11px] text-[#94A3B8] mb-2">See a live brief for a shipment like this — no signup form, just the demo.</p>
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault()
-                  if (!leadEmail) return
-                  setLeadSending(true)
-                  try {
-                    await fetch('/api/waitlist', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ email: leadEmail, company: 'Calculator lead' }),
-                    })
-                  } finally {
-                    setLeadSent(true)
-                    setLeadSending(false)
-                  }
-                }}
-                className="flex gap-2"
-              >
-                <input
-                  type="email"
-                  required
-                  value={leadEmail}
-                  onChange={e => setLeadEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  className="flex-1 bg-[#0D1F35] border border-[#1E3A5F] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#334155] focus:outline-none focus:border-[#00C896]/50"
-                />
-                <button
-                  type="submit"
-                  disabled={leadSending}
-                  className="px-3 py-2 bg-[#00C896] text-[#0A1628] text-xs font-bold rounded-lg hover:bg-[#00C896]/90 transition-colors disabled:opacity-50 whitespace-nowrap"
-                >
-                  {leadSending ? '…' : 'See demo →'}
-                </button>
-              </form>
-            </div>
-          ) : (
-            <div className="mt-4 pt-4 border-t border-[#1E3A5F] text-center">
-              <p className="text-[11px] text-[#00C896] mb-2">Got it. Open the live demo now →</p>
-              <a
-                href="/demo"
-                className="inline-block px-4 py-2 bg-[#00C896]/10 text-[#00C896] border border-[#00C896]/30 rounded-lg text-xs font-semibold hover:bg-[#00C896]/20 transition-colors"
-              >
-                Open KRUX Demo
-              </a>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="bg-[#0A1628] border border-dashed border-[#1E3A5F] rounded-xl p-4 text-center">
-          <p className="text-[#334155] text-xs">Enter shipment values above to see your exposure</p>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── Dashboard Mockup ─────────────────────────────────────────
-
-function DashboardMockup() {
-  const rows = [
-    { name: 'Pharmaceutical APIs — Batch 44', reg: 'PPB', days: 3, risk: 'RED', score: '9.2', landed: '$84,200', status: 'CRITICAL' },
-    { name: 'Agrochemicals Consignment Q2', reg: 'PCPB', days: 7, risk: 'AMBER', score: '6.1', landed: '$31,500', status: 'HIGH' },
-    { name: 'Electronic Components — CN', reg: 'KEBS', days: 14, risk: 'AMBER', score: '3.8', landed: '$52,000', status: 'MEDIUM' },
-    { name: 'Food Additives Shipment', reg: 'WHO-GMP', days: 22, risk: 'GREEN', score: '1.4', landed: '$18,900', status: 'LOW' },
-  ]
-
-  const riskColors: Record<string, string> = {
-    RED: 'bg-red-500/15 text-red-400 border border-red-500/30',
-    AMBER: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
-    GREEN: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
-  }
-
-  const priorityColors: Record<string, string> = {
-    CRITICAL: 'text-red-400',
-    HIGH: 'text-amber-400',
-    MEDIUM: 'text-blue-400',
-    LOW: 'text-[#64748B]',
-  }
-
-  return (
-    <div className="relative rounded-2xl border border-[#1E3A5F] overflow-hidden shadow-2xl bg-[#0A1628]">
-      {/* Browser chrome */}
-      <div className="flex items-center gap-2 px-4 py-3 bg-[#060E1A] border-b border-[#1E3A5F]">
-        <div className="flex gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#1E3A5F]" />
-          <div className="w-2.5 h-2.5 rounded-full bg-[#1E3A5F]" />
-          <div className="w-2.5 h-2.5 rounded-full bg-[#1E3A5F]" />
-        </div>
-        <div className="flex-1 bg-[#0F2040] rounded-md px-3 py-1 text-[10px] text-[#334155] ml-2">
-          krux-xi.vercel.app/dashboard/operations
-        </div>
-      </div>
-
-      {/* Dashboard header */}
-      <div className="px-5 py-3 flex items-center justify-between border-b border-[#1E3A5F] bg-[#0A1628]">
-        <div>
-          <p className="text-white font-bold text-sm">Operations Dashboard</p>
-          <p className="text-[#64748B] text-[10px]">4 shipments tracked · Kenya Import Compliance · <span className="text-red-400 font-semibold">1 critical</span></p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-[#00C896] animate-pulse" />
-          <span className="text-[10px] text-[#64748B]">Live</span>
-        </div>
-      </div>
-
-      {/* Alert banner */}
-      <div className="mx-4 mt-3 px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2">
-        <AlertTriangle size={11} className="text-red-400 flex-shrink-0" />
-        <p className="text-[10px] text-red-400 font-medium">
-          <span className="font-bold">CRITICAL:</span> Pharmaceutical APIs — PPB deadline in 3 days. Est. loss if missed: <span className="font-bold">KES 546,300</span>
-        </p>
-      </div>
-
-      {/* Table */}
-      <div className="p-4 overflow-x-auto">
-        <table className="w-full text-[11px]">
-          <thead>
-            <tr className="border-b border-[#1E3A5F]">
-              {['Priority', 'Shipment', 'Regulator', 'PVoC Deadline', 'Landed Cost', 'Risk'].map(h => (
-                <th key={h} className="text-left pb-2 text-[#64748B] font-semibold uppercase tracking-wide text-[9px] pr-4">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#1E3A5F]/50">
-            {rows.map((row, i) => (
-              <tr key={i} className={i === 0 ? 'bg-red-500/5' : ''}>
-                <td className="py-2.5 pr-4">
-                  <span className={`text-[9px] font-bold ${priorityColors[row.status]}`}>{row.status}</span>
-                  <div className="text-[9px] text-[#64748B]">{row.score}/10</div>
-                </td>
-                <td className="py-2.5 pr-4">
-                  <p className="text-white font-medium truncate max-w-[160px]">{row.name}</p>
-                </td>
-                <td className="py-2.5 pr-4">
-                  <span className="text-[9px] font-bold text-[#00C896] bg-[#00C896]/10 px-1.5 py-0.5 rounded">{row.reg}</span>
-                </td>
-                <td className="py-2.5 pr-4">
-                  <p className="text-white">{row.days}d remaining</p>
-                  {row.days <= 7 && <p className="text-red-400 text-[9px] flex items-center gap-0.5"><AlertTriangle size={8} /> Urgent</p>}
-                </td>
-                <td className="py-2.5 pr-4 text-[#00C896] font-semibold">{row.landed}</td>
-                <td className="py-2.5">
-                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${riskColors[row.risk]}`}>{row.risk}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Overlay CTA */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0A1628] via-[#0A1628]/0 to-transparent flex flex-col items-center justify-end pb-8 pointer-events-none">
-        <div className="pointer-events-auto">
-          <p className="text-center text-xs text-[#64748B] mb-3">This is your dashboard. Live. Real-time. Every shipment.</p>
-        </div>
+        ))}
       </div>
     </div>
   )
 }
-
-// ── Main Page ────────────────────────────────────────────────
 
 export default function Home() {
-  const [calcOpen, setCalcOpen] = useState(false)
-
   return (
     <div className="min-h-screen bg-[#0A1628] text-white">
 
       {/* Nav */}
-      <nav className="flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[#1E3A5F] sticky top-0 bg-[#0A1628]/95 backdrop-blur z-50">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#00C896] flex items-center justify-center flex-shrink-0">
-            <span className="text-[#0A1628] font-black text-sm">K</span>
+      <nav className="flex items-center justify-between px-6 sm:px-10 py-4 border-b border-[#1E3A5F]/60 sticky top-0 bg-[#0A1628]/95 backdrop-blur z-50">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-[#00C896] flex items-center justify-center flex-shrink-0">
+            <span className="text-[#0A1628] font-black text-xs">K</span>
           </div>
-          <span className="text-white font-bold tracking-wide text-sm">KRUX</span>
-          <span className="text-[#64748B] text-xs hidden sm:inline">· Kenya Import Compliance</span>
+          <span className="font-mono font-bold text-sm tracking-widest">KRUX</span>
+          <span className="font-mono text-[10px] text-[#1E3A5F] ml-1 hidden sm:block">· KE</span>
         </div>
-        <div className="flex items-center gap-3">
-          <Link href="/login" className="text-sm text-[#94A3B8] hover:text-white transition-colors hidden sm:block">
+        <div className="flex items-center gap-4">
+          <Link href="/network" className="font-mono text-xs text-[#334155] hover:text-[#64748B] transition-colors hidden sm:block tracking-wider">
+            Network
+          </Link>
+          <Link href="/services" className="font-mono text-xs text-[#334155] hover:text-[#64748B] transition-colors hidden lg:block tracking-wider">
+            Services
+          </Link>
+          <Link href="/enterprise" className="font-mono text-xs text-[#334155] hover:text-[#64748B] transition-colors hidden lg:block tracking-wider">
+            Enterprise
+          </Link>
+          <Link href="/partners" className="font-mono text-xs text-[#334155] hover:text-[#64748B] transition-colors hidden lg:block tracking-wider">
+            Partners
+          </Link>
+          <Link href="/login" className="font-mono text-xs text-[#334155] hover:text-[#64748B] transition-colors hidden sm:block tracking-wider">
             Sign in
           </Link>
-          <a href="/demo" className="px-4 py-2 bg-[#00C896] text-[#0A1628] rounded-lg text-sm font-bold hover:bg-[#00C896]/90 transition-colors">
-            Open Demo Dashboard
+          <a href="/signup" className="font-mono text-xs bg-[#00C896] text-[#0A1628] px-4 py-2 font-bold tracking-widest uppercase hover:bg-[#00C896]/90 transition-colors">
+            Apply for KTIN
           </a>
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="px-6 sm:px-10 pt-20 pb-16 text-center max-w-5xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#00C896]/10 border border-[#00C896]/30 rounded-full text-[#00C896] text-xs font-semibold mb-8">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#00C896] animate-pulse" />
-          Kenya's first AI-native import compliance platform
-        </div>
+      <section className="px-6 sm:px-10 pt-16 pb-20 max-w-6xl mx-auto">
+        <div className="grid lg:grid-cols-2 gap-16 items-start">
 
-        <h1 className="text-4xl sm:text-6xl font-black leading-tight mb-6">
-          Stop losing money to<br />
-          <span className="text-[#00C896]">missed PVoC deadlines</span>
-        </h1>
-
-        <p className="text-[#94A3B8] text-base sm:text-lg max-w-2xl mx-auto mb-4 leading-relaxed">
-          KRUX tracks every Kenya import shipment across all 8 regulatory bodies,
-          fires deadline alerts before it's too late, and uses AI to tell you
-          exactly what to do — and what it will cost if you don't.
-        </p>
-
-        <button
-          onClick={() => setCalcOpen(true)}
-          className="text-sm text-[#64748B] hover:text-[#00C896] transition-colors underline underline-offset-2 mb-10 block mx-auto"
-        >
-          Calculate what your last missed deadline actually cost →
-        </button>
-
-        <div className="flex flex-col sm:flex-row gap-3 justify-center mb-3">
-          <a
-            href="/signup"
-            className="flex items-center justify-center gap-2 px-7 py-3.5 bg-[#00C896] text-[#0A1628] rounded-xl font-bold text-sm hover:bg-[#00C896]/90 transition-colors"
-          >
-            Create free account <ArrowRight size={15} />
-          </a>
-          <a
-            href="/demo"
-            className="flex items-center justify-center gap-2 px-7 py-3.5 border border-[#1E3A5F] text-[#94A3B8] rounded-xl text-sm hover:border-[#00C896]/40 hover:text-white transition-colors"
-          >
-            Open Demo Dashboard
-          </a>
-        </div>
-        <p className="text-[11px] text-[#334155] text-center mb-10">No credit card · 5 demo shipments pre-loaded · Full access immediately</p>
-
-        {/* Stats strip */}
-        <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
-          {[
-            { stat: 'KES 546K+', label: 'Average cost of missing a PPB deadline on a $50K shipment' },
-            { stat: '8 bodies', label: 'Regulators tracked per shipment — PPB, KEBS, KRA, PCPB, KEPHIS, EPRA, NEMA, WHO-GMP' },
-            { stat: '45 days', label: 'PPB minimum processing time — miss the window and you cannot clear on time' },
-          ].map(p => (
-            <div key={p.stat} className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-4 text-left">
-              <div className="text-xl sm:text-2xl font-black text-[#00C896] mb-1.5">{p.stat}</div>
-              <p className="text-[10px] sm:text-xs text-[#64748B] leading-relaxed">{p.label}</p>
+          {/* Left — order-2 on mobile so checker appears first */}
+          <div className="space-y-10 order-2 lg:order-1">
+            <div className="space-y-6">
+              <p className="font-mono text-xs text-[#334155] tracking-widest uppercase">Kenya Import Compliance</p>
+              <h1 className="font-mono font-black text-[clamp(3.2rem,8vw,6rem)] leading-[0.95] tracking-tight">
+                The window<br/>closes before<br/>your goods<br/>leave origin.
+              </h1>
+              <p className="font-mono text-lg text-[#64748B] leading-relaxed max-w-sm">
+                Every Kenya import has a regulatory window. Each body has its own processing timeline. Miss it and goods sit at the port of entry. KRUX calculates your window before goods ship — not when the container arrives.
+              </p>
             </div>
-          ))}
+
+            {/* Regulator scope grid */}
+            <div className="space-y-2">
+              <p className="font-mono text-xs text-[#1E3A5F] tracking-widest uppercase mb-4">All 9 regulatory bodies · Kenya live</p>
+              <div className="grid grid-cols-1 gap-2">
+                {REGULATOR_SCOPE.map(r => (
+                  <div key={r.code} className="flex items-center gap-4">
+                    <span className="font-mono text-base font-bold text-white w-16 flex-shrink-0">{r.code}</span>
+                    <div className="w-px h-4 bg-[#1E3A5F] flex-shrink-0" />
+                    <span className="font-mono text-base text-[#64748B]">{r.scope}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <a href="/signup" className="flex items-center justify-center gap-2 px-6 py-3.5 bg-[#00C896] text-[#0A1628] font-mono font-bold text-sm tracking-widest uppercase hover:bg-[#00C896]/90 transition-colors">
+                Apply for KTIN <ArrowRight size={14} />
+              </a>
+              <a href="/demo" className="flex items-center justify-center gap-2 px-6 py-3.5 border border-[#1E3A5F] text-[#334155] font-mono text-sm tracking-widest uppercase hover:border-[#334155] hover:text-[#64748B] transition-colors hidden sm:flex">
+                Open terminal →
+              </a>
+            </div>
+          </div>
+
+          {/* Right — Window Checker — order-1 on mobile so it appears first */}
+          <div className="space-y-2 order-1 lg:order-2">
+            <WindowChecker />
+            <NetworkPulse />
+          </div>
         </div>
       </section>
 
-      {/* Dashboard preview */}
-      <section className="px-6 sm:px-10 py-16 max-w-5xl mx-auto">
-        <div className="text-center mb-10">
-          <div className="text-xs font-bold text-[#64748B] uppercase tracking-widest mb-3">The Product</div>
-          <h2 className="text-2xl sm:text-3xl font-black text-white">Your compliance war room</h2>
-          <p className="text-[#64748B] text-sm mt-2 max-w-xl mx-auto">Every active shipment. Every regulator. Every deadline. Sorted by risk score so you always know what to fix first.</p>
-        </div>
-        <DashboardMockup />
-      </section>
-
-      {/* Problem → Solution */}
-      <section className="px-6 sm:px-10 py-20 bg-[#0F2040] border-y border-[#1E3A5F]">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-start">
-            <div>
-              <div className="text-xs font-bold text-red-400 uppercase tracking-widest mb-4">Without KRUX</div>
-              <h2 className="text-2xl font-black text-white mb-6">Kenya import compliance is a spreadsheet nightmare</h2>
-              <div className="space-y-3.5">
+      {/* Without / With */}
+      <section className="border-t border-[#1E3A5F]/60 bg-[#060E1A]">
+        <div className="max-w-6xl mx-auto px-6 sm:px-10 py-16">
+          <div className="grid md:grid-cols-2 gap-px bg-[#1E3A5F]/30">
+            <div className="bg-[#060E1A] p-10 space-y-6">
+              <p className="font-mono text-xs text-[#334155] tracking-widest uppercase">Without KRUX</p>
+              <div className="space-y-4">
                 {[
-                  'Manually chasing 8 different regulators across every single shipment',
-                  'Finding out about a missed deadline from a demurrage invoice',
-                  'Spending half a day calculating duties, levies, and landed costs in Excel',
-                  'No idea that a manufacturer\'s PPB license expired — until clearance fails',
+                  'Finding out about a missed deadline from a demurrage invoice at the port',
+                  'Manually chasing 9 different regulators across every shipment',
+                  'No idea PPB needs 52 days until the goods are already at sea',
+                  'Half a day calculating duties, levies, and landed costs in Excel',
                   'Audit trail is a WhatsApp group and someone\'s email inbox',
-                ].map(p => (
-                  <div key={p} className="flex items-start gap-3">
-                    <X size={13} className="text-red-400 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-[#94A3B8]">{p}</p>
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <span className="font-mono text-sm text-[#334155] font-bold flex-shrink-0 mt-0.5">✕</span>
+                    <span className="font-mono text-base text-[#334155] leading-relaxed">{item}</span>
                   </div>
                 ))}
               </div>
             </div>
-            <div>
-              <div className="text-xs font-bold text-[#00C896] uppercase tracking-widest mb-4">With KRUX</div>
-              <h2 className="text-2xl font-black text-white mb-6">One system that handles it all</h2>
-              <div className="space-y-3.5">
+            <div className="bg-[#060E1A] p-10 space-y-6">
+              <p className="font-mono text-xs text-[#00C896] tracking-widest uppercase">With KRUX</p>
+              <div className="space-y-4">
                 {[
-                  'All 8 regulators tracked with automatic risk scoring — sorted by urgency',
-                  'Email + WhatsApp alerts at 14, 7, and 3 days before every PVoC deadline',
+                  'Impossible windows flagged before goods leave origin — not after they land',
+                  'All 9 regulators tracked with automatic risk scoring sorted by urgency',
                   'Landed cost in KES and USD calculated the moment you add a shipment',
-                  'License expiry alerts 60, 30, and 7 days out with exact renewal steps',
+                  'Daily hit list shows exactly what to act on — CRITICAL, URGENT, WATCH',
                   'Complete timestamped audit trail — every action, every event, searchable',
-                ].map(s => (
-                  <div key={s} className="flex items-start gap-3">
-                    <CheckCircle2 size={13} className="text-[#00C896] flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-[#94A3B8]">{s}</p>
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <span className="font-mono text-sm text-[#00C896] font-bold flex-shrink-0 mt-0.5">✓</span>
+                    <span className="font-mono text-base text-[#94A3B8] leading-relaxed">{item}</span>
                   </div>
                 ))}
               </div>
@@ -507,218 +457,241 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Regulators */}
-      <section className="px-6 sm:px-10 py-16 max-w-5xl mx-auto">
-        <div className="text-center mb-10">
-          <div className="text-xs font-bold text-[#64748B] uppercase tracking-widest mb-3">Coverage</div>
-          <h2 className="text-2xl font-black text-white">Every Kenya regulator. In one place.</h2>
-        </div>
-        <div className="flex flex-wrap gap-3 justify-center">
-          {REGULATORS.map(r => (
-            <div key={r} className="flex items-center gap-2 bg-[#0F2040] border border-[#1E3A5F] rounded-lg px-4 py-2.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#00C896]" />
-              <span className="text-sm font-bold text-white">{r}</span>
+      {/* Hit List Demo */}
+      <section className="border-t border-[#1E3A5F]/60">
+        <div className="max-w-6xl mx-auto px-6 sm:px-10 py-16">
+          <div className="grid lg:grid-cols-2 gap-16 items-start">
+            <div className="space-y-6 order-2 lg:order-1">
+              <p className="font-mono text-xs text-[#334155] tracking-widest uppercase">What you see every morning</p>
+              <h2 className="font-mono font-black text-4xl sm:text-5xl text-white leading-tight">
+                Your hit list.<br/>Sorted by<br/>what it costs.
+              </h2>
+              <p className="font-mono text-lg text-[#64748B] leading-relaxed">
+                Every morning KRUX generates a prioritized action list across all your shipments — sorted by KES at risk. Closed windows. Approaching deadlines. Items to watch. You know what to act on before 9am.
+              </p>
+              <a href="/demo" className="inline-flex items-center gap-2 font-mono text-sm text-[#00C896] font-bold tracking-widest uppercase hover:text-[#00C896]/70 transition-colors">
+                Open terminal →
+              </a>
             </div>
-          ))}
-        </div>
-        <p className="text-center text-xs text-[#64748B] mt-6">
-          SLA benchmarks built in — KRUX knows PPB needs 45 days, KEPHIS needs 7. It tells you when a deadline is <span className="text-red-400">physically impossible</span> to meet.
-        </p>
-      </section>
-
-      {/* Features */}
-      <section className="px-6 sm:px-10 py-16 bg-[#0F2040] border-y border-[#1E3A5F]">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="text-xs font-bold text-[#64748B] uppercase tracking-widest mb-3">Platform</div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white">Everything you need. Nothing you don't.</h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-5">
-            {FEATURES.map(f => {
-              const Icon = f.icon
-              return (
-                <div key={f.title} className="bg-[#0A1628] border border-[#1E3A5F] rounded-xl p-6 hover:border-[#00C896]/30 transition-colors">
-                  <div className="w-10 h-10 rounded-xl bg-[#00C896]/10 border border-[#00C896]/20 flex items-center justify-center mb-4">
-                    <Icon size={18} className="text-[#00C896]" />
-                  </div>
-                  <h3 className="text-white font-bold text-sm mb-2">{f.title}</h3>
-                  <p className="text-[#64748B] text-xs leading-relaxed">{f.desc}</p>
+            <div className="bg-[#0A1628] border border-[#1E3A5F] overflow-hidden order-1 lg:order-2">
+              <div className="flex items-center justify-between px-5 py-3 bg-[#060E1A] border-b border-[#1E3A5F]">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#00C896] animate-pulse" />
+                  <span className="font-mono text-xs text-[#00C896] tracking-widest">TODAY&#39;S HIT LIST</span>
                 </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Who it's for */}
-      <section className="px-6 sm:px-10 py-16 max-w-5xl mx-auto">
-        <div className="text-center mb-12">
-          <div className="text-xs font-bold text-[#64748B] uppercase tracking-widest mb-3">Who it's for</div>
-          <h2 className="text-2xl sm:text-3xl font-black text-white">Built for the Kenya import ecosystem</h2>
-        </div>
-        <div className="grid md:grid-cols-3 gap-6">
-          {[
-            {
-              icon: Users,
-              role: 'Clearing Agents',
-              tag: 'Best fit',
-              desc: 'Manage multiple importers from one dashboard. Each client gets their own isolated workspace. Turn compliance intelligence into a billable service.',
-            },
-            {
-              icon: Globe,
-              role: 'SME Importers',
-              tag: null,
-              desc: 'Stop tracking compliance in spreadsheets and WhatsApp groups. Get automatic alerts, AI-generated checklists, and full audit trails.',
-            },
-            {
-              icon: Factory,
-              role: 'Supply Chain Managers',
-              tag: null,
-              desc: 'Visibility from PO to port clearance. Manufacturer vault tracks supplier licenses, audits, and financial risk signals automatically.',
-            },
-          ].map(p => {
-            const Icon = p.icon
-            return (
-              <div key={p.role} className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-6 text-left">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#1E3A5F] flex items-center justify-center">
-                    <Icon size={18} className="text-[#00C896]" />
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold text-sm">{p.role}</h3>
-                    {p.tag && <span className="text-[9px] text-[#00C896] font-bold uppercase tracking-wide">{p.tag}</span>}
-                  </div>
-                </div>
-                <p className="text-[#64748B] text-xs leading-relaxed">{p.desc}</p>
+                <span className="font-mono text-[10px] text-[#334155]">3 critical</span>
               </div>
-            )
-          })}
+              <div className="divide-y divide-[#1E3A5F]/40">
+                {[
+                  {
+                    rank: 1, priority: 'CRITICAL', status: 'WINDOW CLOSED', statusColor: 'text-red-400',
+                    kes: 'KES 185,864', name: 'Jet A-1 Aviation Fuel — 500KL',
+                    detail: 'EPRA needs 25d — only 8d remaining. Window is closed.',
+                    action: 'Escalate to EPRA immediately', border: 'border-l-red-500',
+                  },
+                  {
+                    rank: 2, priority: 'CRITICAL', status: 'WINDOW CLOSED', statusColor: 'text-red-400',
+                    kes: 'KES 40,656', name: 'Amoxicillin 500mg — Batch K23B',
+                    detail: 'PPB needs 52d — only 4d remaining. Window is closed.',
+                    action: 'Request deadline extension now', border: 'border-l-red-500',
+                  },
+                  {
+                    rank: 3, priority: 'URGENT', status: '4d to deadline', statusColor: 'text-amber-400',
+                    kes: 'KES 28,800', name: 'NPK Fertilizer 20-10-10 — 50MT',
+                    detail: 'PCPB deadline approaching — 3 documents pending.',
+                    action: 'Submit PCPB portal today', border: 'border-l-amber-500',
+                  },
+                ].map((item) => (
+                  <div key={item.rank} className={`p-4 border-l-2 ${item.border} space-y-2`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[10px] text-[#334155]">#{item.rank}</span>
+                        <span className={`font-mono text-[10px] font-bold tracking-widest ${item.priority === 'CRITICAL' ? 'text-red-400' : 'text-amber-400'}`}>{item.priority}</span>
+                        <span className={`font-mono text-[10px] ${item.statusColor}`}>{item.status}</span>
+                      </div>
+                      <span className="font-mono text-xs font-bold text-white">{item.kes}</span>
+                    </div>
+                    <p className="font-mono text-sm font-bold text-white">{item.name}</p>
+                    <p className="font-mono text-xs text-[#64748B]">{item.detail}</p>
+                    <p className="font-mono text-[10px] text-[#00C896]">→ {item.action}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="px-5 py-3 bg-[#060E1A] border-t border-[#1E3A5F] flex items-center justify-between">
+                <span className="font-mono text-[10px] text-[#334155]">0 / 3 done today</span>
+                <span className="font-mono text-xs font-bold text-red-400">KES 255,320 at risk</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Pricing */}
-      <section className="px-6 sm:px-10 py-16 bg-[#0F2040] border-y border-[#1E3A5F]">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="text-xs font-bold text-[#64748B] uppercase tracking-widest mb-3">Pricing</div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white mb-2">Simple, transparent pricing</h2>
-            <p className="text-[#64748B] text-sm">All plans include full access. No per-shipment fees. Cancel anytime.</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {PRICING.map(plan => (
-              <div
-                key={plan.name}
-                className={`relative rounded-2xl p-7 border flex flex-col ${
-                  plan.highlight
-                    ? 'bg-[#00C896]/5 border-[#00C896]/40 ring-1 ring-[#00C896]/20'
-                    : 'bg-[#0A1628] border-[#1E3A5F]'
-                }`}
-              >
-                {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-[#00C896] text-[#0A1628] text-xs font-bold rounded-full whitespace-nowrap">
-                    Most Popular
-                  </div>
-                )}
-                <div className="mb-6">
-                  <div className="text-xs font-bold text-[#64748B] uppercase tracking-widest mb-2">{plan.name}</div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-black text-white">${plan.price}</span>
-                    <span className="text-[#64748B] text-sm">/mo</span>
-                  </div>
-                  <p className="text-xs text-[#64748B] mt-2 leading-relaxed">{plan.desc}</p>
-                </div>
-                <div className="space-y-2.5 mb-8 flex-1">
-                  {plan.features.map(f => (
-                    <div key={f} className="flex items-start gap-2">
-                      <CheckCircle2 size={12} className="text-[#00C896] flex-shrink-0 mt-0.5" />
-                      <span className="text-xs text-[#94A3B8]">{f}</span>
-                    </div>
-                  ))}
-                </div>
-                <a
-                  href={plan.name === 'Enterprise' ? 'mailto:hello@kruxvon.com' : '/signup'}
-                  className={`block text-center py-3 rounded-xl text-sm font-bold transition-colors ${
-                    plan.highlight
-                      ? 'bg-[#00C896] text-[#0A1628] hover:bg-[#00C896]/90'
-                      : 'border border-[#1E3A5F] text-white hover:border-[#00C896]/40'
-                  }`}
-                >
-                  {plan.name === 'Enterprise' ? plan.cta : 'Get started free'}
-                </a>
-                {plan.name !== 'Enterprise' && (
-                  <p className="text-[10px] text-[#334155] text-center mt-2">Free account · No credit card</p>
-                )}
+      {/* How it works */}
+      <section className="border-t border-[#1E3A5F]/60">
+        <div className="max-w-6xl mx-auto px-6 sm:px-10 py-16">
+          <p className="font-mono text-xs text-[#334155] tracking-widest uppercase mb-10">How it works</p>
+          <div className="grid md:grid-cols-3 gap-px bg-[#1E3A5F]/30">
+            {[
+              {
+                step: '01',
+                title: 'Add a shipment',
+                body: 'Enter the regulator, HS code, and expected arrival. KRUX calculates the compliance window instantly against today\'s date.',
+              },
+              {
+                step: '02',
+                title: 'Window calculated',
+                body: 'OPEN, TIGHT, or IMPOSSIBLE — with days remaining, SLA required, and KES exposure if the window is already closed.',
+              },
+              {
+                step: '03',
+                title: 'Hit list every morning',
+                body: 'CRITICAL · URGENT · WATCH — sorted by KES at risk. You know what to act on before 9am, every day.',
+              },
+            ].map(s => (
+              <div key={s.step} className="bg-[#0A1628] p-8 space-y-3">
+                <span className="font-mono text-xs text-[#1E3A5F] font-bold tracking-widest">{s.step}</span>
+                <h3 className="font-mono text-lg font-bold text-white">{s.title}</h3>
+                <p className="font-mono text-base text-[#64748B] leading-relaxed">{s.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Signup CTA */}
-      <section id="waitlist" className="px-6 sm:px-10 py-24">
-        <div className="max-w-lg mx-auto text-center">
-          <div className="w-12 h-12 rounded-2xl bg-[#00C896] flex items-center justify-center mx-auto mb-6">
-            <span className="text-[#0A1628] font-black text-xl">K</span>
+      {/* KTIN */}
+      <section className="border-t border-[#1E3A5F]/60 bg-[#060E1A]">
+        <div className="max-w-6xl mx-auto px-6 sm:px-10 py-20">
+          <div className="grid md:grid-cols-2 gap-16 items-center">
+
+            <div className="space-y-6">
+              <p className="font-mono text-xs text-[#334155] tracking-widest uppercase">KTIN — KRUX Trade Identity Number</p>
+              <h2 className="font-mono font-black text-4xl sm:text-5xl text-white leading-tight">
+                Your compliance record.<br/>Permanent. Numbered.
+              </h2>
+              <p className="font-mono text-lg text-[#64748B] leading-relaxed">
+                Every registered operator gets a KTIN. One number, issued once, tied to your actual clearance record across every shipment you have ever run. Banks can reference it. Clients can verify it.
+              </p>
+              <div className="space-y-3">
+                {[
+                  'Issued on registration — permanent and numbered',
+                  'Tier computed from your actual clearance history — not self-reported',
+                  'Public verification page you can share with banks and partners',
+                ].map(f => (
+                  <div key={f} className="flex items-start gap-3">
+                    <CheckCircle2 size={15} className="text-[#00C896] flex-shrink-0 mt-0.5" />
+                    <span className="font-mono text-base text-[#64748B]">{f}</span>
+                  </div>
+                ))}
+              </div>
+              <a href="/signup" className="inline-flex items-center gap-2 font-mono text-sm text-[#00C896] font-bold tracking-widest uppercase hover:text-[#00C896]/70 transition-colors">
+                Apply for your KTIN <ArrowRight size={13} />
+              </a>
+            </div>
+
+            {/* Sample card — KTIN number dominates */}
+            <div className="border border-yellow-400/20 bg-yellow-400/5 p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs text-[#334155] tracking-widest uppercase">Founding operator · Kenya</span>
+                <span className="font-mono text-sm text-yellow-400 font-bold tracking-widest border border-yellow-400/30 px-3 py-1">GOLD</span>
+              </div>
+              <div className="font-mono font-black text-3xl sm:text-4xl text-white tracking-wider leading-none">
+                KRUX-IMP-<br className="sm:hidden"/>KE-00047
+              </div>
+              <div className="grid grid-cols-3 gap-4 pt-2">
+                {[
+                  { label: 'Issued',    value: '01 May 2026', color: 'text-[#64748B]' },
+                  { label: 'Shipments', value: '47 cleared',  color: 'text-[#64748B]' },
+                  { label: 'On-time',   value: '87%',         color: 'text-yellow-400' },
+                ].map(f => (
+                  <div key={f.label}>
+                    <div className="font-mono text-xs text-[#334155] uppercase tracking-wider mb-1">{f.label}</div>
+                    <div className={`font-mono text-sm font-bold ${f.color}`}>{f.value}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="border-t border-yellow-400/10 pt-5">
+                <span className="font-mono text-xs text-[#334155] tracking-wide select-all">
+                  kruxvon.com/verify/KRUX-IMP-KE-00047
+                </span>
+              </div>
+            </div>
           </div>
-          <h2 className="text-3xl font-black text-white mb-3">Start using KRUX today</h2>
-          <p className="text-[#64748B] text-sm mb-10 leading-relaxed">
-            Create your free account in 30 seconds. Your workspace comes pre-loaded
-            with 5 realistic Kenya import shipments so you can see the platform immediately.
-            No credit card required.
-          </p>
-          <div className="flex flex-col gap-3">
-            <Link
-              href="/signup"
-              className="flex items-center justify-center gap-2 py-4 bg-[#00C896] text-[#0A1628] rounded-xl font-bold text-base hover:bg-[#00C896]/90 transition-colors"
-            >
-              Create free account <ArrowRight size={16} />
-            </Link>
-            <a
-              href="/demo"
-              className="flex items-center justify-center gap-2 py-3.5 border border-[#1E3A5F] text-[#94A3B8] rounded-xl text-sm hover:border-[#00C896]/40 hover:text-white transition-colors"
-            >
-              Try the demo first — no account needed
-            </a>
+        </div>
+      </section>
+
+      {/* Operators */}
+      <section className="border-t border-[#1E3A5F]/60">
+        <div className="max-w-6xl mx-auto px-6 sm:px-10 py-20">
+          <p className="font-mono text-xs text-[#334155] tracking-widest uppercase mb-10">Who operates on the network</p>
+          <div className="grid md:grid-cols-3 gap-px bg-[#1E3A5F]/30">
+            {[
+              {
+                type: 'Clearing Agents',
+                ktin: 'KRUX-AGT-KE-XXXXX',
+                desc: 'Every client\'s shipments from one terminal. Compliance intelligence becomes a service you bill for.',
+              },
+              {
+                type: 'Importers',
+                ktin: 'KRUX-IMP-KE-XXXXX',
+                desc: 'Know your window before goods leave origin. Your KTIN follows your compliance record permanently.',
+              },
+              {
+                type: 'Manufacturers',
+                ktin: 'KRUX-MFG-KE-XXXXX',
+                desc: 'Import raw materials with full regulatory intelligence. Supplier licenses and audit schedules tracked.',
+              },
+            ].map(op => (
+              <div key={op.type} className="bg-[#0A1628] p-8 space-y-3">
+                <div>
+                  <p className="font-mono text-lg font-bold text-white">{op.type}</p>
+                  <p className="font-mono text-xs text-[#1E3A5F] mt-1">{op.ktin}</p>
+                </div>
+                <p className="font-mono text-base text-[#64748B] leading-relaxed">{op.desc}</p>
+              </div>
+            ))}
           </div>
-          <p className="text-[10px] text-[#334155] mt-4">Already have an account?{' '}
-            <Link href="/login" className="text-[#64748B] hover:text-[#00C896] transition-colors">Sign in →</Link>
-          </p>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="border-t border-[#1E3A5F]/60 bg-[#060E1A]">
+        <div className="max-w-6xl mx-auto px-6 sm:px-10 py-24">
+          <div className="max-w-lg space-y-7">
+            <div className="w-9 h-9 bg-[#00C896] flex items-center justify-center">
+              <span className="text-[#0A1628] font-black text-base">K</span>
+            </div>
+            <h2 className="font-mono font-black text-4xl sm:text-5xl text-white leading-tight">Apply for your KTIN.</h2>
+            <p className="font-mono text-lg text-[#64748B] leading-relaxed">
+              Registering importers, clearing agents, and manufacturers operating in East Africa. 6 live shipments pre-loaded. Full intelligence access from day one.
+            </p>
+            <div className="flex flex-col gap-3">
+              <a href="/signup" className="flex items-center justify-center gap-2 py-4 bg-[#00C896] text-[#0A1628] font-mono font-bold text-sm tracking-widest uppercase hover:bg-[#00C896]/90 transition-colors">
+                Apply for KTIN <ArrowRight size={14} />
+              </a>
+              <a href="/demo" className="flex items-center justify-center gap-2 py-3.5 border border-[#1E3A5F] text-[#334155] font-mono text-sm tracking-widest uppercase hover:border-[#334155] hover:text-[#64748B] transition-colors">
+                Open terminal — no account needed →
+              </a>
+            </div>
+            <p className="font-mono text-xs text-[#1E3A5F]">
+              Already registered?{' '}
+              <Link href="/login" className="text-[#334155] hover:text-[#64748B] transition-colors">Sign in →</Link>
+            </p>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="px-6 sm:px-10 py-8 border-t border-[#1E3A5F] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#334155]">
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded bg-[#00C896] flex items-center justify-center">
-            <span className="text-[#0A1628] font-black text-[9px]">K</span>
+      <footer className="border-t border-[#1E3A5F]/60 px-6 sm:px-10 py-6">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <span className="font-mono text-xs text-[#1E3A5F]">KRUX · KRUXVON Ltd · Kenya</span>
+          <div className="flex items-center gap-5">
+            <Link href="/terms"   className="font-mono text-xs text-[#1E3A5F] hover:text-[#334155] transition-colors">Terms</Link>
+            <Link href="/privacy" className="font-mono text-xs text-[#1E3A5F] hover:text-[#334155] transition-colors">Privacy</Link>
+            <a href="mailto:hq@kruxvon.com" className="font-mono text-xs text-[#1E3A5F] hover:text-[#334155] transition-colors">hq@kruxvon.com</a>
           </div>
-          <span className="text-[#64748B]">KRUX · Kenya Import Compliance Intelligence</span>
-        </div>
-        <div className="flex items-center gap-6">
-          <Link href="/terms" className="hover:text-[#94A3B8] transition-colors">Terms</Link>
-          <Link href="/privacy" className="hover:text-[#94A3B8] transition-colors">Privacy</Link>
-          <Link href="/login" className="hover:text-[#94A3B8] transition-colors">Sign in</Link>
-          <span>Kenya · {new Date().getFullYear()}</span>
         </div>
       </footer>
 
-      {/* Cost Calculator Modal */}
-      {calcOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4" onClick={() => setCalcOpen(false)}>
-          <div onClick={e => e.stopPropagation()} className="w-full max-w-md">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-white font-bold text-sm">How much did that missed deadline cost?</p>
-              <button onClick={() => setCalcOpen(false)} className="text-[#64748B] hover:text-white">
-                <X size={18} />
-              </button>
-            </div>
-            <CostCalculator />
-            <p className="text-center text-xs text-[#64748B] mt-4">
-              KRUX Basic is $299/month. One missed deadline pays for a year.
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

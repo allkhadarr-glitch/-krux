@@ -1,55 +1,87 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { Resend } from 'resend'
+import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
-export async function POST(req: NextRequest) {
-  const secret = req.headers.get('x-admin-secret')
-  if (secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
-  const { email } = await req.json()
-  if (!email) return NextResponse.json({ error: 'email required' }, { status: 400 })
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url)
+  const to     = searchParams.get('to')
+  const secret = searchParams.get('secret')
 
+  if (secret !== process.env.CRON_SECRET) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!to) return NextResponse.json({ error: 'Pass ?to=email' }, { status: 400 })
+  if (!process.env.RESEND_API_KEY) return NextResponse.json({ error: 'No RESEND_API_KEY' }, { status: 500 })
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://kruxvon.com'
+  const { Resend } = await import('resend')
   const resend = new Resend(process.env.RESEND_API_KEY)
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://krux-xi.vercel.app'
 
-  const { data, error } = await resend.emails.send({
-    from: 'KRUX <welcome@kruxvon.com>',
-    to: email,
-    subject: 'Welcome to KRUX — your workspace is ready',
-    html: `<!DOCTYPE html>
+  // Look up their KTIN
+  let ktin: string | null = null
+  try {
+    const { data: profile } = await supabaseAdmin
+      .from('user_profiles')
+      .select('organization_id')
+      .eq('user_id', (await supabaseAdmin.auth.admin.listUsers()).data.users.find(u => u.email === to)?.id ?? '')
+      .maybeSingle()
+    if (profile?.organization_id) {
+      const { data: entity } = await supabaseAdmin
+        .from('krux_entities')
+        .select('krux_id')
+        .eq('organization_id', profile.organization_id)
+        .maybeSingle()
+      ktin = entity?.krux_id ?? null
+    }
+  } catch {}
+
+  const [welcomeResult, alertResult] = await Promise.all([
+    resend.emails.send({
+      from: 'KRUX <noreply@kruxvon.com>',
+      to,
+      subject: ktin ? `${ktin} · issued` : 'Your KRUX workspace is live',
+      html: `<!DOCTYPE html>
 <html>
-<body style="margin:0;padding:0;background:#0A1628;font-family:system-ui,sans-serif;">
-  <div style="max-width:560px;margin:0 auto;padding:40px 28px;">
-    <div style="margin-bottom:28px;">
-      <div style="display:inline-block;background:#00C896;color:#0A1628;font-weight:900;font-size:20px;padding:8px 14px;border-radius:10px;">K</div>
-      <span style="color:#94A3B8;font-size:13px;margin-left:12px;">KRUX · Kenya Import Compliance</span>
-    </div>
-    <div style="background:#0F2040;border:1px solid #1E3A5F;border-radius:16px;padding:32px;">
-      <h1 style="color:white;font-size:22px;font-weight:700;margin:0 0 8px 0;">You're in.</h1>
-      <p style="color:#64748B;font-size:14px;margin:0 0 24px 0;">Your KRUX workspace is ready with 5 pre-loaded demo shipments.</p>
-      <div style="background:#0A1628;border:1px solid #1E3A5F;border-radius:10px;padding:16px;margin-bottom:24px;">
-        <p style="color:#94A3B8;font-size:13px;margin:0 0 10px 0;font-weight:600;">What's waiting for you:</p>
-        <ul style="margin:0;padding:0 0 0 16px;color:#64748B;font-size:13px;line-height:2;">
-          <li>5 Kenya shipments — RED, AMBER, and GREEN risk levels</li>
-          <li>Jet A-1 fuel shipment with impossible EPRA clearance window</li>
-          <li>AI compliance briefs for every shipment</li>
-          <li>Morning Brief — what your 6:30am WhatsApp will look like</li>
-        </ul>
-      </div>
-      <a href="${appUrl}/dashboard/operations" style="display:inline-block;background:#00C896;color:#0A1628;font-weight:700;font-size:14px;padding:12px 24px;border-radius:10px;text-decoration:none;">
-        Open your dashboard →
-      </a>
-      <p style="color:#334155;font-size:12px;margin:20px 0 0 0;">
-        When you're ready, clear the demo data in Settings and add your first real shipment.
-      </p>
-    </div>
-    <p style="color:#1E3A5F;font-size:11px;text-align:center;margin:20px 0 0 0;">KRUX · Kenya Import Compliance Intelligence</p>
-  </div>
+<head><meta name="color-scheme" content="dark"><meta name="supported-color-schemes" content="dark"></head>
+<body style="margin:0;padding:0;background:#060E1A;font-family:'Courier New',Courier,monospace;">
+<div style="max-width:480px;margin:0 auto;padding:48px 28px;">
+  <div style="color:#00C896;font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:40px;">KRUX</div>
+  <div style="border-top:1px solid #1E3A5F;margin-bottom:40px;"></div>
+  ${ktin ? `<div style="color:#00C896;font-size:28px;font-weight:900;letter-spacing:3px;margin-bottom:16px;">${ktin}</div>` : ''}
+  <div style="color:#94A3B8;font-size:13px;margin-bottom:40px;">Your workspace is live.</div>
+  <a href="${appUrl}/dashboard/today" style="display:inline-block;background:#00C896;color:#060E1A;font-weight:900;font-size:11px;padding:14px 28px;text-decoration:none;letter-spacing:3px;text-transform:uppercase;">OPEN WORKSPACE</a>
+  <div style="border-top:1px solid #1E3A5F;margin-top:40px;margin-bottom:16px;"></div>
+  ${ktin ? `<div style="color:#1E3A5F;font-size:10px;letter-spacing:1px;">kruxvon.com/verify/${ktin}</div>` : `<div style="color:#1E3A5F;font-size:10px;letter-spacing:1px;">kruxvon.com</div>`}
+</div>
 </body>
 </html>`,
-  })
+    }),
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true, id: data?.id })
+    resend.emails.send({
+      from: 'KRUX <noreply@kruxvon.com>',
+      to: process.env.ALERT_EMAIL ?? 'mabdikadirhaji@gmail.com',
+      subject: ktin ? `${ktin} · ${to}` : `New signup: ${to}`,
+      html: `<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#060E1A;font-family:'Courier New',Courier,monospace;">
+<div style="max-width:400px;margin:0 auto;padding:32px 24px;">
+  <div style="color:#00C896;font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:24px;">KRUX · New Operator</div>
+  <div style="border-top:1px solid #1E3A5F;margin-bottom:24px;"></div>
+  ${ktin ? `<div style="color:#00C896;font-size:20px;font-weight:900;letter-spacing:2px;margin-bottom:8px;">${ktin}</div>` : ''}
+  <div style="color:white;font-size:13px;margin-bottom:4px;">${to}</div>
+  <div style="color:#334155;font-size:11px;margin-bottom:24px;">${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi', dateStyle: 'full', timeStyle: 'short' })} EAT</div>
+  <a href="${appUrl}/admin" style="display:inline-block;background:#00C896;color:#060E1A;font-weight:900;font-size:10px;padding:10px 20px;text-decoration:none;letter-spacing:2px;text-transform:uppercase;">VIEW IN ADMIN</a>
+</div>
+</body>
+</html>`,
+    }),
+  ])
+
+  return NextResponse.json({
+    welcome: welcomeResult.error ?? { id: welcomeResult.data?.id },
+    alert:   alertResult.error   ?? { id: alertResult.data?.id },
+    ktin,
+  })
 }

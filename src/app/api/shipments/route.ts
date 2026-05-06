@@ -89,6 +89,8 @@ export async function POST(req: NextRequest) {
     name, origin_port, origin_country, hs_code, product_description,
     cif_value_usd, pvoc_deadline, regulatory_body_id, storage_rate_per_day,
     risk_flag_status, import_duty_pct, client_name,
+    vessel_name, bl_number, eta, shipment_stage, weight_kg,
+    shipping_line, customs_agent, customs_agent_license,
   } = body
 
   if (!name || !origin_port || !cif_value_usd) {
@@ -120,11 +122,59 @@ export async function POST(req: NextRequest) {
       composite_risk_score: risk_flag_status === 'RED' ? 8 : risk_flag_status === 'GREEN' ? 3 : 5,
       exchange_rate_used:   kesRate,
       destination_port:     'Mombasa',
+      vessel_name:           vessel_name || null,
+      bl_number:             bl_number || null,
+      eta:                   eta || null,
+      shipment_stage:        shipment_stage || 'PRE_SHIPMENT',
+      weight_kg:             weight_kg ? Number(weight_kg) : null,
+      shipping_line:         shipping_line || null,
+      customs_agent:         customs_agent || null,
+      customs_agent_license: customs_agent_license || null,
       ...costs,
     })
     .select()
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // First shipment for this org → WhatsApp signal ping to founder
+  const { count } = await supabaseAdmin
+    .from('shipments')
+    .select('id', { count: 'exact', head: true })
+    .eq('organization_id', orgId)
+    .is('deleted_at', null)
+
+  if (count === 1) {
+    const { data: org } = await supabaseAdmin
+      .from('organizations')
+      .select('name')
+      .eq('id', orgId)
+      .single()
+
+    ;(async () => {
+      const sid   = process.env.TWILIO_ACCOUNT_SID
+      const token = process.env.TWILIO_AUTH_TOKEN
+      const from  = process.env.TWILIO_WHATSAPP_FROM
+      const to    = process.env.ALERT_WHATSAPP_TO
+      if (!sid || !token || !from || !to) return
+      const body = [
+        `KRUX · First Shipment 🔴`,
+        `${org?.name ?? orgId} just loaded their first shipment`,
+        `"${name}"`,
+        `They are using it. Follow up now.`,
+        `kruxvon.com/admin`,
+      ].join('\n')
+      const params = new URLSearchParams({ From: from, To: `whatsapp:${to}`, Body: body })
+      await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString('base64')}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params.toString(),
+      })
+    })().catch(() => {})
+  }
+
   return NextResponse.json(data)
 }
