@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 import { Loader2, AlertTriangle, Compass } from 'lucide-react'
 
@@ -80,7 +80,7 @@ export default function AdvisoryPage() {
       <div>
         <div className="flex items-center gap-2 mb-1">
           <div className="w-2 h-2 rounded-full bg-[#00C896]" />
-          <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Pre-Shipment</span>
+          <span className="text-xs font-bold text-[#64748B] uppercase tracking-widest">Pre-Shipment</span>
         </div>
         <h1 className="text-xl font-black text-white">Window Calculator</h1>
         <p className="text-[#64748B] text-sm mt-1">
@@ -154,17 +154,17 @@ export default function AdvisoryPage() {
         <div className="space-y-4">
           {/* Numbers */}
           <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5">
-            <div className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest mb-4">
+            <div className="text-xs font-bold text-[#64748B] uppercase tracking-widest mb-4">
               {result.regulator_name}
             </div>
 
             <div className="grid grid-cols-3 gap-3 mb-5">
               <div>
-                <div className="text-[10px] text-[#64748B] mb-1">Days until ETA</div>
+                <div className="text-xs text-[#64748B] mb-1">Days until ETA</div>
                 <div className="text-2xl font-black font-mono text-white">{result.days_available}d</div>
               </div>
               <div>
-                <div className="text-[10px] text-[#64748B] mb-1">
+                <div className="text-xs text-[#64748B] mb-1">
                   SLA estimate
                   {result.actual_avg !== null && result.sample_size > 0
                     ? ` (${result.sample_size} real clearance${result.sample_size !== 1 ? 's' : ''})`
@@ -175,7 +175,7 @@ export default function AdvisoryPage() {
                 </div>
               </div>
               <div>
-                <div className="text-[10px] text-[#64748B] mb-1">Gap</div>
+                <div className="text-xs text-[#64748B] mb-1">Gap</div>
                 <div className={`text-2xl font-black font-mono ${gapColor(result.buffer)}`}>
                   {result.buffer >= 0 ? '+' : ''}{result.buffer}d
                 </div>
@@ -190,7 +190,7 @@ export default function AdvisoryPage() {
                   style={{ width: `${Math.min(100, Math.round((result.days_available / (result.actual_avg ?? result.actual_sla)) * 100))}%` }}
                 />
               </div>
-              <div className="flex justify-between text-[9px] text-[#334155] mt-1">
+              <div className="flex justify-between text-xs text-[#334155] mt-1">
                 <span>0 days</span>
                 <span>{result.actual_avg ?? result.actual_sla}d needed</span>
               </div>
@@ -202,7 +202,7 @@ export default function AdvisoryPage() {
             {result.actual_avg !== null && result.sample_size > 0 && (
               <div className="mt-3 flex items-start gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#00C896] mt-1 flex-shrink-0" />
-                <p className="text-[10px] text-[#64748B]">
+                <p className="text-xs text-[#64748B]">
                   Window calculation includes {result.sample_size} real {form.regulator} clearance{result.sample_size !== 1 ? 's' : ''} from your account. Accuracy improves with every shipment closed.
                 </p>
               </div>
@@ -212,7 +212,7 @@ export default function AdvisoryPage() {
           {/* Risk factors */}
           {parsed.risks.length > 0 && (
             <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-4">
-              <div className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest mb-3">Watch out for</div>
+              <div className="text-xs font-bold text-[#64748B] uppercase tracking-widest mb-3">Watch out for</div>
               <ul className="space-y-2">
                 {parsed.risks.map((r, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-[#94A3B8]">
@@ -226,7 +226,7 @@ export default function AdvisoryPage() {
 
           {/* SLA reference */}
           <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-4">
-            <div className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest mb-3">SLA Reference</div>
+            <div className="text-xs font-bold text-[#64748B] uppercase tracking-widest mb-3">SLA Reference</div>
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
                 <span className="text-[#64748B]">Official SLA ({form.regulator})</span>
@@ -244,7 +244,7 @@ export default function AdvisoryPage() {
               )}
             </div>
             <div className="mt-3 pt-3 border-t border-[#1E3A5F]">
-              <p className="text-[10px] text-[#334155] leading-relaxed">
+              <p className="text-xs text-[#334155] leading-relaxed">
                 Based on KRUX regulatory research · May 2026
               </p>
             </div>

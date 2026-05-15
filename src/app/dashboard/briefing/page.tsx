@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { Loader2, Sparkles, RefreshCw, Copy, Printer, Bell, Share2, ExternalLink } from 'lucide-react'
 
@@ -102,7 +102,7 @@ export default function BriefingPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <div className="w-2 h-2 rounded-full bg-[#00C896] animate-pulse" />
-            <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Daily Intelligence</span>
+            <span className="text-xs font-bold text-[#64748B] uppercase tracking-widest">Daily Intelligence</span>
           </div>
           <h1 className="text-2xl font-black text-white">Morning Brief</h1>
           <p className="text-[#64748B] text-sm mt-1">{dateStr}</p>
@@ -223,7 +223,7 @@ export default function BriefingPage() {
         <div className="mt-8">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1.5 h-1.5 rounded-full bg-[#25D366]" />
-            <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">How it looks on WhatsApp at 6:30am</span>
+            <span className="text-xs font-bold text-[#64748B] uppercase tracking-widest">How it looks on WhatsApp at 6:30am</span>
           </div>
 
           {/* Phone mockup */}
@@ -231,7 +231,7 @@ export default function BriefingPage() {
             <div className="w-72 bg-[#111B21] rounded-[2.5rem] p-3 shadow-2xl border-4 border-[#1E2C33]">
               {/* Phone status bar */}
               <div className="flex justify-between items-center px-4 py-1 mb-1">
-                <span className="text-[9px] text-[#8696A0] font-medium">6:30</span>
+                <span className="text-xs text-[#8696A0] font-medium">6:30</span>
                 <div className="flex gap-1">
                   <div className="w-3 h-1.5 bg-[#8696A0] rounded-sm" />
                   <div className="w-1 h-1.5 bg-[#8696A0] rounded-sm" />
@@ -245,7 +245,7 @@ export default function BriefingPage() {
                 </div>
                 <div>
                   <p className="text-white text-xs font-semibold">KRUX Compliance</p>
-                  <p className="text-[#8696A0] text-[9px]">online</p>
+                  <p className="text-[#8696A0] text-xs">online</p>
                 </div>
               </div>
 
@@ -255,7 +255,7 @@ export default function BriefingPage() {
                 <div className="ml-2 bg-[#202C33] rounded-lg rounded-tl-none p-3 max-w-[95%] relative">
                   {/* Tail */}
                   <div className="absolute -left-2 top-0 w-0 h-0 border-t-[8px] border-r-[8px] border-t-[#202C33] border-r-transparent" />
-                  <pre className="whitespace-pre-wrap text-[9px] text-[#E9EDEF] leading-[1.5] font-mono break-words">
+                  <pre className="whitespace-pre-wrap text-xs text-[#E9EDEF] leading-[1.5] font-mono break-words">
                     {brief.length > 600 ? brief.slice(0, 600) + '\n\n[Full brief at krux-xi.vercel.app/dashboard]' : brief}
                   </pre>
                   <div className="flex justify-end mt-1">
@@ -266,7 +266,7 @@ export default function BriefingPage() {
             </div>
           </div>
 
-          <p className="text-center text-[10px] text-[#334155] mt-4">
+          <p className="text-center text-xs text-[#334155] mt-4">
             Delivered automatically at 6:30am EAT every weekday · Configure number in Settings → Alerts
           </p>
         </div>

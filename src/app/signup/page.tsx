@@ -1,15 +1,37 @@
-'use client'
+﻿'use client'
 
 import { useActionState, useState } from 'react'
 import { signUp } from './actions'
-import { Shield, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react'
+import { Shield, Loader2, ArrowRight, Eye, EyeOff, Package, ClipboardList, Truck } from 'lucide-react'
 import Link from 'next/link'
 
 const initialState = { error: '' }
 
+const ROLES = [
+  {
+    value:       'importer',
+    label:       'Importer',
+    description: 'I import goods and need compliance tracking',
+    Icon:        Package,
+  },
+  {
+    value:       'clearing_agent',
+    label:       'Clearing Agent',
+    description: 'I handle clearance for multiple importers',
+    Icon:        ClipboardList,
+  },
+  {
+    value:       'freight_forwarder',
+    label:       'Freight Forwarder',
+    description: 'I coordinate shipments and logistics',
+    Icon:        Truck,
+  },
+]
+
 export default function SignupPage() {
   const [state, formAction, isPending] = useActionState(signUp, initialState)
   const [showPassword, setShowPassword] = useState(false)
+  const [role, setRole] = useState('importer')
 
   return (
     <div className="min-h-screen bg-[#0A1628] flex items-center justify-center px-4">
@@ -32,6 +54,35 @@ export default function SignupPage() {
           </p>
 
           <form action={formAction} className="space-y-4">
+            {/* Role selector */}
+            <div>
+              <label className="block text-[#94A3B8] text-xs font-medium mb-2 uppercase tracking-wider">
+                Your Role
+              </label>
+              <input type="hidden" name="role" value={role} />
+              <div className="space-y-2">
+                {ROLES.map(({ value, label, description, Icon }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => setRole(value)}
+                    className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-lg border text-left transition-all ${
+                      role === value
+                        ? 'border-[#00C896] bg-[#00C896]/10'
+                        : 'border-[#1E3A5F] bg-[#0A1628] hover:border-[#334155]'
+                    }`}
+                  >
+                    <Icon size={16} className={role === value ? 'text-[#00C896] flex-shrink-0' : 'text-[#475569] flex-shrink-0'} />
+                    <div>
+                      <div className={`text-sm font-semibold ${role === value ? 'text-[#00C896]' : 'text-white'}`}>{label}</div>
+                      <div className="text-[#64748B] text-xs mt-0.5">{description}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div>
               <label htmlFor="company" className="block text-[#94A3B8] text-xs font-medium mb-1.5 uppercase tracking-wider">
                 Company Name
@@ -61,6 +112,17 @@ export default function SignupPage() {
                 disabled={isPending}
                 className="w-full bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3.5 py-2.5 text-white text-sm placeholder-[#334155] focus:outline-none focus:border-[#00C896] focus:ring-1 focus:ring-[#00C896]/30 transition-all disabled:opacity-50"
                 placeholder="you@company.com"
+                onBlur={(e) => {
+                  const email   = e.target.value.trim()
+                  const company = (document.getElementById('company') as HTMLInputElement)?.value?.trim() || null
+                  if (email && email.includes('@')) {
+                    fetch('/api/signup-intent', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email, company, stage: 'INTENT' }),
+                    }).catch(() => {})
+                  }
+                }}
               />
             </div>
 
@@ -120,7 +182,7 @@ export default function SignupPage() {
             </button>
           </form>
 
-          <p className="text-[10px] text-[#334155] text-center mt-4 leading-relaxed">
+          <p className="text-xs text-[#334155] text-center mt-4 leading-relaxed">
             By creating an account you agree to our{' '}
             <span className="text-[#64748B]">Terms of Service</span>
             {' '}and{' '}

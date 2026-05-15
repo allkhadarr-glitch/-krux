@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 import { X, Loader2, CheckCircle2, ClipboardList } from 'lucide-react'
 
@@ -89,7 +89,7 @@ export default function ClearanceDebriefModal({
             <ClipboardList size={16} className="text-[#00C896]" />
             <div>
               <h2 className="text-white font-bold text-sm">Clearance Debrief</h2>
-              <p className="text-[10px] text-[#64748B] mt-0.5 truncate max-w-[280px]">{shipmentName}</p>
+              <p className="text-xs text-[#64748B] mt-0.5 truncate max-w-[280px]">{shipmentName}</p>
             </div>
           </div>
           <button onClick={onClose} className="text-[#64748B] hover:text-white transition-colors p-1">
@@ -98,7 +98,7 @@ export default function ClearanceDebriefModal({
         </div>
 
         <div className="px-5 py-3 bg-[#00C896]/5 border-b border-[#1E3A5F]">
-          <p className="text-[11px] text-[#64748B] leading-relaxed">
+          <p className="text-xs text-[#64748B] leading-relaxed">
             Every field you fill in here builds KRUX intelligence — examination rates by HS code, agent performance, shipping line reliability. It takes 2 minutes. It compounds.
           </p>
         </div>

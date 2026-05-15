@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { formatDate } from '@/lib/utils'
 import { CheckCircle2, AlertTriangle, Clock, Minus } from 'lucide-react'
@@ -33,7 +33,7 @@ function OutcomeBadge({ outcome }: { outcome: string }) {
   const o = outcomeStyles[outcome as keyof typeof outcomeStyles]
   if (!o) return <span className="text-xs text-[#64748B]">{outcome}</span>
   return (
-    <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${o.cls}`}>
+    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide border ${o.cls}`}>
       {o.label}
     </span>
   )
@@ -49,11 +49,11 @@ function timeAgo(iso: string) {
 
 function RegimeBadge({ regime }: { regime: 'A' | 'B' }) {
   return regime === 'A' ? (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border bg-blue-500/10 text-blue-400 border-blue-500/30">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border bg-blue-500/10 text-blue-400 border-blue-500/30">
       A · Execution
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border bg-red-500/10 text-red-400 border-red-500/30">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border bg-red-500/10 text-red-400 border-red-500/30">
       B · No Start
     </span>
   )
@@ -71,7 +71,7 @@ function CompletionBar({ completed, failed, pending, total }: { completed: numbe
         <div className="bg-red-500"     style={{ width: `${pctFailed}%` }} />
         <div className="bg-amber-500/40" style={{ width: `${pctPend}%` }} />
       </div>
-      <div className="text-[10px] text-[#64748B]">{completed}/{total} done</div>
+      <div className="text-xs text-[#64748B]">{completed}/{total} done</div>
     </div>
   )
 }
@@ -155,17 +155,17 @@ export default function ClosedShipmentsPage() {
                   <td className="px-4 py-3">
                     <div className="text-sm font-medium text-white">{r.name}</div>
                     {r.reference_number && (
-                      <div className="text-[10px] text-[#64748B] mt-0.5">{r.reference_number}</div>
+                      <div className="text-xs text-[#64748B] mt-0.5">{r.reference_number}</div>
                     )}
                     {r.pvoc_deadline && (
-                      <div className="text-[10px] text-[#64748B]">Deadline: {formatDate(r.pvoc_deadline)}</div>
+                      <div className="text-xs text-[#64748B]">Deadline: {formatDate(r.pvoc_deadline)}</div>
                     )}
                   </td>
                   <td className="px-4 py-3"><RegimeBadge regime={r.regime} /></td>
                   <td className="px-4 py-3"><OutcomeBadge outcome={r.outcome} /></td>
                   <td className="px-4 py-3">
                     <div className="text-sm text-white">{timeAgo(r.closed_at)}</div>
-                    <div className="text-[10px] text-[#64748B]">{formatDate(r.closed_at)}</div>
+                    <div className="text-xs text-[#64748B]">{formatDate(r.closed_at)}</div>
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-sm text-white">

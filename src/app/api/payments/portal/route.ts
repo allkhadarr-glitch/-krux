@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { getSessionContext } from '@/lib/session'
 
@@ -9,26 +8,51 @@ const supabase = createClient(
 )
 
 export async function POST(req: NextRequest) {
-  if (!process.env.STRIPE_SECRET_KEY) return NextResponse.json({ error: 'Billing not configured' }, { status: 503 })
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-04-22.dahlia' as any })
+  if (!process.env.PAYSTACK_SECRET_KEY) {
+    return NextResponse.json({ error: 'Billing not configured' }, { status: 503 })
+  }
+
   const { orgId } = await getSessionContext(req)
 
   const { data: org } = await supabase
     .from('organizations')
-    .select('stripe_customer_id')
+    .select('pst_subscription_code, pst_email_token')
     .eq('id', orgId)
     .single()
 
-  if (!org?.stripe_customer_id) {
-    return NextResponse.json({ error: 'No billing account found' }, { status: 404 })
+  if (!org?.pst_subscription_code) {
+    return NextResponse.json({ error: 'No active subscription found' }, { status: 404 })
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://krux.vercel.app'
+  if (!org.pst_email_token) {
+    return NextResponse.json({ error: 'Contact support to cancel: hq@kruxvon.com' }, { status: 422 })
+  }
 
-  const session = await stripe.billingPortal.sessions.create({
-    customer:    org.stripe_customer_id,
-    return_url:  `${baseUrl}/dashboard/billing`,
+  const res = await fetch('https://api.paystack.co/subscription/disable', {
+    method:  'POST',
+    headers: {
+      Authorization:  `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      code:  org.pst_subscription_code,
+      token: org.pst_email_token,
+    }),
   })
 
-  return NextResponse.json({ url: session.url })
+  const data = await res.json()
+  if (!res.ok || !data.status) {
+    return NextResponse.json({ error: data.message ?? 'Cancel failed' }, { status: 500 })
+  }
+
+  await supabase.from('organizations').update({
+    subscription_tier:      'trial',
+    subscription_status:    'cancelled',
+    monthly_shipment_limit: 5,
+    pst_subscription_code:  null,
+    pst_email_token:        null,
+    updated_at:             new Date().toISOString(),
+  }).eq('id', orgId)
+
+  return NextResponse.json({ ok: true })
 }

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { Shipment } from '@/lib/types'
 import { formatUSD, formatDate } from '@/lib/utils'
@@ -12,6 +12,7 @@ import {
 import { getRegulator, getWindowStatus } from '@/lib/regulatory-intelligence'
 import { getDemoContent } from '@/lib/demo-content'
 import ClearanceDebriefModal from './ClearanceDebriefModal'
+import VesselRoute from './VesselRoute'
 
 // ─── Tabs ────────────────────────────────────────────────────
 
@@ -148,7 +149,7 @@ function TimelinePanel({ shipmentId }: { shipmentId: string }) {
               <div className="flex-1 pt-1.5 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-medium text-white leading-snug">{ev.title}</p>
-                  <span className="text-[10px] text-[#334155] whitespace-nowrap shrink-0">
+                  <span className="text-xs text-[#334155] whitespace-nowrap shrink-0">
                     {timeAgo(ev.created_at)}
                   </span>
                 </div>
@@ -158,11 +159,11 @@ function TimelinePanel({ shipmentId }: { shipmentId: string }) {
                 )}
 
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[9px] text-[#334155] uppercase tracking-wide">
+                  <span className="text-xs text-[#334155] uppercase tracking-wide">
                     {ev.actor_label ?? ev.actor_type}
                   </span>
                   {ev.metadata?.duration_minutes != null && (
-                    <span className="text-[9px] text-[#334155]">
+                    <span className="text-xs text-[#334155]">
                       · {ev.metadata.duration_minutes}m
                     </span>
                   )}
@@ -251,7 +252,7 @@ function DutyPanel({ shipment }: { shipment: any }) {
               </tbody>
             </table>
           </div>
-          <p className="text-[10px] text-[#334155] mt-1.5">1 USD = KES {calc.fx_rate} · Estimates only, verify with KRA iCMS portal</p>
+          <p className="text-xs text-[#334155] mt-1.5">1 USD = KES {calc.fx_rate} · Estimates only, verify with KRA iCMS portal</p>
         </div>
       )}
 
@@ -267,7 +268,7 @@ function DutyPanel({ shipment }: { shipment: any }) {
           </button>
         ) : (
           <div>
-            <p className="text-[10px] text-[#64748B] font-semibold uppercase tracking-wide mb-2">AI Analysis</p>
+            <p className="text-xs text-[#64748B] font-semibold uppercase tracking-wide mb-2">AI Analysis</p>
             <pre className="whitespace-pre-wrap text-xs text-[#94A3B8] bg-[#0A1628] border border-[#1E3A5F] rounded-lg p-3 leading-relaxed font-sans">
               {aiText}
             </pre>
@@ -301,22 +302,22 @@ function DetentionMeter({ shipment }: { shipment: Shipment }) {
   return (
     <div className={`border ${colors.border} ${colors.bg} rounded-xl p-4 space-y-3`}>
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Storage Accruing</span>
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded font-mono ${colors.badge}`}>
+        <span className="text-xs font-bold text-[#64748B] uppercase tracking-widest">Storage Accruing</span>
+        <span className={`text-xs font-bold px-2 py-0.5 rounded font-mono ${colors.badge}`}>
           {daysAtPort}d AT PORT
         </span>
       </div>
       <div className="grid grid-cols-3 gap-3">
         <div>
-          <div className="text-[10px] text-[#64748B] mb-0.5">Daily rate</div>
+          <div className="text-xs text-[#64748B] mb-0.5">Daily rate</div>
           <div className={`text-sm font-bold font-mono ${colors.text}`}>KES {dailyKES.toLocaleString()}</div>
         </div>
         <div>
-          <div className="text-[10px] text-[#64748B] mb-0.5">Accrued to date</div>
+          <div className="text-xs text-[#64748B] mb-0.5">Accrued to date</div>
           <div className={`text-sm font-bold font-mono ${colors.text}`}>KES {accruedKES.toLocaleString()}</div>
         </div>
         <div>
-          <div className="text-[10px] text-[#64748B] mb-0.5">+30 day projection</div>
+          <div className="text-xs text-[#64748B] mb-0.5">+30 day projection</div>
           <div className="text-sm font-bold font-mono text-white">KES {proj30KES.toLocaleString()}</div>
         </div>
       </div>
@@ -397,7 +398,7 @@ function CostsPanel({ shipmentId }: { shipmentId: string }) {
         <div key={c.id} className="flex items-start justify-between gap-2 py-2 border-b border-[#1E3A5F]">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold text-[#64748B] uppercase">{COST_LABELS[c.cost_type as CostType] ?? c.cost_type}</span>
+              <span className="text-xs font-bold text-[#64748B] uppercase">{COST_LABELS[c.cost_type as CostType] ?? c.cost_type}</span>
               <span className="text-sm font-semibold text-white">KES {Number(c.amount_kes).toLocaleString()}</span>
             </div>
             {c.note && <p className="text-xs text-[#64748B] mt-0.5">{c.note}</p>}
@@ -410,7 +411,7 @@ function CostsPanel({ shipmentId }: { shipmentId: string }) {
 
       {/* Add form */}
       <div className="border border-[#1E3A5F] rounded-xl p-3 space-y-2 bg-[#0F2040]">
-        <p className="text-[10px] text-[#64748B] font-semibold uppercase tracking-wide">Add Cost</p>
+        <p className="text-xs text-[#64748B] font-semibold uppercase tracking-wide">Add Cost</p>
         <select
           value={type}
           onChange={(e) => setType(e.target.value as CostType)}
@@ -538,11 +539,11 @@ function FilesPanel({ shipmentId, regulatorCode }: { shipmentId: string; regulat
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5">
               <ClipboardList size={11} className="text-[#64748B]" />
-              <p className="text-[10px] text-[#64748B] font-semibold uppercase tracking-wide">
+              <p className="text-xs text-[#64748B] font-semibold uppercase tracking-wide">
                 {regulatorCode} Required Documents
               </p>
             </div>
-            <p className="text-[10px] text-[#334155]">Tap to cycle status</p>
+            <p className="text-xs text-[#334155]">Tap to cycle status</p>
           </div>
           <div className="space-y-1">
             {regDocs.map((doc) => {
@@ -557,14 +558,14 @@ function FilesPanel({ shipmentId, regulatorCode }: { shipmentId: string; regulat
                   <span className={`text-sm font-bold shrink-0 w-4 text-center ${cfg.color}`}>{cfg.icon}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-white truncate">{doc.name}</p>
-                    {!doc.mandatory && <p className="text-[10px] text-[#64748B]">Conditional</p>}
+                    {!doc.mandatory && <p className="text-xs text-[#64748B]">Conditional</p>}
                   </div>
-                  <span className={`text-[10px] font-medium shrink-0 ${cfg.color}`}>{cfg.label}</span>
+                  <span className={`text-xs font-medium shrink-0 ${cfg.color}`}>{cfg.label}</span>
                 </button>
               )
             })}
           </div>
-          <p className="text-[10px] text-[#334155] mt-2 flex items-center gap-1">
+          <p className="text-xs text-[#334155] mt-2 flex items-center gap-1">
             <Sparkles size={9} />
             AI Brief uses these statuses for accurate ✓ / ✗ — regenerate after updating
           </p>
@@ -573,7 +574,7 @@ function FilesPanel({ shipmentId, regulatorCode }: { shipmentId: string; regulat
 
       {/* Upload */}
       <div className="border border-[#1E3A5F] rounded-xl p-3 space-y-2 bg-[#0F2040]">
-        <p className="text-[10px] text-[#64748B] font-semibold uppercase tracking-wide">Upload Document</p>
+        <p className="text-xs text-[#64748B] font-semibold uppercase tracking-wide">Upload Document</p>
         <select
           value={docType}
           onChange={(e) => setDocType(e.target.value as typeof DOC_TYPES[number])}
@@ -599,7 +600,7 @@ function FilesPanel({ shipmentId, regulatorCode }: { shipmentId: string; regulat
               <FileText size={14} className="text-[#64748B] shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-white truncate">{doc.file_name}</p>
-                <p className="text-[10px] text-[#64748B]">{doc.document_type} · {formatSize(doc.file_size)}</p>
+                <p className="text-xs text-[#64748B]">{doc.document_type} · {formatSize(doc.file_size)}</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {doc.signed_url && (
@@ -854,7 +855,7 @@ export default function ShipmentDrawer({
                 <RiskBadge risk={shipment.risk_flag_status} />
                 <span className="text-[#64748B] text-xs">{shipment.regulatory_body?.code ?? '—'}</span>
                 {regProfile?.last_verified && (
-                  <span className="text-[9px] text-[#334155] border border-[#1E3A5F] rounded px-1.5 py-0.5">
+                  <span className="text-xs text-[#334155] border border-[#1E3A5F] rounded px-1.5 py-0.5">
                     verified {regProfile.last_verified}
                   </span>
                 )}
@@ -865,7 +866,7 @@ export default function ShipmentDrawer({
                 {shipment.pvoc_deadline && ` · Deadline ${formatDate(shipment.pvoc_deadline)}`}
               </p>
               {(shipment.vessel_name || shipment.bl_number) && (
-                <p className="text-[#334155] text-[11px] mt-1 flex items-center gap-2 flex-wrap">
+                <p className="text-[#334155] text-xs mt-1 flex items-center gap-2 flex-wrap">
                   {shipment.vessel_name && (
                     <span className="flex items-center gap-1">
                       <Ship size={10} className="text-[#334155]" />
@@ -945,7 +946,7 @@ export default function ShipmentDrawer({
               {windowStatus?.useETA ? 'arrival' : 'deadline'}. You are{' '}
               <span className="font-bold">{daysShort} days short.</span>
             </p>
-            <p className="text-[10px] text-red-400/70 mt-1.5">
+            <p className="text-xs text-red-400/70 mt-1.5">
               File immediately to create a paper trail and reduce penalty exposure. See Brief tab for next steps.
             </p>
           </div>
@@ -972,7 +973,7 @@ export default function ShipmentDrawer({
         {(shipment as any).shipment_type === 'BONDED' && (
           <div className="mx-3 sm:mx-4 mt-2 mb-1 rounded-xl border border-amber-400/30 bg-amber-400/5 p-3 sm:p-3.5">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest bg-amber-400/10 border border-amber-400/30 px-2 py-0.5 rounded">Bonded Shipment</span>
+              <span className="text-xs font-black text-amber-400 uppercase tracking-widest bg-amber-400/10 border border-amber-400/30 px-2 py-0.5 rounded">Bonded Shipment</span>
             </div>
             <p className="text-xs text-amber-300/80 leading-relaxed">
               Goods are in a <strong>customs-bonded warehouse</strong>. Import duty is deferred — not paid until goods are removed.
@@ -983,7 +984,7 @@ export default function ShipmentDrawer({
         {(shipment as any).shipment_type === 'TRANSIT' && (
           <div className="mx-3 sm:mx-4 mt-2 mb-1 rounded-xl border border-blue-400/30 bg-blue-400/5 p-3 sm:p-3.5">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest bg-blue-400/10 border border-blue-400/30 px-2 py-0.5 rounded">Transit Shipment</span>
+              <span className="text-xs font-black text-blue-400 uppercase tracking-widest bg-blue-400/10 border border-blue-400/30 px-2 py-0.5 rounded">Transit Shipment</span>
             </div>
             <p className="text-xs text-blue-300/80 leading-relaxed">
               Goods are <strong>transiting through Kenya</strong> to an EAC destination (Uganda, Rwanda, DRC, Tanzania).
@@ -991,6 +992,15 @@ export default function ShipmentDrawer({
             </p>
           </div>
         )}
+
+        {/* Vessel route tracker */}
+        <VesselRoute
+          shipmentStatus={shipment.shipment_status}
+          destinationPort={shipment.destination_port ?? undefined}
+          originLabel={shipment.origin_port ?? shipment.origin_country ?? undefined}
+          vesselName={shipment.vessel_name ?? undefined}
+          eta={(shipment as any).eta ?? undefined}
+        />
 
         {/* Tabs — scrollable strip */}
         <div className="flex border-b border-[#1E3A5F] overflow-x-auto mt-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
@@ -1129,7 +1139,7 @@ export default function ShipmentDrawer({
         {shipment.risk && (
           <div className="border-t border-[#1E3A5F] px-6 py-3 flex items-center gap-4">
             <div className="text-center">
-              <p className="text-[10px] text-[#64748B]">Risk Score</p>
+              <p className="text-xs text-[#64748B]">Risk Score</p>
               <p className="text-sm font-bold text-white">
                 {shipment.composite_risk_score != null
                   ? `${shipment.composite_risk_score * 10}/100`
@@ -1137,14 +1147,14 @@ export default function ShipmentDrawer({
               </p>
             </div>
             <div className="text-center">
-              <p className="text-[10px] text-[#64748B]">Delay Prob</p>
+              <p className="text-xs text-[#64748B]">Delay Prob</p>
               <p className="text-sm font-bold text-amber-400">{Math.round((shipment.risk.delay_probability ?? 0) * 100)}%</p>
             </div>
             <div className="flex-1">
-              <p className="text-[10px] text-[#64748B] mb-1">Drivers</p>
+              <p className="text-xs text-[#64748B] mb-1">Drivers</p>
               <div className="flex flex-wrap gap-1">
                 {(shipment.risk.risk_drivers ?? []).slice(0, 2).map((d, i) => (
-                  <span key={i} className="text-[9px] bg-[#1E3A5F] text-[#94A3B8] px-1.5 py-0.5 rounded">{d}</span>
+                  <span key={i} className="text-xs bg-[#1E3A5F] text-[#94A3B8] px-1.5 py-0.5 rounded">{d}</span>
                 ))}
               </div>
             </div>

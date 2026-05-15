@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect, useRef } from 'react'
 import { Shipment } from '@/lib/types'
 import { formatUSD } from '@/lib/utils'
@@ -152,7 +152,7 @@ export default function AIPage() {
           <div className="flex items-center gap-2 mb-3">
             <Sparkles size={14} className="text-[#00C896]" />
             <span className="text-xs font-bold text-white uppercase tracking-wide">Shipments</span>
-            <span className="ml-auto text-[10px] text-[#334155]">{shipments.length}</span>
+            <span className="ml-auto text-xs text-[#334155]">{shipments.length}</span>
           </div>
           <div className="relative">
             <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#334155]" />
@@ -195,7 +195,7 @@ export default function AIPage() {
                   <RegulatorBadge body={s.regulatory_body?.code ?? '—'} />
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-[#64748B] truncate flex-1">
+                  <span className="text-xs text-[#64748B] truncate flex-1">
                     {s.reference_number} · {formatUSD(s.cif_value_usd)}
                   </span>
                   <RiskBadge risk={s.risk_flag_status} />
@@ -246,7 +246,7 @@ export default function AIPage() {
         {/* Quick tool buttons */}
         {selected && (
           <div className="px-6 py-3 border-b border-[#1E3A5F] flex gap-2 overflow-x-auto bg-[#0A1628]">
-            <span className="text-[10px] text-[#334155] self-center flex-shrink-0 mr-1">Quick tools:</span>
+            <span className="text-xs text-[#334155] self-center flex-shrink-0 mr-1">Quick tools:</span>
             {TOOLS.map(tool => {
               const Icon = tool.icon
               return (
@@ -347,7 +347,7 @@ export default function AIPage() {
               {thinking ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
             </button>
           </div>
-          <p className="text-[10px] text-[#334155] mt-2">Enter to send · Shift+Enter for new line</p>
+          <p className="text-xs text-[#334155] mt-2">Enter to send · Shift+Enter for new line</p>
         </div>
       </div>
     </div>

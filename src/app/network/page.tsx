@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+﻿import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 
 export const revalidate = 300
@@ -69,7 +69,7 @@ export default async function NetworkPage() {
         </Link>
         <a
           href={`${appUrl}/signup`}
-          className="text-[9px] px-3 py-1.5 border border-[#00C896]/40 text-[#00C896] hover:bg-[#00C896]/10 transition-colors uppercase tracking-widest"
+          className="text-xs px-3 py-1.5 border border-[#00C896]/40 text-[#00C896] hover:bg-[#00C896]/10 transition-colors uppercase tracking-widest"
         >
           Register entity
         </a>
@@ -79,7 +79,7 @@ export default async function NetworkPage() {
 
         {/* Header */}
         <div className="mb-10">
-          <p className="text-[9px] text-[#334155] uppercase tracking-[0.25em] mb-3">Public registry</p>
+          <p className="text-xs text-[#334155] uppercase tracking-[0.25em] mb-3">Public registry</p>
           <h1 className="text-xl font-black text-white tracking-wide mb-2">The KRUX Network</h1>
           <p className="text-[#64748B] text-sm">
             Every registered entity on East Africa&apos;s trade standard. Identity verified. Record permanent.
@@ -89,15 +89,15 @@ export default async function NetworkPage() {
         {/* Stats bar */}
         <div className="grid grid-cols-3 border border-[#1E3A5F] mb-10">
           <div className="px-5 py-4 border-r border-[#1E3A5F]">
-            <p className="text-[9px] text-[#334155] uppercase tracking-[0.2em] mb-1">Registered entities</p>
+            <p className="text-xs text-[#334155] uppercase tracking-[0.2em] mb-1">Registered entities</p>
             <p className="text-2xl font-black text-white">{entities.length}</p>
           </div>
           <div className="px-5 py-4 border-r border-[#1E3A5F]">
-            <p className="text-[9px] text-[#334155] uppercase tracking-[0.2em] mb-1">Shipments on record</p>
+            <p className="text-xs text-[#334155] uppercase tracking-[0.2em] mb-1">Shipments on record</p>
             <p className="text-2xl font-black text-white">{shipmentCount}</p>
           </div>
           <div className="px-5 py-4">
-            <p className="text-[9px] text-[#334155] uppercase tracking-[0.2em] mb-1">Scored entities</p>
+            <p className="text-xs text-[#334155] uppercase tracking-[0.2em] mb-1">Scored entities</p>
             <p className="text-2xl font-black text-white">{scoredCount}</p>
           </div>
         </div>
@@ -120,7 +120,7 @@ export default async function NetworkPage() {
                   className="flex items-center gap-4 px-4 py-4 bg-[#0A1628] border border-[#1E3A5F] hover:border-[#00C896]/30 transition-all group"
                 >
                   {/* Rank — hidden on mobile */}
-                  <span className="text-[10px] text-[#1E3A5F] w-4 flex-shrink-0 font-black hidden sm:block">
+                  <span className="text-xs text-[#1E3A5F] w-4 flex-shrink-0 font-black hidden sm:block">
                     {String(i + 1).padStart(2, '0')}
                   </span>
 
@@ -129,14 +129,14 @@ export default async function NetworkPage() {
                     <p className="text-sm font-semibold text-white truncate">
                       {entity.name}
                       {entity.is_verified && (
-                        <span className="ml-2 text-[9px] text-[#00C896] font-black tracking-widest">VERIFIED</span>
+                        <span className="ml-2 text-xs text-[#00C896] font-black tracking-widest">VERIFIED</span>
                       )}
                     </p>
-                    <p className="text-[10px] text-[#334155] font-mono tracking-wide mt-0.5">{entity.krux_id}</p>
+                    <p className="text-xs text-[#334155] font-mono tracking-wide mt-0.5">{entity.krux_id}</p>
                   </div>
 
                   {/* Type badge — hidden on mobile */}
-                  <span className={`text-[9px] font-bold border px-2 py-0.5 flex-shrink-0 tracking-wide hidden sm:block ${typeColor}`}>
+                  <span className={`text-xs font-bold border px-2 py-0.5 flex-shrink-0 tracking-wide hidden sm:block ${typeColor}`}>
                     {TYPE_LABEL[entity.entity_type] ?? entity.entity_type}
                   </span>
 
@@ -144,7 +144,7 @@ export default async function NetworkPage() {
                   <div className="w-28 flex-shrink-0 text-right">
                     {tier ? (
                       <div>
-                        <span className={`text-[9px] font-black tracking-widest ${tier.color}`}>
+                        <span className={`text-xs font-black tracking-widest ${tier.color}`}>
                           {entity.compliance_tier}
                         </span>
                         <span className={`ml-2 text-sm font-black ${tier.color}`}>
@@ -152,14 +152,14 @@ export default async function NetworkPage() {
                         </span>
                       </div>
                     ) : (
-                      <span className="text-[9px] text-[#334155]">Score pending</span>
+                      <span className="text-xs text-[#334155]">Score pending</span>
                     )}
                   </div>
 
                   {/* Shipments — hidden on mobile */}
                   <div className="w-20 flex-shrink-0 text-right hidden sm:block">
                     <p className="text-xs text-[#64748B]">{entity.total_shipments}</p>
-                    <p className="text-[9px] text-[#334155]">shipments</p>
+                    <p className="text-xs text-[#334155]">shipments</p>
                   </div>
 
                   {/* Arrow */}
@@ -180,13 +180,13 @@ export default async function NetworkPage() {
           <div className="mt-4 flex items-center gap-4">
             <a
               href={`${appUrl}/signup`}
-              className="text-[9px] px-4 py-2 border border-[#00C896]/40 text-[#00C896] hover:bg-[#00C896]/10 transition-colors uppercase tracking-widest"
+              className="text-xs px-4 py-2 border border-[#00C896]/40 text-[#00C896] hover:bg-[#00C896]/10 transition-colors uppercase tracking-widest"
             >
               Register your entity
             </a>
             <Link
               href="/methodology"
-              className="text-[9px] text-[#64748B] hover:text-[#00C896] uppercase tracking-widest transition-colors"
+              className="text-xs text-[#64748B] hover:text-[#00C896] uppercase tracking-widest transition-colors"
             >
               How scores work →
             </Link>
@@ -197,8 +197,8 @@ export default async function NetworkPage() {
 
       {/* Footer */}
       <div className="border-t border-[#1E3A5F] px-6 py-4 flex items-center justify-between max-w-4xl mx-auto">
-        <p className="text-[9px] text-[#1E3A5F] uppercase tracking-widest">KRUX · East Africa&apos;s trade standard</p>
-        <p className="text-[9px] text-[#1E3A5F]">Updated every 5 minutes</p>
+        <p className="text-xs text-[#1E3A5F] uppercase tracking-widest">KRUX · East Africa&apos;s trade standard</p>
+        <p className="text-xs text-[#1E3A5F]">Updated every 5 minutes</p>
       </div>
 
     </div>

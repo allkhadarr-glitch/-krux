@@ -4,8 +4,8 @@ import './globals.css'
 import { PostHogProvider } from '@/providers/PostHogProvider'
 
 export const metadata: Metadata = {
-  title: 'KRUX — Kenya Import Compliance Intelligence',
-  description: 'AI-powered Kenya import compliance platform. Track shipments, manage regulatory requirements, and generate tax quotations instantly.',
+  title: 'KRUX — East Africa\'s Trade Standard',
+  description: 'East Africa\'s trade standard. Identity, record, and intelligence for every importer, clearing agent, and freight forwarder.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -8,6 +8,27 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+const COUNTRY_TO_ISO: Record<string, string> = {
+  'china': 'CN', 'people\'s republic of china': 'CN', 'prc': 'CN',
+  'india': 'IN', 'republic of india': 'IN',
+  'uae': 'AE', 'united arab emirates': 'AE', 'dubai': 'AE',
+  'singapore': 'SG', 'usa': 'US', 'united states': 'US', 'united states of america': 'US',
+  'uk': 'GB', 'united kingdom': 'GB', 'england': 'GB', 'great britain': 'GB',
+  'germany': 'DE', 'deutschland': 'DE', 'netherlands': 'NL', 'holland': 'NL',
+  'belgium': 'BE', 'japan': 'JP', 'south korea': 'KR', 'korea': 'KR',
+  'pakistan': 'PK', 'bangladesh': 'BD', 'turkey': 'TR', 'türkiye': 'TR',
+  'italy': 'IT', 'france': 'FR', 'south africa': 'ZA', 'tanzania': 'TZ', 'uganda': 'UG',
+  'sri lanka': 'LK', 'malaysia': 'MY', 'indonesia': 'ID', 'thailand': 'TH',
+  'vietnam': 'VN', 'ethiopia': 'ET', 'nigeria': 'NG', 'ghana': 'GH',
+}
+
+function toISO(raw: string | null | undefined): string | null {
+  if (!raw) return null
+  const trimmed = raw.trim()
+  if (trimmed.length === 2) return trimmed.toUpperCase()
+  return (COUNTRY_TO_ISO[trimmed.toLowerCase()] ?? trimmed) || null
+}
+
 function calcLandedCost(cif: number, dutyPct: number, kesRate: number) {
   const duty     = cif * (dutyPct / 100)
   const idf      = cif * 0.02
@@ -48,26 +69,23 @@ export async function POST(req: NextRequest) {
   if (!Array.isArray(rows) || rows.length === 0) {
     return NextResponse.json({ error: 'No rows provided' }, { status: 400 })
   }
-  if (rows.length > 200) {
-    return NextResponse.json({ error: 'Maximum 200 rows per import' }, { status: 400 })
-  }
 
   const kesRate = await getKesRate()
-  const refs = await nextRefBatch(rows.length)
+  const refs    = await nextRefBatch(rows.length)
 
   const VALID_STAGES = new Set(['PRE_SHIPMENT', 'IN_TRANSIT', 'AT_PORT', 'CUSTOMS', 'CLEARED'])
 
   const inserts = rows.map((r, i) => {
-    const cif    = Number(r.cif_value_usd || 0)
-    const duty   = Number(r.import_duty_pct || 25)
-    const stage  = VALID_STAGES.has(r.shipment_stage) ? r.shipment_stage : 'CLEARED'
-    const costs  = calcLandedCost(cif, duty, kesRate)
+    const cif   = Number(r.cif_value_usd || 0)
+    const duty  = Number(r.import_duty_pct || 25)
+    const stage = VALID_STAGES.has(r.shipment_stage) ? r.shipment_stage : 'CLEARED'
+    const costs = calcLandedCost(cif, duty, kesRate)
     return {
       organization_id:      orgId,
       reference_number:     refs[i],
       name:                 r.name,
-      origin_port:          r.origin_port,
-      origin_country:       r.origin_country || null,
+      origin_port:          r.origin_port || null,
+      origin_country:       toISO(r.origin_country),
       hs_code:              r.hs_code || null,
       product_description:  r.product_description || null,
       cif_value_usd:        cif,
@@ -91,12 +109,29 @@ export async function POST(req: NextRequest) {
     }
   })
 
-  const { data, error } = await supabaseAdmin
-    .from('shipments')
-    .insert(inserts)
-    .select('id, name, reference_number')
+  // Process in sub-batches of 100 to stay within Supabase limits
+  const BATCH = 100
+  let inserted = 0
+  const errors: string[] = []
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  for (let i = 0; i < inserts.length; i += BATCH) {
+    const chunk = inserts.slice(i, i + BATCH)
+    const { data, error } = await supabaseAdmin
+      .from('shipments')
+      .insert(chunk)
+      .select('id')
+    if (error) {
+      errors.push(`Rows ${i + 1}–${i + chunk.length}: ${error.message}`)
+    } else {
+      inserted += data?.length ?? 0
+    }
+  }
 
-  return NextResponse.json({ ok: true, inserted: data?.length ?? 0, shipments: data })
+  return NextResponse.json({
+    ok:       true,
+    inserted,
+    failed:   rows.length - inserted,
+    total:    rows.length,
+    errors:   errors.length ? errors : undefined,
+  })
 }

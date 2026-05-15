@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Users, AlertTriangle, Clock, ChevronDown, ChevronUp,
@@ -394,7 +394,7 @@ export default function ClientPortfolioPage() {
                 </button>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {g.impossibleCount > 0 && (
-                    <span className="flex items-center gap-1 text-[10px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 font-mono">
+                    <span className="flex items-center gap-1 text-xs font-bold text-red-400 bg-red-500/10 px-2 py-0.5 font-mono">
                       {g.impossibleCount} IMPOSSIBLE
                     </span>
                   )}
@@ -449,10 +449,10 @@ export default function ClientPortfolioPage() {
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-[#94A3B8] text-sm font-medium truncate">{s.name}</span>
                             {isOverdue && (
-                              <span className="text-[9px] font-bold font-mono tracking-widest text-red-400 bg-red-500/10 px-1.5 py-0.5 flex-shrink-0">WINDOW CLOSED</span>
+                              <span className="text-xs font-bold font-mono tracking-widest text-red-400 bg-red-500/10 px-1.5 py-0.5 flex-shrink-0">WINDOW CLOSED</span>
                             )}
                             {!isOverdue && isEscalated && (
-                              <span className="text-[9px] font-bold font-mono tracking-widest text-red-400 bg-red-500/10 px-1.5 py-0.5 flex-shrink-0">ESCALATED</span>
+                              <span className="text-xs font-bold font-mono tracking-widest text-red-400 bg-red-500/10 px-1.5 py-0.5 flex-shrink-0">ESCALATED</span>
                             )}
                           </div>
                           <div className="text-[#64748B] text-xs mt-0.5">{s.reference_number} · {s.regulatory_body?.code ?? '—'} · {s.origin_port}</div>
@@ -463,7 +463,7 @@ export default function ClientPortfolioPage() {
                             ? days !== null && days > 0 ? `${days}d` : days === 0 ? 'today' : `${Math.abs(days!)}d late`
                             : '—'}
                         </div>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold flex-shrink-0 ${
                           s.risk_flag_status === 'RED'   ? 'bg-red-500/10 text-red-400' :
                           s.risk_flag_status === 'AMBER' ? 'bg-amber-500/10 text-amber-400' :
                           'bg-emerald-500/10 text-emerald-400'
@@ -472,7 +472,7 @@ export default function ClientPortfolioPage() {
                         </span>
                         <a
                           href={`/dashboard/operations?open=${s.id}`}
-                          className="flex items-center gap-1 text-[10px] text-[#64748B] hover:text-[#00C896] font-mono flex-shrink-0 transition-colors"
+                          className="flex items-center gap-1 text-xs text-[#64748B] hover:text-[#00C896] font-mono flex-shrink-0 transition-colors"
                           title="Open in operations"
                         >
                           <ArrowUpRight size={12} />

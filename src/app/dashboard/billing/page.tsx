@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { CheckCircle2, Loader2, CreditCard, Zap, Shield, Building2, ArrowRight, AlertTriangle } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
@@ -6,50 +6,49 @@ import { Suspense } from 'react'
 
 const PLANS = [
   {
-    id: 'basic',
-    name: 'Basic',
-    price: 299,
+    id: 'starter',
+    name: 'Starter',
+    price: 99,
     color: '#00C896',
     features: [
-      'Up to 25 shipments/month',
-      'All 8 Kenya regulators',
+      'Up to 5 active shipments',
+      'All Kenya regulators',
       'Deadline alerts (email)',
-      'AI compliance briefs',
-      'Manufacturer vault (10)',
-      'Team (3 members)',
+      'HS code lookup',
+      'KTIN identity',
+      'Quotation template',
     ],
   },
   {
-    id: 'pro',
-    name: 'Pro',
-    price: 499,
+    id: 'standard',
+    name: 'Standard',
+    price: 299,
     color: '#3B82F6',
     badge: 'Most Popular',
     features: [
-      'Up to 100 shipments/month',
-      'Everything in Basic',
-      'WhatsApp alerts',
-      'Document AI extraction',
-      'Manufacturer vault (unlimited)',
-      'Team (10 members)',
-      'Audit export reports',
-      'Priority support',
+      'Unlimited shipments',
+      'Everything in Starter',
+      'Clearance intelligence',
+      'Today page dashboard',
+      'Historical data import',
+      'Team access',
+      'Window checker',
+      'Priority email support',
     ],
   },
   {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: 1500,
+    id: 'professional',
+    name: 'Professional',
+    price: 599,
     color: '#F59E0B',
     features: [
-      'Unlimited shipments',
-      'Everything in Pro',
-      'Custom onboarding',
-      'Dedicated account manager',
-      'SLA guarantee',
-      'API access',
-      'Custom integrations',
-      'Multi-entity support',
+      'Everything in Standard',
+      'KTIN Verification API',
+      'Multi-user access',
+      'Monthly compliance report',
+      'Agent performance data',
+      'Partner referral program',
+      'Dedicated onboarding',
     ],
   },
 ]
@@ -91,12 +90,14 @@ function BillingContent() {
     }
   }
 
-  async function manageSubscription() {
+  async function cancelSubscription() {
+    if (!window.confirm('Cancel your KRUX subscription? You will be moved to the free trial tier immediately.')) return
     setManaging(true)
     try {
       const r = await fetch('/api/payments/portal', { method: 'POST' })
-      const { url } = await r.json()
-      if (url) window.location.href = url
+      if (r.ok) {
+        await loadOrg()
+      }
     } finally {
       setManaging(false)
     }
@@ -141,10 +142,10 @@ function BillingContent() {
             <div className="flex items-center gap-3">
               <h2 className="text-xl font-bold text-white capitalize">{currentTier}</h2>
               {isActive && (
-                <span className="text-[10px] bg-[#00C896]/10 text-[#00C896] px-2 py-0.5 rounded-full border border-[#00C896]/20 font-medium">Active</span>
+                <span className="text-xs bg-[#00C896]/10 text-[#00C896] px-2 py-0.5 rounded-full border border-[#00C896]/20 font-medium">Active</span>
               )}
               {currentTier === 'trial' && (
-                <span className="text-[10px] bg-[#F59E0B]/10 text-[#F59E0B] px-2 py-0.5 rounded-full border border-[#F59E0B]/20 font-medium">Trial</span>
+                <span className="text-xs bg-[#F59E0B]/10 text-[#F59E0B] px-2 py-0.5 rounded-full border border-[#F59E0B]/20 font-medium">Trial</span>
               )}
             </div>
             {org?.subscription_expires_at && (
@@ -155,12 +156,12 @@ function BillingContent() {
           </div>
           {isActive && (
             <button
-              onClick={manageSubscription}
+              onClick={cancelSubscription}
               disabled={managing}
               className="flex items-center gap-2 px-4 py-2 bg-[#0A1628] border border-[#1E3A5F] text-[#94A3B8] hover:text-white rounded-lg text-sm font-medium transition-colors"
             >
               {managing ? <Loader2 size={13} className="animate-spin" /> : <CreditCard size={13} />}
-              Manage billing
+              Cancel subscription
             </button>
           )}
         </div>
@@ -170,7 +171,7 @@ function BillingContent() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {PLANS.map((plan) => {
           const isCurrent = currentTier === plan.id
-          const Icon = plan.id === 'basic' ? Zap : plan.id === 'pro' ? Shield : Building2
+          const Icon = plan.id === 'starter' ? Zap : plan.id === 'standard' ? Shield : Building2
 
           return (
             <div
@@ -180,7 +181,7 @@ function BillingContent() {
               }`}
             >
               {plan.badge && (
-                <div className="text-[10px] font-bold text-[#3B82F6] bg-[#3B82F6]/10 border border-[#3B82F6]/20 px-2 py-0.5 rounded-full w-fit mb-3">
+                <div className="text-xs font-bold text-[#3B82F6] bg-[#3B82F6]/10 border border-[#3B82F6]/20 px-2 py-0.5 rounded-full w-fit mb-3">
                   {plan.badge}
                 </div>
               )}
@@ -223,41 +224,11 @@ function BillingContent() {
       </div>
 
       <p className="text-xs text-[#64748B] text-center">
-        Payments are processed securely by Stripe. Cancel anytime from the billing portal.{' '}
+        Payments are processed securely by Paystack. Cancel anytime.{' '}
         <a href="/terms" className="text-[#00C896] hover:underline">Terms</a> ·{' '}
         <a href="/privacy" className="text-[#00C896] hover:underline">Privacy</a>
       </p>
 
-      {/* Go Live with Stripe */}
-      <div className="bg-[#0F2040] border border-amber-500/20 rounded-xl p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
-            <span className="text-amber-400 text-xs font-bold">!</span>
-          </div>
-          <h3 className="text-white font-semibold">Currently in Test Mode</h3>
-          <span className="px-2 py-0.5 bg-amber-500/10 text-amber-400 text-[10px] font-bold rounded-full border border-amber-500/20">TEST</span>
-        </div>
-        <p className="text-[#64748B] text-sm mb-5 leading-relaxed">
-          Subscriptions are processed with Stripe test keys. No real charges occur. To accept live payments, follow these steps:
-        </p>
-        <ol className="space-y-3">
-          {[
-            { n: '1', label: 'Get live keys', detail: 'Stripe Dashboard → Developers → API Keys → switch to Live mode. Copy sk_live_... and pk_live_...' },
-            { n: '2', label: 'Update STRIPE_SECRET_KEY in Vercel', detail: 'Vercel → Project → Settings → Environment Variables → replace sk_test_... with sk_live_...' },
-            { n: '3', label: 'Re-run setup-stripe.js', detail: 'node scripts/setup-stripe.js — creates live products + updates STRIPE_PRICE_* env vars automatically' },
-            { n: '4', label: 'Register live webhook', detail: 'Stripe Dashboard → Webhooks → Add endpoint → https://krux-xi.vercel.app/api/payments/webhook — select: checkout.session.completed, invoice.paid, customer.subscription.deleted' },
-            { n: '5', label: 'Update STRIPE_WEBHOOK_SECRET', detail: 'Copy the new whsec_... signing secret from the live webhook → update in Vercel env vars → redeploy' },
-          ].map(({ n, label, detail }) => (
-            <li key={n} className="flex gap-4">
-              <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{n}</div>
-              <div>
-                <div className="text-white text-sm font-semibold">{label}</div>
-                <div className="text-[#64748B] text-xs mt-0.5 leading-relaxed">{detail}</div>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </div>
     </div>
   )
 }

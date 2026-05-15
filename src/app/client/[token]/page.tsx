@@ -143,12 +143,12 @@ export default async function ClientPortalPage({ params }: { params: Promise<{ t
             </div>
             <div>
               <div className="text-white font-bold text-sm leading-none">KRUX</div>
-              <div className="text-[#64748B] text-[10px] leading-none mt-0.5">Kenya Import Compliance</div>
+              <div className="text-[#64748B] text-xs leading-none mt-0.5">Kenya Import Compliance</div>
             </div>
           </div>
           <div className="text-right">
             <div className="text-white font-semibold text-sm leading-none">{tokenRow.client_name}</div>
-            <div className="text-[#64748B] text-[10px] leading-none mt-0.5">Shipment Portal</div>
+            <div className="text-[#64748B] text-xs leading-none mt-0.5">Shipment Portal</div>
           </div>
         </div>
       </div>
@@ -244,7 +244,7 @@ export default async function ClientPortalPage({ params }: { params: Promise<{ t
 
                   {/* ── Journey stages ── */}
                   <div className="px-4 py-3 border-b border-[#1E3A5F]">
-                    <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wide mb-2.5">Where is your cargo?</p>
+                    <p className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-2.5">Where is your cargo?</p>
                     <div className="relative">
                       {/* Track line */}
                       <div className="absolute top-3 left-3 right-3 h-0.5 bg-[#1E3A5F]" />
@@ -271,7 +271,7 @@ export default async function ClientPortalPage({ params }: { params: Promise<{ t
                                     : <div className="w-1.5 h-1.5 rounded-full bg-[#1E3A5F]" />
                                 }
                               </div>
-                              <span className={`text-[9px] font-semibold text-center leading-tight max-w-[48px] ${
+                              <span className={`text-xs font-semibold text-center leading-tight max-w-[48px] ${
                                 current ? 'text-[#00C896]' : done ? 'text-[#64748B]' : 'text-[#334155]'
                               }`}>
                                 {STAGE_LABELS[stage]}
@@ -291,7 +291,7 @@ export default async function ClientPortalPage({ params }: { params: Promise<{ t
                   {/* ── Cost breakdown ── */}
                   {s.total_landed_cost_kes && (
                     <div className="px-4 py-3 border-b border-[#1E3A5F]">
-                      <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wide mb-3">What it's costing you</p>
+                      <p className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-3">What it's costing you</p>
                       <div className="space-y-0">
                         {s.cif_value_usd && (
                           <CostRow
@@ -325,7 +325,7 @@ export default async function ClientPortalPage({ params }: { params: Promise<{ t
                           <span className="text-sm font-bold text-white">Total you pay</span>
                           <span className="text-lg font-black text-[#00C896] tabular-nums">{fmtKES(s.total_landed_cost_kes)}</span>
                         </div>
-                        <p className="text-[10px] text-[#334155] mt-1">
+                        <p className="text-xs text-[#334155] mt-1">
                           Taxes &amp; levies = {Math.round(((s.total_landed_cost_kes - s.cif_value_usd * rate) / s.total_landed_cost_kes) * 100)}% of your total cost
                           {s.exchange_rate_used ? ` · Rate: KES ${Number(s.exchange_rate_used).toFixed(1)}/USD` : ''}
                         </p>
@@ -336,7 +336,7 @@ export default async function ClientPortalPage({ params }: { params: Promise<{ t
                   {/* ── Action steps ── */}
                   {s.actions.length > 0 && (
                     <div className="px-4 py-3 border-b border-[#1E3A5F]">
-                      <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wide mb-2.5">What your clearing agent is doing</p>
+                      <p className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-2.5">What your clearing agent is doing</p>
                       <div className="space-y-2">
                         {s.actions.map((a: any, i: number) => (
                           <div key={i} className="flex items-start gap-2.5">
@@ -362,7 +362,7 @@ export default async function ClientPortalPage({ params }: { params: Promise<{ t
                               }`}>{a.title}</p>
                             </div>
                             {(a.status === 'IN_PROGRESS' || a.status === 'SUBMITTED') && (
-                              <span className="text-[9px] font-bold text-[#00C896] bg-[#00C896]/10 px-1.5 py-0.5 rounded flex-shrink-0">Active</span>
+                              <span className="text-xs font-bold text-[#00C896] bg-[#00C896]/10 px-1.5 py-0.5 rounded flex-shrink-0">Active</span>
                             )}
                           </div>
                         ))}
@@ -372,7 +372,7 @@ export default async function ClientPortalPage({ params }: { params: Promise<{ t
 
                   {/* ── Key details ── */}
                   <div className="px-4 py-3">
-                    <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wide mb-2.5">Shipment details</p>
+                    <p className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-2.5">Shipment details</p>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                       {s.vessel_name && <Detail label="Vessel" val={s.vessel_name} />}
                       {s.bl_number && <Detail label="Bill of Lading" val={s.bl_number} />}
@@ -408,7 +408,7 @@ export default async function ClientPortalPage({ params }: { params: Promise<{ t
           </a>
         </div>
 
-        <p className="text-[#1E3A5F] text-[10px] text-center pb-2">
+        <p className="text-[#1E3A5F] text-xs text-center pb-2">
           Powered by KRUX · Kenya Import Compliance Intelligence · {new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
       </div>
@@ -420,7 +420,7 @@ function StatCard({ val, label, color }: { val: number | string; label: string; 
   return (
     <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-3 text-center">
       <div className={`text-lg font-black ${color} leading-none`}>{val}</div>
-      <div className="text-[#64748B] text-[10px] mt-1 leading-tight">{label}</div>
+      <div className="text-[#64748B] text-xs mt-1 leading-tight">{label}</div>
     </div>
   )
 }
@@ -430,7 +430,7 @@ function CostRow({ label, kes, note, highlight }: { label: string; kes: number; 
     <div className="flex items-start justify-between py-1.5 gap-3">
       <div className="flex-1 min-w-0">
         <span className={`text-xs ${highlight ? 'text-[#94A3B8]' : 'text-[#64748B]'}`}>{label}</span>
-        {note && <div className="text-[9px] text-[#334155] mt-0.5">{note}</div>}
+        {note && <div className="text-xs text-[#334155] mt-0.5">{note}</div>}
       </div>
       <span className={`text-xs font-semibold tabular-nums flex-shrink-0 ${highlight ? 'text-amber-400' : 'text-[#64748B]'}`}>
         {fmtKES(kes)}
@@ -442,7 +442,7 @@ function CostRow({ label, kes, note, highlight }: { label: string; kes: number; 
 function Detail({ label, val }: { label: string; val: string }) {
   return (
     <div>
-      <div className="text-[9px] font-bold text-[#334155] uppercase tracking-wide">{label}</div>
+      <div className="text-xs font-bold text-[#334155] uppercase tracking-wide">{label}</div>
       <div className="text-xs text-[#94A3B8] mt-0.5 break-words">{val}</div>
     </div>
   )

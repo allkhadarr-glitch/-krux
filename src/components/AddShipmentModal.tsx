@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect, useRef } from 'react'
 import { X, Loader2, Plus, TrendingUp, Sparkles, CheckCircle2, Upload, FileText, AlertTriangle, Ship, Info, Copy, Share2 } from 'lucide-react'
 import { Shipment } from '@/lib/types'
@@ -44,12 +44,60 @@ const STAGES = [
   { value: 'CLEARED',      label: 'Cleared' },
 ]
 
-const ORIGINS = [
-  'Mumbai, India', 'Chennai, India', 'Delhi, India', 'Bangalore, India',
-  'Shanghai, China', 'Shenzhen, China', 'Guangzhou, China', 'Ningbo, China',
-  'Dubai, UAE', 'Jebel Ali, UAE', 'Singapore', 'Nagoya, Japan', 'Tokyo, Japan',
-  'London, UK', 'Amsterdam, Netherlands', 'Antwerp, Belgium', 'Other',
+const ORIGINS: { label: string; iso: string }[] = [
+  // India
+  { label: 'Mumbai, India',           iso: 'IN' },
+  { label: 'Chennai, India',          iso: 'IN' },
+  { label: 'Nhava Sheva, India',      iso: 'IN' },
+  { label: 'Delhi, India',            iso: 'IN' },
+  { label: 'Kolkata, India',          iso: 'IN' },
+  // China
+  { label: 'Shanghai, China',         iso: 'CN' },
+  { label: 'Shenzhen, China',         iso: 'CN' },
+  { label: 'Guangzhou, China',        iso: 'CN' },
+  { label: 'Ningbo, China',           iso: 'CN' },
+  { label: 'Tianjin, China',          iso: 'CN' },
+  { label: 'Qingdao, China',          iso: 'CN' },
+  // UAE
+  { label: 'Dubai, UAE',              iso: 'AE' },
+  { label: 'Jebel Ali, UAE',          iso: 'AE' },
+  { label: 'Abu Dhabi, UAE',          iso: 'AE' },
+  // Asia
+  { label: 'Singapore',               iso: 'SG' },
+  { label: 'Busan, South Korea',      iso: 'KR' },
+  { label: 'Tokyo, Japan',            iso: 'JP' },
+  { label: 'Nagoya, Japan',           iso: 'JP' },
+  { label: 'Karachi, Pakistan',       iso: 'PK' },
+  { label: 'Chittagong, Bangladesh',  iso: 'BD' },
+  { label: 'Colombo, Sri Lanka',      iso: 'LK' },
+  // Europe
+  { label: 'Rotterdam, Netherlands',  iso: 'NL' },
+  { label: 'Amsterdam, Netherlands',  iso: 'NL' },
+  { label: 'Antwerp, Belgium',        iso: 'BE' },
+  { label: 'Hamburg, Germany',        iso: 'DE' },
+  { label: 'London, UK',              iso: 'GB' },
+  { label: 'Istanbul, Turkey',        iso: 'TR' },
+  { label: 'Genoa, Italy',            iso: 'IT' },
+  // Americas
+  { label: 'New York, USA',           iso: 'US' },
+  { label: 'Los Angeles, USA',        iso: 'US' },
+  { label: 'Houston, USA',            iso: 'US' },
+  // Africa
+  { label: 'Durban, South Africa',    iso: 'ZA' },
+  { label: 'Dar es Salaam, Tanzania', iso: 'TZ' },
+  { label: 'Other',                   iso: '' },
 ]
+
+// ISO 2-letter → full country name (for display)
+const ISO_NAMES: Record<string, string> = {
+  IN: 'India', CN: 'China', AE: 'UAE', SG: 'Singapore', KR: 'South Korea',
+  JP: 'Japan', PK: 'Pakistan', BD: 'Bangladesh', LK: 'Sri Lanka',
+  NL: 'Netherlands', BE: 'Belgium', DE: 'Germany', GB: 'United Kingdom',
+  TR: 'Turkey', IT: 'Italy', US: 'United States', ZA: 'South Africa',
+  TZ: 'Tanzania', UG: 'Uganda', ET: 'Ethiopia', NG: 'Nigeria',
+  FR: 'France', ES: 'Spain', SE: 'Sweden', NO: 'Norway',
+  AU: 'Australia', CA: 'Canada', BR: 'Brazil', MX: 'Mexico',
+}
 
 function calcPreview(cif: number, dutyPct: number, kesRate: number) {
   if (!cif) return null
@@ -112,7 +160,7 @@ function HsCodeSearch({ value, onSelect }: { value: string; onSelect: (hs: HsCod
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#00C896] font-mono">{h.code}</span>
-                <span className="text-[10px] text-[#64748B]">{h.duty}% duty · {h.regulator}</span>
+                <span className="text-xs text-[#64748B]">{h.duty}% duty · {h.regulator}</span>
               </div>
               <div className="text-xs text-[#94A3B8] mt-0.5 truncate">{h.description}</div>
             </button>
@@ -328,7 +376,7 @@ export default function AddShipmentModal({
               </div>
               {clientLink ? (
                 <div className="flex items-center gap-2">
-                  <span className="flex-1 text-[11px] text-[#64748B] font-mono truncate bg-[#0A1628] px-2 py-1.5 rounded-lg border border-[#1E3A5F]">
+                  <span className="flex-1 text-xs text-[#64748B] font-mono truncate bg-[#0A1628] px-2 py-1.5 rounded-lg border border-[#1E3A5F]">
                     {clientLink}
                   </span>
                   <button
@@ -375,7 +423,7 @@ export default function AddShipmentModal({
           ) : (
             <div className="space-y-3">
               <div className="bg-[#00C896]/10 border border-[#00C896]/20 rounded-xl px-4 py-3 text-sm text-[#00C896] font-medium">
-                Actions generated — check Action Center
+                Actions generated — check Compliance Actions
               </div>
               <button onClick={onClose} className="w-full py-2.5 bg-[#00C896] text-[#0A1628] rounded-xl font-bold text-sm hover:bg-[#00C896]/90 transition-colors">
                 Go to Dashboard
@@ -419,7 +467,7 @@ export default function AddShipmentModal({
                     }`}
                   >
                     {tpl.regulatory_body && (
-                      <span className={`font-mono text-[10px] font-bold px-1.5 py-0.5 ${
+                      <span className={`font-mono text-xs font-bold px-1.5 py-0.5 ${
                         appliedTpl === tpl.id ? 'bg-[#00C896]/20 text-[#00C896]' : 'bg-[#1E3A5F] text-[#64748B]'
                       }`}>
                         {tpl.regulatory_body.code}
@@ -429,13 +477,13 @@ export default function AddShipmentModal({
                       {tpl.name}
                     </span>
                     {tpl.use_count > 0 && (
-                      <span className="text-[10px] text-[#334155] flex-shrink-0">{tpl.use_count}×</span>
+                      <span className="text-xs text-[#334155] flex-shrink-0">{tpl.use_count}×</span>
                     )}
                   </button>
                 ))}
               </div>
               {appliedTpl && (
-                <p className="text-[10px] text-[#00C896]">Template applied — fill in shipment name, vessel, ETA and dates</p>
+                <p className="text-xs text-[#00C896]">Template applied — fill in shipment name, vessel, ETA and dates</p>
               )}
             </div>
           )}
@@ -491,12 +539,30 @@ export default function AddShipmentModal({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-[#94A3B8] mb-1 block">Origin Port *</label>
-                <select required value={form.origin_port} onChange={(e) => set('origin_port', e.target.value)}
+                <label className="text-xs text-[#94A3B8] mb-1 block">
+                  Origin Port *
+                  {form.origin_country && (
+                    <span className="ml-2 font-mono text-[#00C896]">{form.origin_country}</span>
+                  )}
+                </label>
+                <select required value={form.origin_port} onChange={(e) => {
+                  const val = e.target.value
+                  const match = ORIGINS.find((o) => o.label === val)
+                  setForm((f) => ({ ...f, origin_port: val, origin_country: match?.iso ?? f.origin_country }))
+                }}
                   className="w-full px-3 py-2 bg-[#0F2040] border border-[#1E3A5F] rounded-lg text-sm text-white focus:outline-none focus:border-[#00C896]">
                   <option value="">Select origin</option>
-                  {ORIGINS.map((o) => <option key={o} value={o}>{o}</option>)}
+                  {ORIGINS.map((o) => <option key={o.label} value={o.label}>{o.label}</option>)}
                 </select>
+                {form.origin_port === 'Other' && (
+                  <select value={form.origin_country} onChange={(e) => set('origin_country', e.target.value)}
+                    className="mt-1.5 w-full px-3 py-2 bg-[#0F2040] border border-[#1E3A5F] rounded-lg text-sm text-white focus:outline-none focus:border-[#00C896]">
+                    <option value="">Select country</option>
+                    {Object.entries(ISO_NAMES).sort(([,a],[,b]) => a.localeCompare(b)).map(([iso, name]) => (
+                      <option key={iso} value={iso}>{name} ({iso})</option>
+                    ))}
+                  </select>
+                )}
               </div>
               <div>
                 <label className="text-xs text-[#94A3B8] mb-1 block">Product Description</label>
@@ -657,7 +723,7 @@ export default function AddShipmentModal({
                     <TrendingUp size={14} className="text-[#00C896]" />
                     <span className="text-xs font-semibold text-[#00C896] uppercase tracking-wide">Live Landed Cost Estimate</span>
                   </div>
-                  <span className="text-[10px] text-[#64748B]">1 USD = KES {kesRate}</span>
+                  <span className="text-xs text-[#64748B]">1 USD = KES {kesRate}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-xs mb-3">
                   {[
@@ -682,7 +748,7 @@ export default function AddShipmentModal({
                   <div className="text-right">
                     <div className="text-xs text-[#64748B] mb-0.5">KES equivalent</div>
                     <div className="text-sm font-bold text-white">KES {preview.totalKES.toLocaleString()}</div>
-                    <div className="text-[10px] text-[#64748B]">Taxes = {preview.taxPct}% of total</div>
+                    <div className="text-xs text-[#64748B]">Taxes = {preview.taxPct}% of total</div>
                   </div>
                 </div>
               </div>

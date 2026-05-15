@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { Manufacturer, ManufacturerLicense, RiskFlag } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
@@ -275,9 +275,9 @@ function LicenseRow({ license }: { license: ManufacturerLicense }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-white truncate">{license.license_name}</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#1E3A5F] text-[#94A3B8] font-medium">{license.license_type}</span>
+          <span className="text-xs px-1.5 py-0.5 rounded bg-[#1E3A5F] text-[#94A3B8] font-medium">{license.license_type}</span>
         </div>
-        <div className="text-[10px] text-[#64748B] mt-0.5">
+        <div className="text-xs text-[#64748B] mt-0.5">
           {license.issuing_body} · {license.license_number || 'No number'}
         </div>
       </div>
@@ -285,7 +285,7 @@ function LicenseRow({ license }: { license: ManufacturerLicense }) {
         <div className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${licenseStatusColors[license.status] ?? 'text-[#64748B]'}`}>
           {license.status.replace(/_/g, ' ')}
         </div>
-        <div className={`text-[10px] mt-0.5 flex items-center justify-end gap-1 ${urgent ? 'text-red-400' : 'text-[#64748B]'}`}>
+        <div className={`text-xs mt-0.5 flex items-center justify-end gap-1 ${urgent ? 'text-red-400' : 'text-[#64748B]'}`}>
           {urgent && <AlertTriangle size={9} />}
           <Clock size={9} />
           {days > 0 ? `${days}d left` : `${Math.abs(days)}d overdue`}
@@ -321,10 +321,10 @@ function ManufacturerRow({
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-white truncate">{manufacturer.company_name}</span>
             {manufacturer.is_preferred_supplier && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#00C896]/10 text-[#00C896] border border-[#00C896]/20 font-medium">Preferred</span>
+              <span className="text-xs px-1.5 py-0.5 rounded bg-[#00C896]/10 text-[#00C896] border border-[#00C896]/20 font-medium">Preferred</span>
             )}
             {manufacturer.is_blacklisted && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 font-medium">Blacklisted</span>
+              <span className="text-xs px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 font-medium">Blacklisted</span>
             )}
           </div>
           <div className="text-xs text-[#64748B] mt-0.5">
@@ -335,7 +335,7 @@ function ManufacturerRow({
 
         <div className="flex items-center gap-3 shrink-0">
           {expiringSoon > 0 && (
-            <span className="flex items-center gap-1 text-[10px] text-red-400 font-semibold">
+            <span className="flex items-center gap-1 text-xs text-red-400 font-semibold">
               <AlertTriangle size={10} /> {expiringSoon} expiring
             </span>
           )}
@@ -359,7 +359,7 @@ function ManufacturerRow({
           {manufacturer.product_categories?.length > 0 && (
             <div className="flex gap-1 flex-wrap">
               {manufacturer.product_categories.map((cat) => (
-                <span key={cat} className="text-[10px] px-2 py-0.5 rounded-full bg-[#1E3A5F] text-[#94A3B8]">{cat}</span>
+                <span key={cat} className="text-xs px-2 py-0.5 rounded-full bg-[#1E3A5F] text-[#94A3B8]">{cat}</span>
               ))}
             </div>
           )}
@@ -369,7 +369,7 @@ function ManufacturerRow({
               <span className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">Licenses</span>
               <button
                 onClick={(e) => { e.stopPropagation(); onAddLicense(manufacturer) }}
-                className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg bg-[#00C896]/10 text-[#00C896] border border-[#00C896]/20 hover:bg-[#00C896]/20 transition-colors font-semibold"
+                className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-[#00C896]/10 text-[#00C896] border border-[#00C896]/20 hover:bg-[#00C896]/20 transition-colors font-semibold"
               >
                 <Plus size={10} /> Add License
               </button>

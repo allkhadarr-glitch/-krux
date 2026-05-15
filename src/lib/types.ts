@@ -232,6 +232,11 @@ export interface Action {
   source:           'SYSTEM' | 'USER'
   created_at:       string
   updated_at:       string
+  execution_status?: 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'FAILED' | 'AT_RISK'
+  started_at?:      string
+  failed_at?:       string
+  execution_notes?: string
+  portal_ref?:      string
 
   // Joins
   shipment?: Pick<Shipment, 'id' | 'name' | 'reference_number' | 'pvoc_deadline' | 'risk_flag_status'>

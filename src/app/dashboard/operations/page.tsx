@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { Shipment, ShipmentPortal, PriorityLevel } from '@/lib/types'
 import { formatUSD, formatDate, daysUntilDeadline } from '@/lib/utils'
@@ -36,13 +36,13 @@ function PriorityBadge({ level, score, compositeScore }: { level?: PriorityLevel
   return (
     <div className="flex flex-col gap-0.5">
       {level && (
-        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${priorityColors[level]}`}>
+        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${priorityColors[level]}`}>
           {level}
         </span>
       )}
       {display != null && (
         <span className={`text-sm font-black tabular-nums ${color}`}>
-          {display}<span className="text-[10px] font-normal text-[#64748B]">/100</span>
+          {display}<span className="text-xs font-normal text-[#64748B]">/100</span>
         </span>
       )}
     </div>
@@ -54,13 +54,13 @@ function ImpossibleWindowBadge({ shipment }: { shipment: any }) {
   const ws = getWindowStatus({ pvoc_deadline: shipment.pvoc_deadline, eta: shipment.eta }, profile ?? null)
   if (!ws || ws.status === 'OK') return null
   if (ws.status === 'IMPOSSIBLE') return (
-    <div className="flex items-center gap-1 mt-1 text-[10px] font-semibold text-red-400 leading-tight">
+    <div className="flex items-center gap-1 mt-1 text-xs font-semibold text-red-400 leading-tight">
       <AlertTriangle size={9} className="flex-shrink-0 mt-px animate-pulse" />
       <span>{ws.slaRequired}d needed · {ws.daysRemaining}d left · {ws.daysShort}d short</span>
     </div>
   )
   return (
-    <div className="flex items-center gap-1 mt-1 text-[10px] font-semibold text-amber-400 leading-tight">
+    <div className="flex items-center gap-1 mt-1 text-xs font-semibold text-amber-400 leading-tight">
       <AlertTriangle size={9} className="flex-shrink-0 mt-px" />
       <span>Tight — {ws.daysShort}d buffer only</span>
     </div>
@@ -74,13 +74,13 @@ function RiskDriversTooltip({ drivers }: { drivers?: string[] }) {
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-0.5 text-[10px] text-[#64748B] hover:text-[#94A3B8] transition-colors mt-0.5"
+        className="flex items-center gap-0.5 text-xs text-[#64748B] hover:text-[#94A3B8] transition-colors mt-0.5"
       >
         {drivers.length} driver{drivers.length !== 1 ? 's' : ''} <ChevronDown size={10} />
       </button>
       {open && (
         <div className="absolute z-10 top-5 left-0 bg-[#0A1628] border border-[#1E3A5F] rounded-lg p-3 shadow-xl min-w-[200px]">
-          <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wide mb-2">Risk Drivers</p>
+          <p className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-2">Risk Drivers</p>
           <ul className="space-y-1">
             {drivers.map((d, i) => (
               <li key={i} className="text-xs text-[#94A3B8] flex items-start gap-1.5">
@@ -110,19 +110,19 @@ function ScoreBreakdown({ daysLeft, cifUsd, delayProb }: { daysLeft?: number; ci
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-0.5 text-[10px] text-[#334155] hover:text-[#64748B] transition-colors"
+        className="flex items-center gap-0.5 text-xs text-[#334155] hover:text-[#64748B] transition-colors"
       >
         breakdown <ChevronDown size={9} />
       </button>
       {open && (
         <div className="absolute z-10 top-5 left-0 bg-[#0A1628] border border-[#1E3A5F] rounded-lg p-3 shadow-xl w-[210px]">
-          <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wide mb-2.5">Score breakdown</p>
+          <p className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-2.5">Score breakdown</p>
           <div className="space-y-2">
             {bars.map(b => (
               <div key={b.label}>
                 <div className="flex justify-between mb-0.5">
-                  <span className="text-[10px] text-[#94A3B8]">{b.label}</span>
-                  <span className="text-[10px] font-bold" style={{ color: b.color }}>{b.pct}%</span>
+                  <span className="text-xs text-[#94A3B8]">{b.label}</span>
+                  <span className="text-xs font-bold" style={{ color: b.color }}>{b.pct}%</span>
                 </div>
                 <div className="h-1 bg-[#1E3A5F] rounded-full overflow-hidden">
                   <div className="h-full rounded-full transition-all" style={{ width: `${b.pct}%`, background: b.color }} />
@@ -130,7 +130,7 @@ function ScoreBreakdown({ daysLeft, cifUsd, delayProb }: { daysLeft?: number; ci
               </div>
             ))}
           </div>
-          <p className="text-[9px] text-[#334155] mt-2.5 leading-relaxed">Weighted composite: urgency × (0.4 + 0.6 × value) × (0.3 + 0.7 × probability)</p>
+          <p className="text-xs text-[#334155] mt-2.5 leading-relaxed">Weighted composite: urgency × (0.4 + 0.6 × value) × (0.3 + 0.7 × probability)</p>
         </div>
       )}
     </div>
@@ -151,7 +151,7 @@ function PortalDots({ portals }: { portals?: ShipmentPortal[] }) {
   return (
     <div className="flex gap-1 flex-wrap">
       {active.map((p) => (
-        <span key={p.regulator} className={`text-[10px] font-bold uppercase ${portalStatusColors[p.status] ?? 'text-[#64748B]'}`}>
+        <span key={p.regulator} className={`text-xs font-bold uppercase ${portalStatusColors[p.status] ?? 'text-[#64748B]'}`}>
           {p.regulator}
         </span>
       ))}
@@ -303,7 +303,7 @@ function CloseShipmentModal({
 
           {/* Action summary strip */}
           {summary && (
-            <div className="bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3 py-2 flex gap-4 text-[11px]">
+            <div className="bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3 py-2 flex gap-4 text-xs">
               <span className="text-emerald-400 font-semibold">{summary.completed} done</span>
               {summary.failed   > 0 && <span className="text-red-400  font-semibold">{summary.failed} failed</span>}
               {summary.at_risk  > 0 && <span className="text-red-400  font-semibold animate-pulse">{summary.at_risk} at risk</span>}
@@ -406,7 +406,7 @@ function StagePipeline({ shipmentId, currentStage }: { shipmentId: string; curre
           )
         })}
       </div>
-      <div className={`text-[9px] font-bold uppercase tracking-widest leading-none ${STAGE_COLORS[stage] ?? 'text-[#64748B]'}`}>
+      <div className={`text-xs font-bold uppercase tracking-widest leading-none ${STAGE_COLORS[stage] ?? 'text-[#64748B]'}`}>
         {STAGE_LABELS[stage] ?? stage}
       </div>
     </div>
@@ -436,6 +436,7 @@ export default function OperationsPage() {
   const [valueData, setValueData] = useState<{ kes_protected: number; windows_caught: number; actions_completed: number } | null>(null)
   const [tooltipDismissed, setTooltipDismissed] = useState(false)
   const [seedingDemo, setSeedingDemo] = useState(false)
+  const [actionSummary, setActionSummary] = useState<Record<string, { total: number; done: number; in_progress: number }>>( {})
   const { canWrite } = useRole()
   const isDemo = useDemo()
 
@@ -519,12 +520,18 @@ export default function OperationsPage() {
     Promise.all([
       fetch('/api/shipments').then((r) => r.json()),
       fetch('/api/fx/rate').then((r) => r.json()).catch(() => ({ usd_kes: 130 })),
+      fetch('/api/actions/summary').then((r) => r.json()).catch(() => []),
     ])
-      .then(async ([shipsRaw, fx]) => {
+      .then(async ([shipsRaw, fx, summaryRaw]) => {
         setKesRate(fx.usd_kes ?? 130)
         const ships = Array.isArray(shipsRaw) ? shipsRaw : []
         setShipments(ships)
-        if (ships.length === 0) setShowOnboarding(true)
+        if (ships.length === 0 && !localStorage.getItem('krux_onboarding_done')) setShowOnboarding(true)
+        const summaryMap: Record<string, { total: number; done: number; in_progress: number }> = {}
+        for (const s of (Array.isArray(summaryRaw) ? summaryRaw : [])) {
+          summaryMap[s.shipment_id] = { total: s.total, done: s.done, in_progress: s.in_progress }
+        }
+        setActionSummary(summaryMap)
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
@@ -581,7 +588,7 @@ export default function OperationsPage() {
 
   return (
     <div className="px-2 lg:px-3 py-4 lg:py-5 space-y-4 lg:space-y-5">
-      {showOnboarding && <OnboardingWizard onDismiss={() => setShowOnboarding(false)} />}
+      {showOnboarding && <OnboardingWizard onDismiss={() => { localStorage.setItem('krux_onboarding_done', '1'); setShowOnboarding(false) }} />}
       <AlertBanner alerts={alerts} />
 
       {valueData && (valueData.kes_protected > 0 || valueData.windows_caught > 0) && (
@@ -738,7 +745,7 @@ export default function OperationsPage() {
               >
                 {label}
                 {count > 0 && (
-                  <span className={`text-[10px] px-1 rounded ${filterStage === key ? 'bg-[#00C896]/20 text-[#00C896]' : 'bg-[#1E3A5F] text-[#64748B]'}`}>
+                  <span className={`text-xs px-1 rounded ${filterStage === key ? 'bg-[#00C896]/20 text-[#00C896]' : 'bg-[#1E3A5F] text-[#64748B]'}`}>
                     {count}
                   </span>
                 )}
@@ -790,11 +797,11 @@ export default function OperationsPage() {
                   >
                     <div className="flex-1 min-w-0">
                       <span className="text-xs text-white font-medium group-hover:text-red-300 transition-colors truncate block">{s.name}</span>
-                      <span className="text-[10px] text-[#64748B]">
+                      <span className="text-xs text-[#64748B]">
                         {s.regulatory_body?.code} · {ws.slaRequired}d needed · {ws.daysRemaining}d until {ws.useETA ? 'arrival' : 'deadline'}
                       </span>
                     </div>
-                    <span className={`text-[10px] font-bold flex-shrink-0 whitespace-nowrap px-2 py-0.5 rounded ${
+                    <span className={`text-xs font-bold flex-shrink-0 whitespace-nowrap px-2 py-0.5 rounded ${
                       isImpossible
                         ? 'text-red-400 bg-red-500/15 border border-red-500/30'
                         : 'text-amber-400 bg-amber-500/10 border border-amber-500/20'
@@ -805,7 +812,7 @@ export default function OperationsPage() {
                 )
               })}
             </div>
-            <p className="text-[10px] text-red-400/60 mt-2">Click any shipment to see the Brief and next steps.</p>
+            <p className="text-xs text-red-400/60 mt-2">Click any shipment to see the Brief and next steps.</p>
           </div>
         )
       })()}
@@ -861,7 +868,7 @@ export default function OperationsPage() {
                       <div className={`text-xl font-black tabular-nums leading-none ${
                         score >= 80 ? 'text-red-400' : score >= 50 ? 'text-amber-400' : 'text-[#64748B]'
                       }`}>{score}</div>
-                      <div className="text-[9px] text-[#64748B] text-right">RISK</div>
+                      <div className="text-xs text-[#64748B] text-right">RISK</div>
                     </div>
                   )}
                 </div>
@@ -883,25 +890,40 @@ export default function OperationsPage() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <StagePipeline shipmentId={s.id} currentStage={(s as any).shipment_stage ?? 'PRE_SHIPMENT'} />
                   {s.risk?.priority_level && (
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${priorityColors[s.risk.priority_level as PriorityLevel]}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${priorityColors[s.risk.priority_level as PriorityLevel]}`}>
                       {s.risk.priority_level}
                     </span>
                   )}
                   {(s as any).shipment_type === 'BONDED' && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-400/10 text-amber-400 border border-amber-400/30">BONDED</span>
+                    <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-amber-400/10 text-amber-400 border border-amber-400/30">BONDED</span>
                   )}
                   {(s as any).shipment_type === 'TRANSIT' && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-400/10 text-blue-400 border border-blue-400/30">TRANSIT</span>
+                    <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-blue-400/10 text-blue-400 border border-blue-400/30">TRANSIT</span>
                   )}
                   {(() => {
                     const regProfile = s.regulatory_body?.code ? getRegulator('KE', s.regulatory_body.code) : null
                     const ws = getWindowStatus({ pvoc_deadline: s.pvoc_deadline, eta: (s as any).eta }, regProfile ?? null)
                     if (!ws || ws.status === 'OK') return null
                     return ws.status === 'IMPOSSIBLE'
-                      ? <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/30 animate-pulse">WINDOW CLOSED</span>
-                      : <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">TIGHT WINDOW</span>
+                      ? <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/30 animate-pulse">WINDOW CLOSED</span>
+                      : <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">TIGHT WINDOW</span>
                   })()}
                 </div>
+
+                {/* Compliance action progress */}
+                {actionSummary[s.id] && actionSummary[s.id].total > 0 && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-1 bg-[#1E3A5F] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#00C896] rounded-full transition-all duration-500"
+                        style={{ width: `${Math.round((actionSummary[s.id].done / actionSummary[s.id].total) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-[#64748B] shrink-0 font-mono tabular-nums">
+                      {actionSummary[s.id].done}/{actionSummary[s.id].total}
+                    </span>
+                  </div>
+                )}
 
                 {/* Bottom bar: cost + status + actions */}
                 <div className="flex items-center justify-between pt-2 border-t border-[#1E3A5F]" onClick={(e) => e.stopPropagation()}>
@@ -917,7 +939,7 @@ export default function OperationsPage() {
                     ) : null}
                     <StatusBadge status={s.remediation_status} />
                     {alert && (
-                      <div className="text-[10px] text-red-400 font-medium mt-0.5">
+                      <div className="text-xs text-red-400 font-medium mt-0.5">
                         Est. loss KES {alert.estimatedAdditionalCostKES.toLocaleString()}
                       </div>
                     )}
@@ -1092,7 +1114,7 @@ export default function OperationsPage() {
                   {/* Shipment */}
                   <td className="px-2 py-3 relative">
                     {showTooltip && (
-                      <div className="absolute -top-8 left-0 z-20 flex items-center gap-1.5 bg-red-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-lg whitespace-nowrap pointer-events-none">
+                      <div className="absolute -top-8 left-0 z-20 flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg shadow-lg whitespace-nowrap pointer-events-none">
                         <AlertTriangle size={10} />
                         Click this shipment — it's critical
                       </div>
@@ -1112,15 +1134,28 @@ export default function OperationsPage() {
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span className="text-xs text-[#64748B]">{s.origin_port}</span>
                       {(s as any).shipment_type === 'BONDED' && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-400/10 text-amber-400 border border-amber-400/30">BONDED</span>
+                        <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-amber-400/10 text-amber-400 border border-amber-400/30">BONDED</span>
                       )}
                       {(s as any).shipment_type === 'TRANSIT' && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-400/10 text-blue-400 border border-blue-400/30">TRANSIT</span>
+                        <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-blue-400/10 text-blue-400 border border-blue-400/30">TRANSIT</span>
                       )}
                     </div>
                     {alert && (
-                      <div className="text-[10px] text-red-400 mt-0.5 font-medium truncate max-w-[200px]">
+                      <div className="text-xs text-red-400 mt-0.5 font-medium truncate max-w-[200px]">
                         Est. loss: KES {alert.estimatedAdditionalCostKES.toLocaleString()}
+                      </div>
+                    )}
+                    {actionSummary[s.id] && actionSummary[s.id].total > 0 && (
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <div className="w-16 h-1 bg-[#1E3A5F] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-[#00C896] rounded-full"
+                            style={{ width: `${Math.round((actionSummary[s.id].done / actionSummary[s.id].total) * 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-[#475569] font-mono tabular-nums">
+                          {actionSummary[s.id].done}/{actionSummary[s.id].total}
+                        </span>
                       </div>
                     )}
                   </td>
@@ -1158,7 +1193,7 @@ export default function OperationsPage() {
                             ? `${(s.total_landed_cost_kes / 1_000_000).toFixed(1)}M`
                             : s.total_landed_cost_kes.toLocaleString()}
                         </div>
-                        <div className="text-[10px] text-[#64748B] tabular-nums">{formatUSD(s.total_landed_cost_usd!)}</div>
+                        <div className="text-xs text-[#64748B] tabular-nums">{formatUSD(s.total_landed_cost_usd!)}</div>
                       </>
                     ) : (
                       <span className="text-sm font-semibold text-[#00C896] tabular-nums">{formatUSD(s.total_landed_cost_usd!)}</span>
@@ -1181,7 +1216,7 @@ export default function OperationsPage() {
 
                   {/* Status — sticky right, always visible */}
                   <td className={`sticky right-[88px] z-10 px-2 py-3 whitespace-nowrap min-w-[96px] ${rowBg || 'bg-[#0A1628]'} ${isCriticalRow ? 'bg-red-500/5' : alert?.level === 'URGENT' ? 'bg-amber-500/5' : 'bg-[#0A1628]'}`}>
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${STATUS_STYLE[s.remediation_status] ?? ''}`}>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_STYLE[s.remediation_status] ?? ''}`}>
                       {s.remediation_status === 'ESCALATED' && <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block" />}
                       {STATUS_LABEL[s.remediation_status] ?? s.remediation_status}
                     </span>
@@ -1199,7 +1234,7 @@ export default function OperationsPage() {
                       )}
                       {canWrite && s.remediation_status !== 'CLOSED' && (
                         <button onClick={() => setCloseTarget(s)}
-                          className="flex items-center gap-1 px-2 py-1 border border-[#1E3A5F] text-[#64748B] rounded-md text-[10px] font-semibold hover:border-emerald-500/40 hover:text-emerald-400 transition-all">
+                          className="flex items-center gap-1 px-2 py-1 border border-[#1E3A5F] text-[#64748B] rounded-md text-xs font-semibold hover:border-emerald-500/40 hover:text-emerald-400 transition-all">
                           <CheckCircle2 size={11} /> Close
                         </button>
                       )}

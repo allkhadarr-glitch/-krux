@@ -38,11 +38,11 @@ if (!APP_URL || APP_URL.includes('localhost')) {
   process.exit(1)
 }
 
-const STRIPE_WEBHOOK = getEnv('STRIPE_WEBHOOK_SECRET')
-if (!STRIPE_WEBHOOK || STRIPE_WEBHOOK.startsWith('whsec_your')) {
-  console.error('\n❌  STRIPE_WEBHOOK_SECRET is a placeholder.')
-  console.error('   Complete the webhook setup in Stripe dashboard first')
-  console.error('   (run setup-stripe.js and follow the webhook instructions)\n')
+const FLW_WEBHOOK = getEnv('FLW_WEBHOOK_HASH')
+if (!FLW_WEBHOOK || FLW_WEBHOOK.includes('your_')) {
+  console.error('\n❌  FLW_WEBHOOK_HASH is missing.')
+  console.error('   Set your webhook secret hash in .env.local first.')
+  console.error('   (run setup-flutterwave.js and follow the webhook instructions)\n')
   process.exit(1)
 }
 
@@ -50,11 +50,11 @@ if (!STRIPE_WEBHOOK || STRIPE_WEBHOOK.startsWith('whsec_your')) {
 const KEYS_TO_PUSH = [
   'ANTHROPIC_API_KEY',
   'RESEND_API_KEY',
-  'STRIPE_SECRET_KEY',
-  'STRIPE_WEBHOOK_SECRET',
-  'STRIPE_PRICE_BASIC',
-  'STRIPE_PRICE_PRO',
-  'STRIPE_PRICE_ENTERPRISE',
+  'FLW_SECRET_KEY',
+  'FLW_WEBHOOK_HASH',
+  'FLW_PLAN_STARTER',
+  'FLW_PLAN_STANDARD',
+  'FLW_PLAN_PROFESSIONAL',
   'NEXT_PUBLIC_APP_URL',
 ]
 

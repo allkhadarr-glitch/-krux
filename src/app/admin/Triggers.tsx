@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 import { Loader2, Play, CheckCircle2 } from 'lucide-react'
 
@@ -50,7 +50,7 @@ export function AdminTriggers({ cronSecret }: { cronSecret: string }) {
             {cron.label}
           </button>
           {results[cron.label] && (
-            <span className={`text-[10px] font-mono ${results[cron.label].startsWith('✓') ? 'text-[#00C896]' : 'text-red-400'}`}>
+            <span className={`text-xs font-mono ${results[cron.label].startsWith('✓') ? 'text-[#00C896]' : 'text-red-400'}`}>
               {results[cron.label]}
             </span>
           )}

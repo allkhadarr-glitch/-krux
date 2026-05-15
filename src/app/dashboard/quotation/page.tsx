@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect, useRef } from 'react'
 import { Printer, Copy, CheckCheck } from 'lucide-react'
 
@@ -111,7 +111,7 @@ export default function QuotationPage() {
             <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">Client Details</p>
 
             <div>
-              <label className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wide">Client / Importer Name</label>
+              <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">Client / Importer Name</label>
               <input
                 value={clientName}
                 onChange={e => setClientName(e.target.value)}
@@ -121,7 +121,7 @@ export default function QuotationPage() {
             </div>
 
             <div>
-              <label className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wide">Goods Description</label>
+              <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">Goods Description</label>
               <textarea
                 value={goods}
                 onChange={e => setGoods(e.target.value)}
@@ -132,7 +132,7 @@ export default function QuotationPage() {
             </div>
 
             <div>
-              <label className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wide">Port of Entry</label>
+              <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">Port of Entry</label>
               <select
                 value={port}
                 onChange={e => setPort(e.target.value)}
@@ -158,7 +158,7 @@ export default function QuotationPage() {
           <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-5 space-y-4">
             <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">Charges</p>
             <div>
-              <label className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wide">Professional Service Fee (KES)</label>
+              <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">Professional Service Fee (KES)</label>
               <input
                 type="number"
                 value={serviceFee}
@@ -168,7 +168,7 @@ export default function QuotationPage() {
               />
             </div>
             <div>
-              <label className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wide">Notes (optional)</label>
+              <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">Notes (optional)</label>
               <textarea
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
@@ -183,18 +183,18 @@ export default function QuotationPage() {
         {/* Preview */}
         <div ref={previewRef} className="print-full">
           <div className="no-print flex items-center justify-between mb-3">
-            <p className="text-[10px] text-[#64748B] uppercase tracking-wide">Preview</p>
+            <p className="text-xs text-[#64748B] uppercase tracking-wide">Preview</p>
             <div className="flex items-center gap-2">
               <button
                 onClick={copyQuote}
-                className="flex items-center gap-1.5 text-[10px] text-[#64748B] hover:text-[#00C896] transition-colors"
+                className="flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#00C896] transition-colors"
               >
                 {copied ? <CheckCheck size={12} className="text-[#00C896]" /> : <Copy size={12} />}
                 {copied ? 'Copied!' : 'Copy text'}
               </button>
               <button
                 onClick={handlePrint}
-                className="flex items-center gap-1.5 text-[10px] px-3 py-1.5 border border-[#1E3A5F] text-[#64748B] hover:border-[#00C896]/40 hover:text-[#00C896] transition-colors uppercase tracking-widest"
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 border border-[#1E3A5F] text-[#64748B] hover:border-[#00C896]/40 hover:text-[#00C896] transition-colors uppercase tracking-widest"
               >
                 <Printer size={11} />
                 Save as PDF
@@ -209,29 +209,29 @@ export default function QuotationPage() {
             <div className="px-6 py-4 border-b border-[#1E3A5F] flex items-start justify-between">
               <div>
                 <p className="text-[#00C896] text-xs font-black tracking-[0.35em] uppercase">KRUX</p>
-                <p className="text-[#334155] text-[10px] tracking-widest uppercase mt-0.5">East Africa&apos;s trade standard</p>
+                <p className="text-[#334155] text-xs tracking-widest uppercase mt-0.5">East Africa&apos;s trade standard</p>
               </div>
               <div className="text-right">
-                <p className="text-[9px] text-[#334155] uppercase tracking-wide">Service Quotation</p>
-                <p className="text-[10px] text-white font-bold mt-0.5">{qNum}</p>
-                <p className="text-[9px] text-[#334155] mt-0.5">{today}</p>
+                <p className="text-xs text-[#334155] uppercase tracking-wide">Service Quotation</p>
+                <p className="text-xs text-white font-bold mt-0.5">{qNum}</p>
+                <p className="text-xs text-[#334155] mt-0.5">{today}</p>
               </div>
             </div>
 
             {/* From (entity identity) */}
             <div className="px-6 py-4 border-b border-[#1E3A5F]">
-              <p className="text-[9px] text-[#334155] uppercase tracking-[0.2em] mb-2">From</p>
+              <p className="text-xs text-[#334155] uppercase tracking-[0.2em] mb-2">From</p>
               {entity ? (
                 <div>
                   <p className="text-sm font-bold text-white">{entity.name}</p>
                   <div className="mt-1.5 flex items-center gap-2">
-                    <span className="text-[10px] text-[#64748B] font-mono">{entity.krux_id}</span>
+                    <span className="text-xs text-[#64748B] font-mono">{entity.krux_id}</span>
                     <span className="text-[#334155]">·</span>
-                    <span className="text-[10px] text-[#64748B]">{TYPE_LABEL[entity.entity_type] ?? 'Broker'}</span>
+                    <span className="text-xs text-[#64748B]">{TYPE_LABEL[entity.entity_type] ?? 'Broker'}</span>
                     {entity.compliance_tier && (
                       <>
                         <span className="text-[#334155]">·</span>
-                        <span className={`text-[10px] font-black tracking-widest ${TIER_COLOR[entity.compliance_tier] ?? 'text-[#64748B]'}`}>
+                        <span className={`text-xs font-black tracking-widest ${TIER_COLOR[entity.compliance_tier] ?? 'text-[#64748B]'}`}>
                           {entity.compliance_tier}
                         </span>
                       </>
@@ -239,11 +239,11 @@ export default function QuotationPage() {
                     {entity.is_verified && (
                       <>
                         <span className="text-[#334155]">·</span>
-                        <span className="text-[9px] text-[#00C896] font-black tracking-wide">VERIFIED</span>
+                        <span className="text-xs text-[#00C896] font-black tracking-wide">VERIFIED</span>
                       </>
                     )}
                   </div>
-                  <p className="text-[9px] text-[#334155] mt-1">kruxvon.com/verify/{entity.krux_id}</p>
+                  <p className="text-xs text-[#334155] mt-1">kruxvon.com/verify/{entity.krux_id}</p>
                 </div>
               ) : (
                 <p className="text-[#334155] text-xs">Loading entity…</p>
@@ -252,46 +252,46 @@ export default function QuotationPage() {
 
             {/* To (client) */}
             <div className="px-6 py-4 border-b border-[#1E3A5F]">
-              <p className="text-[9px] text-[#334155] uppercase tracking-[0.2em] mb-2">Prepared for</p>
+              <p className="text-xs text-[#334155] uppercase tracking-[0.2em] mb-2">Prepared for</p>
               <p className="text-sm font-semibold text-white">{clientName || <span className="text-[#334155]">Client name</span>}</p>
-              {goods && <p className="text-[10px] text-[#64748B] mt-1">{goods}</p>}
-              <p className="text-[10px] text-[#334155] mt-1">{port}</p>
+              {goods && <p className="text-xs text-[#64748B] mt-1">{goods}</p>}
+              <p className="text-xs text-[#334155] mt-1">{port}</p>
             </div>
 
             {/* Regulatory scope */}
             <div className="px-6 py-4 border-b border-[#1E3A5F]">
-              <p className="text-[9px] text-[#334155] uppercase tracking-[0.2em] mb-3">Regulatory Scope</p>
+              <p className="text-xs text-[#334155] uppercase tracking-[0.2em] mb-3">Regulatory Scope</p>
               <div className="flex flex-wrap gap-1.5">
                 {regulators.length > 0 ? regulators.map(reg => (
-                  <span key={reg} className="text-[9px] border border-[#1E3A5F] px-2 py-0.5 text-[#94A3B8]">{reg}</span>
+                  <span key={reg} className="text-xs border border-[#1E3A5F] px-2 py-0.5 text-[#94A3B8]">{reg}</span>
                 )) : (
-                  <span className="text-[9px] text-[#334155]">None selected</span>
+                  <span className="text-xs text-[#334155]">None selected</span>
                 )}
               </div>
             </div>
 
             {/* Charges */}
             <div className="px-6 py-4 border-b border-[#1E3A5F]">
-              <p className="text-[9px] text-[#334155] uppercase tracking-[0.2em] mb-3">Charges</p>
+              <p className="text-xs text-[#334155] uppercase tracking-[0.2em] mb-3">Charges</p>
               <div className="flex items-center justify-between">
-                <span className="text-[10px] text-[#94A3B8]">Professional service fee</span>
+                <span className="text-xs text-[#94A3B8]">Professional service fee</span>
                 <span className="text-sm font-black text-white">
                   {serviceFee ? `KES ${Number(serviceFee).toLocaleString()}` : <span className="text-[#334155] text-xs">—</span>}
                 </span>
               </div>
               {notes && (
-                <p className="text-[9px] text-[#334155] mt-3 leading-relaxed">{notes}</p>
+                <p className="text-xs text-[#334155] mt-3 leading-relaxed">{notes}</p>
               )}
             </div>
 
             {/* Footer */}
             <div className="px-6 py-3 flex items-end justify-between">
-              <p className="text-[9px] text-[#1E3A5F] leading-relaxed max-w-xs">
+              <p className="text-xs text-[#1E3A5F] leading-relaxed max-w-xs">
                 This quotation is valid for 14 days. Government levies, port charges, and regulatory fees are billed separately.
               </p>
               <div className="text-right">
                 <div className="border-t border-[#334155] pt-2 mt-4 min-w-[120px]">
-                  <p className="text-[9px] text-[#334155]">Authorised signature</p>
+                  <p className="text-xs text-[#334155]">Authorised signature</p>
                 </div>
               </div>
             </div>

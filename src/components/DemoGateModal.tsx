@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { ArrowRight, CheckCircle2, X, Sparkles, Loader2 } from 'lucide-react'
 import { trackDemo } from '@/lib/demo-analytics'
@@ -164,7 +164,7 @@ export function DemoGateModal({ onClose, onSubmitted }: Props) {
               >
                 Create my workspace <ArrowRight size={14} />
               </button>
-              <p className="text-[10px] text-[#334155] text-center">
+              <p className="text-xs text-[#334155] text-center">
                 Free. No credit card. Takes 3 seconds.
               </p>
             </form>

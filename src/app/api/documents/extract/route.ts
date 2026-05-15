@@ -9,7 +9,7 @@ Return ONLY valid JSON with these fields (use null for fields not found):
   "name": "shipment name / product description",
   "hs_code": "HS code if present",
   "origin_port": "port of loading",
-  "origin_country": "country of origin",
+  "origin_country": "ISO 2-letter country code (e.g. CN, IN, AE, US, GB, DE)",
   "destination_port": "port of discharge (usually Mombasa)",
   "product_description": "full product description",
   "quantity": number or null,

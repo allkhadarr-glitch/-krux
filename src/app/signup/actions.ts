@@ -28,10 +28,18 @@ async function createClient() {
   )
 }
 
+const ROLE_MAP: Record<string, { dbRole: string; orgType: string }> = {
+  importer:          { dbRole: 'admin',          orgType: 'importer' },
+  clearing_agent:    { dbRole: 'clearing_agent', orgType: 'clearing_agent_firm' },
+  freight_forwarder: { dbRole: 'admin',          orgType: 'freight_forwarder' },
+}
+
 export async function signUp(_: unknown, formData: FormData) {
   const company  = (formData.get('company') as string)?.trim()
   const email    = (formData.get('email') as string)?.trim()?.toLowerCase()
   const password = formData.get('password') as string
+  const roleKey  = (formData.get('role') as string) || 'importer'
+  const { dbRole, orgType } = ROLE_MAP[roleKey] ?? ROLE_MAP.importer
 
   if (!company)             return { error: 'Company name is required.' }
   if (!email || !password)  return { error: 'Email and password are required.' }
@@ -47,7 +55,38 @@ export async function signUp(_: unknown, formData: FormData) {
   })
 
   if (createErr) {
-    if (createErr.message.toLowerCase().includes('already')) {
+    const isDuplicate = createErr.message.toLowerCase().includes('already')
+    // Log the failed attempt — fire and forget
+    ;(async () => {
+      try {
+        await serviceSupabase.from('waitlist').upsert({
+          email,
+          company,
+          role: isDuplicate ? 'signup_duplicate' : 'signup_failed',
+          lead_tier: 'HOT',
+          lead_context: { error: createErr.message, stage: isDuplicate ? 'DUPLICATE' : 'AUTH_FAIL' },
+        }, { onConflict: 'email', ignoreDuplicates: false })
+        if (process.env.RESEND_API_KEY) {
+          const { Resend } = await import('resend')
+          const r = new Resend(process.env.RESEND_API_KEY)
+          await r.emails.send({
+            from: 'KRUX Lab <noreply@kruxvon.com>',
+            to:   'hq@kruxvon.com',
+            subject: `⚠️ FAILED SIGNUP — ${email}`,
+            html: `<div style="font-family:monospace;background:#060E1A;color:#94A3B8;padding:32px;max-width:480px;">
+              <div style="color:#F59E0B;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin-bottom:16px;">KRUX LAB · FAILED SIGNUP</div>
+              <div style="color:white;font-size:16px;font-weight:700;margin-bottom:8px;">${email}</div>
+              <div style="color:#64748B;font-size:12px;margin-bottom:4px;">Company: ${company}</div>
+              <div style="color:#EF4444;font-size:12px;margin-bottom:16px;">Reason: ${isDuplicate ? 'Account already exists — send them the login link' : `Setup failed — ${createErr.message}`}</div>
+              <div style="border-left:3px solid #F59E0B;padding:10px 14px;background:#0F2040;color:#94A3B8;font-size:12px;">
+                → ${isDuplicate ? 'This person already has a KRUX account. Reply to their welcome email or send login link directly.' : 'Technical failure at auth step. Investigate and onboard manually if needed.'}
+              </div>
+            </div>`,
+          })
+        }
+      } catch {}
+    })().catch(() => {})
+    if (isDuplicate) {
       return { error: 'An account with this email already exists. Sign in instead.' }
     }
     console.error('[signUp] createUser error:', createErr.message)
@@ -60,7 +99,7 @@ export async function signUp(_: unknown, formData: FormData) {
     .from('organizations')
     .insert({
       name:              company,
-      type:              'clearing_agent_firm',
+      type:              orgType,
       subscription_tier: 'trial',
       is_active:         true,
     })
@@ -70,13 +109,34 @@ export async function signUp(_: unknown, formData: FormData) {
   if (orgErr || !org) {
     await serviceSupabase.auth.admin.deleteUser(userId)
     console.error('[signUp] org insert error:', orgErr?.message)
+    ;(async () => {
+      try {
+        if (process.env.RESEND_API_KEY) {
+          const { Resend } = await import('resend')
+          const r = new Resend(process.env.RESEND_API_KEY)
+          await r.emails.send({
+            from: 'KRUX Lab <noreply@kruxvon.com>',
+            to:   'hq@kruxvon.com',
+            subject: `🔴 SIGNUP BROKE — ${email}`,
+            html: `<div style="font-family:monospace;background:#060E1A;color:#94A3B8;padding:32px;max-width:480px;">
+              <div style="color:#EF4444;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin-bottom:16px;">KRUX LAB · ORG SETUP FAILED</div>
+              <div style="color:white;font-size:16px;font-weight:700;margin-bottom:8px;">${email}</div>
+              <div style="color:#64748B;font-size:12px;margin-bottom:16px;">Company: ${company} · Auth account was created and deleted.</div>
+              <div style="border-left:3px solid #EF4444;padding:10px 14px;background:#0F2040;color:#EF4444;font-size:12px;">
+                Error: ${orgErr?.message ?? 'Org insert returned null'}<br/>→ Onboard this person manually.
+              </div>
+            </div>`,
+          })
+        }
+      } catch {}
+    })().catch(() => {})
     return { error: 'Account setup failed. Please try again.' }
   }
 
   await serviceSupabase.from('user_profiles').insert({
     user_id:         userId,
     organization_id: org.id,
-    role:            'admin',
+    role:            dbRole,
   })
 
   // Fetch KTIN assigned by DB trigger
@@ -135,7 +195,7 @@ export async function signUp(_: unknown, formData: FormData) {
   <div style="border-top:1px solid #1E3A5F;margin-bottom:40px;"></div>
   ${ktin ? `<div style="color:#00C896;font-size:28px;font-weight:900;letter-spacing:3px;margin-bottom:16px;">${ktin}</div>` : ''}
   <div style="color:#94A3B8;font-size:13px;margin-bottom:40px;">Your workspace is live.</div>
-  <a href="${appUrl}/dashboard/today" style="display:inline-block;background:#00C896;color:#060E1A;font-weight:900;font-size:11px;padding:14px 28px;text-decoration:none;letter-spacing:3px;text-transform:uppercase;">OPEN WORKSPACE</a>
+  <a href="${appUrl}${dbRole === 'clearing_agent' ? '/dashboard/portfolio' : '/dashboard/today'}" style="display:inline-block;background:#00C896;color:#060E1A;font-weight:900;font-size:11px;padding:14px 28px;text-decoration:none;letter-spacing:3px;text-transform:uppercase;">OPEN WORKSPACE</a>
   <div style="border-top:1px solid #1E3A5F;margin-top:40px;margin-bottom:16px;"></div>
   ${ktin ? `<div style="color:#1E3A5F;font-size:10px;letter-spacing:1px;">kruxvon.com/verify/${ktin}</div>` : `<div style="color:#1E3A5F;font-size:10px;letter-spacing:1px;">kruxvon.com</div>`}
 </div>
@@ -145,7 +205,7 @@ export async function signUp(_: unknown, formData: FormData) {
 
         resend.emails.send({
           from: 'KRUX <noreply@kruxvon.com>',
-          to: process.env.ALERT_EMAIL ?? 'mabdikadirhaji@gmail.com',
+          to: 'hq@kruxvon.com',
           subject: ktin ? `${ktin} · ${company}` : `New signup: ${company}`,
           html: `<!DOCTYPE html>
 <html>
@@ -177,5 +237,5 @@ export async function signUp(_: unknown, formData: FormData) {
     redirect('/login?created=1')
   }
 
-  redirect('/dashboard/today')
+  redirect(dbRole === 'clearing_agent' ? '/dashboard/portfolio' : '/dashboard/today')
 }

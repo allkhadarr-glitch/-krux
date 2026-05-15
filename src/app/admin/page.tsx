@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+﻿import { createClient } from '@supabase/supabase-js'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -127,14 +127,14 @@ export default async function AdminPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Shield size={16} className="text-[#00C896]" />
-            <span className="text-[10px] font-bold text-[#00C896] uppercase tracking-widest">KRUX Admin</span>
+            <span className="text-xs font-bold text-[#00C896] uppercase tracking-widest">KRUX Admin</span>
           </div>
           <h1 className="text-2xl font-black text-white">Command Centre</h1>
           <p className="text-[#64748B] text-sm mt-0.5">{user.email} · {new Date().toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         </div>
         <div className="text-right">
           <div className="text-3xl font-black text-white">{orgs.length}</div>
-          <div className="text-[10px] text-[#64748B] uppercase tracking-wide">total orgs</div>
+          <div className="text-xs text-[#64748B] uppercase tracking-wide">total orgs</div>
         </div>
       </div>
 
@@ -149,7 +149,7 @@ export default async function AdminPage() {
           <div key={label} className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-4">
             <div className="flex items-center gap-2 mb-1">
               <Icon size={13} className="text-[#64748B]" />
-              <span className="text-[10px] text-[#64748B] uppercase tracking-wide font-semibold">{label}</span>
+              <span className="text-xs text-[#64748B] uppercase tracking-wide font-semibold">{label}</span>
             </div>
             <div className={`text-2xl font-black ${color}`}>{value}</div>
           </div>
@@ -204,7 +204,7 @@ export default async function AdminPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-white truncate">{org.name}</span>
-                    <span className="text-[10px] text-[#334155] bg-[#1E3A5F] px-1.5 py-0.5 rounded">
+                    <span className="text-xs text-[#334155] bg-[#1E3A5F] px-1.5 py-0.5 rounded">
                       {TYPE_LABEL[entity?.entity_type] ?? org.type ?? 'IMP'}
                     </span>
                   </div>
@@ -213,16 +213,16 @@ export default async function AdminPage() {
 
                 {/* KTIN */}
                 {entity && (
-                  <span className="font-mono text-[10px] text-[#64748B] hidden sm:block">{entity.krux_id}</span>
+                  <span className="font-mono text-xs text-[#64748B] hidden sm:block">{entity.krux_id}</span>
                 )}
 
                 {/* Tier */}
                 {tier && (
-                  <span className={`text-[10px] font-bold hidden md:block ${TIER_COLOR[tier] ?? 'text-[#64748B]'}`}>{tier}</span>
+                  <span className={`text-xs font-bold hidden md:block ${TIER_COLOR[tier] ?? 'text-[#64748B]'}`}>{tier}</span>
                 )}
 
                 {/* Stats */}
-                <div className="flex items-center gap-3 text-[10px] text-[#64748B] flex-shrink-0">
+                <div className="flex items-center gap-3 text-xs text-[#64748B] flex-shrink-0">
                   <span>{ships} ship{ships !== 1 ? 's' : ''}</span>
                   {evts > 0 && <span className="text-amber-400">{evts} evt</span>}
                   <span>{timeAgo(org.created_at)}</span>
@@ -245,7 +245,7 @@ export default async function AdminPage() {
             {recentEvents.slice(0, 30).map((e: any, i: number) => {
               const org = orgs.find((o: any) => o.id === e.organization_id)
               return (
-                <div key={i} className="flex items-center gap-3 text-[10px]">
+                <div key={i} className="flex items-center gap-3 text-xs">
                   <span className="text-[#334155] w-12 flex-shrink-0">{timeAgo(e.created_at)}</span>
                   <span className="text-[#64748B] font-mono">{e.event_type}</span>
                   <span className="text-[#64748B] truncate">{org?.name ?? e.organization_id.slice(0, 8)}</span>
@@ -262,11 +262,11 @@ export default async function AdminPage() {
           <AlertTriangle size={14} className="text-[#64748B]" />
           Manual Cron Triggers
         </h3>
-        <p className="text-[10px] text-[#334155] mb-4">Run any scheduled job on demand. Results show inline.</p>
+        <p className="text-xs text-[#334155] mb-4">Run any scheduled job on demand. Results show inline.</p>
         <AdminTriggers cronSecret={process.env.CRON_SECRET ?? ''} />
       </div>
 
-      <p className="text-[#1E3A5F] text-[10px] text-center pb-4">KRUX Admin · {user.email} · Only visible to you</p>
+      <p className="text-[#1E3A5F] text-xs text-center pb-4">KRUX Admin · {user.email} · Only visible to you</p>
     </div>
   )
 }

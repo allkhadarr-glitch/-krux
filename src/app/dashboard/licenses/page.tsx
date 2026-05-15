@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { Plus, X, Check, Loader2, AlertTriangle, CheckCircle2, Clock, Trash2, FileText } from 'lucide-react'
 
@@ -29,11 +29,11 @@ function fmt(d: string) {
 }
 
 function ExpiryBadge({ days }: { days: number }) {
-  if (days < 0)   return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">EXPIRED {Math.abs(days)}d ago</span>
-  if (days === 0) return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">EXPIRES TODAY</span>
-  if (days <= 30) return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">EXPIRES IN {days}d</span>
-  if (days <= 90) return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30">{days}d left</span>
-  return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">{days}d left</span>
+  if (days < 0)   return <span className="px-2 py-0.5 rounded text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30">EXPIRED {Math.abs(days)}d ago</span>
+  if (days === 0) return <span className="px-2 py-0.5 rounded text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30">EXPIRES TODAY</span>
+  if (days <= 30) return <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">EXPIRES IN {days}d</span>
+  if (days <= 90) return <span className="px-2 py-0.5 rounded text-xs font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30">{days}d left</span>
+  return <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">{days}d left</span>
 }
 
 function AddDocModal({ onClose, onSave }: { onClose: () => void; onSave: (d: OrgDoc) => void }) {
@@ -196,7 +196,7 @@ export default function LicensesPage() {
                   <tr key={doc.id} className={`hover:bg-[#1E3A5F]/20 transition-colors ${days < 0 ? 'opacity-60' : ''}`}>
                     <td className="px-4 py-3">
                       <div className="text-sm font-semibold text-white">{doc.document_type}</div>
-                      {doc.notes && <div className="text-[11px] text-[#64748B] mt-0.5 truncate max-w-xs">{doc.notes}</div>}
+                      {doc.notes && <div className="text-xs text-[#64748B] mt-0.5 truncate max-w-xs">{doc.notes}</div>}
                     </td>
                     <td className="px-4 py-3 text-sm text-[#94A3B8]">{doc.issuer ?? '—'}</td>
                     <td className="px-4 py-3 text-xs text-[#64748B] font-mono">{doc.reference_number ?? '—'}</td>

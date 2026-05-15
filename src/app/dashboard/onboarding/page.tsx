@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import {
   CheckCircle2, ArrowRight, Shield, Factory,
@@ -22,9 +22,9 @@ export default function OnboardingPage() {
     {
       id: 'account',
       icon: Shield,
-      title: 'Create your organization',
-      description: 'Your KRUX account is active and your organization is set up. All your shipment data is isolated to your org.',
-      cta: 'View settings',
+      title: 'Your KTIN has been issued',
+      description: 'Your Kenya Trade Identity Number is permanent — it follows every clearance you run. View it in Settings. You can share the public verification link with banks, partners, and clients.',
+      cta: 'View your KTIN',
       href: '/dashboard/settings',
       status: 'done',
     },
@@ -255,12 +255,12 @@ export default function OnboardingPage() {
                       {step.title}
                     </h3>
                     {isDone && (
-                      <span className="text-[10px] bg-[#00C896]/10 text-[#00C896] px-2 py-0.5 rounded-full font-medium border border-[#00C896]/20">
+                      <span className="text-xs bg-[#00C896]/10 text-[#00C896] px-2 py-0.5 rounded-full font-medium border border-[#00C896]/20">
                         Done
                       </span>
                     )}
                     {nextPending && !isDone && (
-                      <span className="text-[10px] bg-[#00C896]/10 text-[#00C896] px-2 py-0.5 rounded-full font-medium border border-[#00C896]/20">
+                      <span className="text-xs bg-[#00C896]/10 text-[#00C896] px-2 py-0.5 rounded-full font-medium border border-[#00C896]/20">
                         Up next
                       </span>
                     )}

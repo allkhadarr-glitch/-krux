@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 
 export const metadata = {
   title: 'Partner Agent Program — KRUX',
@@ -66,10 +66,10 @@ export default function PartnersPage() {
             <Link href="/" className="text-[#00C896] text-xs font-black tracking-[0.35em] uppercase hover:opacity-80 transition-opacity">
               KRUX
             </Link>
-            <p className="text-[#334155] text-[10px] tracking-widest uppercase mt-0.5">East Africa&apos;s trade standard</p>
+            <p className="text-[#334155] text-xs tracking-widest uppercase mt-0.5">East Africa&apos;s trade standard</p>
           </div>
           <div className="text-right">
-            <p className="text-[#334155] text-[10px] uppercase tracking-wide">Partner Agent Program</p>
+            <p className="text-[#334155] text-xs uppercase tracking-wide">Partner Agent Program</p>
           </div>
         </div>
 
@@ -86,7 +86,7 @@ export default function PartnersPage() {
 
         {/* How it works */}
         <div className="mb-12">
-          <p className="text-[9px] text-[#334155] uppercase tracking-[0.25em] mb-5">How it works</p>
+          <p className="text-xs text-[#334155] uppercase tracking-[0.25em] mb-5">How it works</p>
           <div className="border border-[#1E3A5F]">
             {STEPS.map((s, i) => (
               <div key={s.n} className={`px-5 py-5 ${i < STEPS.length - 1 ? 'border-b border-[#1E3A5F]' : ''}`}>
@@ -104,11 +104,11 @@ export default function PartnersPage() {
 
         {/* Why agents use KRUX */}
         <div className="mb-12">
-          <p className="text-[9px] text-[#334155] uppercase tracking-[0.25em] mb-5">Why clearing agents use KRUX</p>
+          <p className="text-xs text-[#334155] uppercase tracking-[0.25em] mb-5">Why clearing agents use KRUX</p>
           <div className="border border-[#1E3A5F]">
             {WHY.map((w, i) => (
               <div key={i} className={`px-5 py-4 flex items-start gap-3 ${i < WHY.length - 1 ? 'border-b border-[#1E3A5F]' : ''}`}>
-                <span className="text-[#00C896] text-[10px] flex-shrink-0 mt-0.5">·</span>
+                <span className="text-[#00C896] text-xs flex-shrink-0 mt-0.5">·</span>
                 <p className="text-[#94A3B8] text-xs leading-relaxed">{w}</p>
               </div>
             ))}
@@ -117,7 +117,7 @@ export default function PartnersPage() {
 
         {/* FAQ */}
         <div className="mb-12">
-          <p className="text-[9px] text-[#334155] uppercase tracking-[0.25em] mb-5">Common questions</p>
+          <p className="text-xs text-[#334155] uppercase tracking-[0.25em] mb-5">Common questions</p>
           <div className="border border-[#1E3A5F] space-y-0">
             {FAQ.map((f, i) => (
               <div key={i} className={`px-5 py-4 ${i < FAQ.length - 1 ? 'border-b border-[#1E3A5F]' : ''}`}>
@@ -152,8 +152,8 @@ export default function PartnersPage() {
 
         {/* Footer */}
         <div className="mt-16 pt-6 border-t border-[#1E3A5F] flex items-center justify-between">
-          <p className="text-[9px] text-[#334155] uppercase tracking-widest">KRUX · East Africa&apos;s trade standard</p>
-          <Link href="/" className="text-[9px] text-[#64748B] hover:text-[#00C896] uppercase tracking-widest transition-colors">
+          <p className="text-xs text-[#334155] uppercase tracking-widest">KRUX · East Africa&apos;s trade standard</p>
+          <Link href="/" className="text-xs text-[#64748B] hover:text-[#00C896] uppercase tracking-widest transition-colors">
             kruxvon.com
           </Link>
         </div>

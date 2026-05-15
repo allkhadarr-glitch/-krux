@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { createHmac } from 'crypto'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,76 +8,70 @@ const supabase = createClient(
 )
 
 const PLAN_LIMITS: Record<string, { tier: string; limit: number }> = {
-  basic:      { tier: 'basic',      limit: 25 },
-  pro:        { tier: 'pro',        limit: 100 },
-  enterprise: { tier: 'enterprise', limit: 9999 },
-}
-
-async function updateOrg(orgId: string, plan: string, subId: string, priceId: string, expiresAt: Date | null) {
-  const { tier, limit } = PLAN_LIMITS[plan] ?? { tier: 'basic', limit: 25 }
-  await supabase.from('organizations').update({
-    subscription_tier:       tier,
-    subscription_status:     'active',
-    stripe_subscription_id:  subId,
-    stripe_price_id:         priceId,
-    subscription_expires_at: expiresAt?.toISOString() ?? null,
-    monthly_shipment_limit:  limit,
-    updated_at:              new Date().toISOString(),
-  }).eq('id', orgId)
+  starter:      { tier: 'starter',      limit: 5 },
+  standard:     { tier: 'standard',     limit: 9999 },
+  professional: { tier: 'professional', limit: 9999 },
 }
 
 export async function POST(req: NextRequest) {
-  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
-    return NextResponse.json({ error: 'Billing not configured' }, { status: 503 })
-  }
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-04-22.dahlia' as any })
-  const body = await req.text()
-  const sig  = req.headers.get('stripe-signature') ?? ''
+  // Must read raw body for HMAC verification before parsing
+  const rawBody   = await req.text()
+  const signature = req.headers.get('x-paystack-signature') ?? ''
+  const expected  = createHmac('sha512', process.env.PAYSTACK_SECRET_KEY ?? '')
+    .update(rawBody)
+    .digest('hex')
 
-  let event: Stripe.Event
-  try {
-    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET)
-  } catch {
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+  if (!signature || signature !== expected) {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
-  switch (event.type) {
-    case 'checkout.session.completed': {
-      const session = event.data.object as any
-      const orgId   = session.metadata?.org_id
-      const plan    = session.metadata?.plan ?? 'basic'
-      if (!orgId || !session.subscription) break
+  const event = JSON.parse(rawBody)
 
-      const sub = await stripe.subscriptions.retrieve(session.subscription as string) as any
-      const exp = sub.current_period_end ? new Date(sub.current_period_end * 1000) : null
-      await updateOrg(orgId, plan, sub.id, sub.items?.data?.[0]?.price?.id ?? '', exp)
-      break
-    }
+  if (event.event === 'charge.success') {
+    const meta             = event.data?.metadata ?? {}
+    const orgId            = meta.org_id as string | undefined
+    const plan             = meta.plan as string | undefined
+    const subscriptionCode = event.data?.subscription?.subscription_code as string | null ?? null
+    const emailToken       = event.data?.subscription?.email_token as string | null ?? null
+    const customerCode     = event.data?.customer?.customer_code as string | null ?? null
+    const nextPaymentDate  = event.data?.subscription?.next_payment_date as string | null ?? null
 
-    case 'invoice.paid': {
-      const invoice = event.data.object as any
-      if (!invoice.subscription) break
-      const sub   = await stripe.subscriptions.retrieve(invoice.subscription as string) as any
-      const orgId = sub.metadata?.org_id
-      const plan  = sub.metadata?.plan ?? 'basic'
-      if (!orgId) break
-      const exp = sub.current_period_end ? new Date(sub.current_period_end * 1000) : null
-      await updateOrg(orgId, plan, sub.id, sub.items?.data?.[0]?.price?.id ?? '', exp)
-      break
-    }
-
-    case 'customer.subscription.deleted': {
-      const sub   = event.data.object as any
-      const orgId = sub.metadata?.org_id
-      if (!orgId) break
+    if (orgId && plan) {
+      // First payment — we have metadata
+      const { tier, limit } = PLAN_LIMITS[plan] ?? { tier: 'starter', limit: 5 }
       await supabase.from('organizations').update({
-        subscription_tier:    'trial',
-        subscription_status:  'cancelled',
-        monthly_shipment_limit: 5,
-        updated_at: new Date().toISOString(),
+        subscription_tier:       tier,
+        subscription_status:     'active',
+        monthly_shipment_limit:  limit,
+        pst_subscription_code:   subscriptionCode,
+        pst_customer_code:       customerCode,
+        pst_email_token:         emailToken,
+        subscription_expires_at: nextPaymentDate,
+        updated_at:              new Date().toISOString(),
       }).eq('id', orgId)
-      break
+    } else if (subscriptionCode) {
+      // Renewal charge — no metadata, look up by subscription code
+      await supabase.from('organizations').update({
+        subscription_status:     'active',
+        subscription_expires_at: nextPaymentDate,
+        updated_at:              new Date().toISOString(),
+      }).eq('pst_subscription_code', subscriptionCode)
     }
+  }
+
+  // Subscription disabled or not renewing — downgrade to trial
+  if (event.event === 'subscription.disable' || event.event === 'subscription.not_renew') {
+    const subscriptionCode = event.data?.subscription_code ?? event.data?.code
+    if (!subscriptionCode) return NextResponse.json({ ok: true })
+
+    await supabase.from('organizations').update({
+      subscription_tier:      'trial',
+      subscription_status:    'cancelled',
+      monthly_shipment_limit: 5,
+      pst_subscription_code:  null,
+      pst_email_token:        null,
+      updated_at:             new Date().toISOString(),
+    }).eq('pst_subscription_code', subscriptionCode)
   }
 
   return NextResponse.json({ ok: true })

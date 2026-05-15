@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { Users, Mail, Plus, X, Check, Loader2, Clock, Shield, Copy } from 'lucide-react'
 
@@ -156,7 +156,7 @@ export default function TeamPage() {
                   <div className="text-sm font-semibold text-white">{m.full_name ?? 'Unnamed'}</div>
                   {m.phone && <div className="text-xs text-[#64748B]">{m.phone}</div>}
                 </div>
-                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${ROLE_COLORS[m.role] ?? ROLE_COLORS.operations}`}>
+                <span className={`px-2 py-0.5 rounded-md text-xs font-bold border ${ROLE_COLORS[m.role] ?? ROLE_COLORS.operations}`}>
                   {ROLE_LABELS[m.role] ?? m.role}
                 </span>
               </div>
@@ -175,12 +175,12 @@ export default function TeamPage() {
                 <Mail size={16} className="text-[#64748B] flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm text-white">{inv.email}</div>
-                  <div className="flex items-center gap-1 text-[10px] text-[#64748B] mt-0.5">
+                  <div className="flex items-center gap-1 text-xs text-[#64748B] mt-0.5">
                     <Clock size={9} />
                     Expires {new Date(inv.expires_at).toLocaleDateString('en-KE', { day: '2-digit', month: 'short' })}
                   </div>
                 </div>
-                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${ROLE_COLORS[inv.role] ?? ROLE_COLORS.operations}`}>
+                <span className={`px-2 py-0.5 rounded-md text-xs font-bold border ${ROLE_COLORS[inv.role] ?? ROLE_COLORS.operations}`}>
                   {ROLE_LABELS[inv.role] ?? inv.role}
                 </span>
                 <span title="Pending"><Shield size={12} className="text-amber-400" /></span>
@@ -201,7 +201,7 @@ export default function TeamPage() {
             { role: 'field',      perms: 'Update action status via Field View (mobile)' },
           ].map(({ role, perms }) => (
             <div key={role} className="flex items-start gap-3">
-              <span className={`mt-0.5 px-2 py-0.5 rounded text-[10px] font-bold border flex-shrink-0 ${ROLE_COLORS[role]}`}>
+              <span className={`mt-0.5 px-2 py-0.5 rounded text-xs font-bold border flex-shrink-0 ${ROLE_COLORS[role]}`}>
                 {ROLE_LABELS[role]}
               </span>
               <span className="text-xs text-[#64748B]">{perms}</span>

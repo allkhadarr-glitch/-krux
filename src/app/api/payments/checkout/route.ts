@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { getSessionContext } from '@/lib/session'
 
@@ -8,52 +7,60 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-export async function POST(req: NextRequest) {
-  if (!process.env.STRIPE_SECRET_KEY) return NextResponse.json({ error: 'Billing not configured' }, { status: 503 })
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-04-22.dahlia' as any })
-  const PRICES: Record<string, string> = {
-    basic:      process.env.STRIPE_PRICE_BASIC ?? '',
-    pro:        process.env.STRIPE_PRICE_PRO ?? '',
-    enterprise: process.env.STRIPE_PRICE_ENTERPRISE ?? '',
-  }
-  const { orgId, userId } = await getSessionContext(req)
+// Amount in smallest currency unit (cents for USD: $99 = 9900)
+const PLANS: Record<string, { planCode: string; amount: number }> = {
+  starter:      { planCode: process.env.PAYSTACK_PLAN_STARTER ?? '',      amount: 9900 },
+  standard:     { planCode: process.env.PAYSTACK_PLAN_STANDARD ?? '',     amount: 29900 },
+  professional: { planCode: process.env.PAYSTACK_PLAN_PROFESSIONAL ?? '', amount: 59900 },
+}
 
+export async function POST(req: NextRequest) {
+  if (!process.env.PAYSTACK_SECRET_KEY) {
+    return NextResponse.json({ error: 'Billing not configured' }, { status: 503 })
+  }
+
+  const { orgId, userId } = await getSessionContext(req)
   const { plan } = await req.json()
-  const priceId = PRICES[plan]
-  if (!priceId) return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
+
+  const cfg = PLANS[plan]
+  if (!cfg?.planCode) return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
 
   const { data: org } = await supabase
     .from('organizations')
-    .select('name, email, stripe_customer_id')
+    .select('name, email')
     .eq('id', orgId)
     .single()
 
   if (!org) return NextResponse.json({ error: 'Org not found' }, { status: 404 })
 
-  let customerId = org.stripe_customer_id
+  const reference = `krux-${orgId}-${Date.now()}`
+  const baseUrl   = process.env.NEXT_PUBLIC_APP_URL ?? 'https://kruxvon.com'
 
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: org.email ?? undefined,
-      name:  org.name,
-      metadata: { org_id: orgId, user_id: userId },
-    })
-    customerId = customer.id
-    await supabase.from('organizations').update({ stripe_customer_id: customerId }).eq('id', orgId)
-  }
-
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://krux.vercel.app'
-
-  const session = await stripe.checkout.sessions.create({
-    customer:            customerId,
-    mode:                'subscription',
-    payment_method_types: ['card'],
-    line_items:          [{ price: priceId, quantity: 1 }],
-    success_url:         `${baseUrl}/dashboard/billing?success=1`,
-    cancel_url:          `${baseUrl}/dashboard/billing?cancelled=1`,
-    metadata:            { org_id: orgId, plan },
-    subscription_data:   { metadata: { org_id: orgId, plan } },
+  const res = await fetch('https://api.paystack.co/transaction/initialize', {
+    method: 'POST',
+    headers: {
+      Authorization:  `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email:        org.email ?? '',
+      amount:       cfg.amount,
+      currency:     'USD',
+      reference,
+      callback_url: `${baseUrl}/api/payments/verify?plan=${plan}&org_id=${orgId}`,
+      plan:         cfg.planCode,
+      metadata: {
+        org_id:  orgId,
+        plan,
+        user_id: userId,
+      },
+    }),
   })
 
-  return NextResponse.json({ url: session.url })
+  const data = await res.json()
+  if (!res.ok || !data.status) {
+    return NextResponse.json({ error: data.message ?? 'Payment init failed' }, { status: 500 })
+  }
+
+  return NextResponse.json({ url: data.data.authorization_url })
 }

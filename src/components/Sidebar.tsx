@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -10,22 +10,41 @@ import {
 import { signOut } from '@/app/login/actions'
 import { NotificationBell } from './NotificationBell'
 
-const nav = [
-  { href: '/dashboard/today',         label: 'Today',            icon: ListChecks, highlight: true },
-  { href: '/dashboard/actions',       label: 'Action Centre',    icon: Zap },
-  { href: '/dashboard/operations',    label: 'Operations',       icon: Shield },
-  { href: '/dashboard/portfolio',     label: 'Client Portfolio', icon: FolderKanban },
-  { href: '/dashboard/hs-lookup',     label: 'HS Code Lookup',   icon: Hash },
-  { href: '/dashboard/mv-calculator', label: 'Vehicle Duty',     icon: Car },
-  { href: '/dashboard/quotation',     label: 'Quotation',        icon: Receipt },
-  { href: '/dashboard/alerts',        label: 'Alerts',           icon: Bell },
-  { href: '/dashboard/closed',        label: 'Closed Shipments', icon: Archive },
-  { href: '/dashboard/analytics',     label: 'Analytics',        icon: TrendingUp },
-  { href: '/dashboard/briefing',      label: 'Morning Brief',    icon: FileText },
-  { href: '/dashboard/import',        label: 'Import History',   icon: Upload },
+const importerNav = [
+  { href: '/dashboard/today',         label: 'Today',              icon: ListChecks,    highlight: true },
+  { href: '/dashboard/actions',       label: 'Compliance Actions', icon: Zap },
+  { href: '/dashboard/operations',    label: 'Operations',         icon: Shield },
+  { href: '/dashboard/portfolio',     label: 'Client Portfolio',   icon: FolderKanban },
+  { href: '/dashboard/hs-lookup',     label: 'HS Code Lookup',     icon: Hash },
+  { href: '/dashboard/mv-calculator', label: 'Vehicle Duty',       icon: Car },
+  { href: '/dashboard/quotation',     label: 'Quotation',          icon: Receipt },
+  { href: '/dashboard/alerts',        label: 'Alerts',             icon: Bell },
+  { href: '/dashboard/closed',        label: 'Closed Shipments',   icon: Archive },
+  { href: '/dashboard/analytics',     label: 'Analytics',          icon: TrendingUp },
+  { href: '/dashboard/briefing',      label: 'Morning Brief',      icon: FileText },
+  { href: '/dashboard/import',        label: 'Import History',     icon: Upload },
 ]
 
-export function Sidebar({ userEmail, orgName, ktin }: { userEmail: string; orgName?: string | null; ktin?: string | null }) {
+const agentNav = [
+  { href: '/dashboard/portfolio',     label: 'Client Portfolio',   icon: FolderKanban,  highlight: true },
+  { href: '/dashboard/operations',    label: 'Operations',         icon: Shield },
+  { href: '/dashboard/import',        label: 'Import History',     icon: Upload },
+  { href: '/dashboard/actions',       label: 'Compliance Actions', icon: Zap },
+  { href: '/dashboard/closed',        label: 'Closed Shipments',   icon: Archive },
+  { href: '/dashboard/hs-lookup',     label: 'HS Code Lookup',     icon: Hash },
+  { href: '/dashboard/analytics',     label: 'Analytics',          icon: TrendingUp },
+  { href: '/dashboard/alerts',        label: 'Alerts',             icon: Bell },
+  { href: '/dashboard/briefing',      label: 'Morning Brief',      icon: FileText },
+]
+
+export function Sidebar({ userEmail, orgName, ktin, role }: {
+  userEmail: string
+  orgName?: string | null
+  ktin?: string | null
+  role?: string | null
+}) {
+  const isAgent = role === 'clearing_agent'
+  const nav     = isAgent ? agentNav : importerNav
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
@@ -46,7 +65,7 @@ export function Sidebar({ userEmail, orgName, ktin }: { userEmail: string; orgNa
             <span className="text-[#0A1628] font-black text-xs">K</span>
           </div>
           <span className="text-white font-bold text-sm tracking-wide">KRUX</span>
-          <span className="text-[#334155] text-xs hidden sm:block">Compliance Intelligence</span>
+          <span className="text-[#64748B] text-xs hidden sm:block">Compliance Intelligence</span>
         </div>
 
         <NotificationBell />
@@ -93,9 +112,16 @@ export function Sidebar({ userEmail, orgName, ktin }: { userEmail: string; orgNa
         </div>
 
         {/* Entity identity card */}
-        {(ktin || orgName) && (
+        {(ktin || orgName || isAgent) && (
           <Link href="/dashboard/settings" onClick={() => setOpen(false)} className="block mx-3 mt-3 px-3 py-2.5 rounded-lg bg-[#0A1628] border border-[#1E3A5F] hover:border-[#00C896]/40 transition-all group">
-            {ktin && <div className="text-[#00C896] text-[11px] font-mono font-bold tracking-widest group-hover:text-[#00D9A8] transition-colors">{ktin}</div>}
+            {isAgent && (
+              <div className="text-[#00C896] text-xs font-mono font-bold tracking-widest group-hover:text-[#00D9A8] transition-colors">
+                KRUX CERTIFIED AGENT
+              </div>
+            )}
+            {!isAgent && ktin && (
+              <div className="text-[#00C896] text-xs font-mono font-bold tracking-widest group-hover:text-[#00D9A8] transition-colors">{ktin}</div>
+            )}
             {orgName && <div className="text-white text-xs font-semibold mt-0.5 truncate">{orgName}</div>}
           </Link>
         )}
@@ -149,8 +175,8 @@ export function Sidebar({ userEmail, orgName, ktin }: { userEmail: string; orgNa
           </form>
 
           <div className="px-3 pt-3">
-            <div className="text-[#334155] text-xs truncate">{userEmail}</div>
-            <div className="text-[#1E3A5F] text-xs mt-0.5">KRUX v1.0</div>
+            <div className="text-[#64748B] text-xs truncate">{userEmail}</div>
+            <div className="text-[#334155] text-xs mt-0.5">KRUX v1.0</div>
           </div>
         </div>
       </aside>

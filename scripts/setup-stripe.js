@@ -50,22 +50,22 @@ const stripe = new Stripe(STRIPE_KEY, { apiVersion: '2026-04-22.dahlia' })
 
 const PLANS = [
   {
-    id:     'basic',
-    name:   'KRUX Basic',
+    id:     'starter',
+    name:   'KRUX Starter',
+    amount: 9900,
+    desc:   'Up to 5 active shipments. All Kenya regulators. Email alerts.',
+  },
+  {
+    id:     'standard',
+    name:   'KRUX Standard',
     amount: 29900,
-    desc:   'Up to 25 shipments/month. All Kenya regulators. Email alerts.',
+    desc:   'Unlimited shipments. All tools. The main tier.',
   },
   {
-    id:     'pro',
-    name:   'KRUX Pro',
-    amount: 49900,
-    desc:   'Up to 100 shipments/month. WhatsApp alerts + document AI extraction.',
-  },
-  {
-    id:     'enterprise',
-    name:   'KRUX Enterprise',
-    amount: 150000,
-    desc:   'Unlimited shipments. Dedicated support + API access.',
+    id:     'professional',
+    name:   'KRUX Professional',
+    amount: 59900,
+    desc:   'API access, multi-user, monthly compliance report.',
   },
 ]
 
@@ -131,9 +131,13 @@ async function main() {
   // ── Patch .env.local ──────────────────────────────────────
   console.log('\n   Patching .env.local with price IDs...')
   let updated = envText
-  updated = updated.replace(/^STRIPE_PRICE_BASIC=.*/m,      `STRIPE_PRICE_BASIC=${priceIds.basic}`)
-  updated = updated.replace(/^STRIPE_PRICE_PRO=.*/m,        `STRIPE_PRICE_PRO=${priceIds.pro}`)
-  updated = updated.replace(/^STRIPE_PRICE_ENTERPRISE=.*/m, `STRIPE_PRICE_ENTERPRISE=${priceIds.enterprise}`)
+  updated = updated.replace(/^STRIPE_PRICE_STARTER=.*/m,      `STRIPE_PRICE_STARTER=${priceIds.starter}`)
+  updated = updated.replace(/^STRIPE_PRICE_STANDARD=.*/m,     `STRIPE_PRICE_STANDARD=${priceIds.standard}`)
+  updated = updated.replace(/^STRIPE_PRICE_PROFESSIONAL=.*/m, `STRIPE_PRICE_PROFESSIONAL=${priceIds.professional}`)
+  // Append any keys that don't exist yet
+  if (!updated.match(/^STRIPE_PRICE_STARTER=/m))      updated += `\nSTRIPE_PRICE_STARTER=${priceIds.starter}`
+  if (!updated.match(/^STRIPE_PRICE_STANDARD=/m))     updated += `\nSTRIPE_PRICE_STANDARD=${priceIds.standard}`
+  if (!updated.match(/^STRIPE_PRICE_PROFESSIONAL=/m)) updated += `\nSTRIPE_PRICE_PROFESSIONAL=${priceIds.professional}`
   fs.writeFileSync(envPath, updated, 'utf8')
   console.log('   .env.local updated ✓')
 
@@ -168,12 +172,12 @@ async function main() {
   // ── Vercel env vars to add ────────────────────────────────
   console.log('\n  VERCEL ENVIRONMENT VARIABLES (add via push-vercel-env.js)')
   console.log('─'.repeat(62))
-  console.log(`  STRIPE_SECRET_KEY       = ${STRIPE_KEY.slice(0, 14)}...`)
-  console.log(`  STRIPE_PRICE_BASIC      = ${priceIds.basic}`)
-  console.log(`  STRIPE_PRICE_PRO        = ${priceIds.pro}`)
-  console.log(`  STRIPE_PRICE_ENTERPRISE = ${priceIds.enterprise}`)
-  console.log(`  STRIPE_WEBHOOK_SECRET   = <from webhook step above>`)
-  console.log(`  NEXT_PUBLIC_APP_URL     = ${APP_URL}`)
+  console.log(`  STRIPE_SECRET_KEY           = ${STRIPE_KEY.slice(0, 14)}...`)
+  console.log(`  STRIPE_PRICE_STARTER        = ${priceIds.starter}`)
+  console.log(`  STRIPE_PRICE_STANDARD       = ${priceIds.standard}`)
+  console.log(`  STRIPE_PRICE_PROFESSIONAL   = ${priceIds.professional}`)
+  console.log(`  STRIPE_WEBHOOK_SECRET       = <from webhook step above>`)
+  console.log(`  NEXT_PUBLIC_APP_URL         = ${APP_URL}`)
   console.log('─'.repeat(62))
 
   console.log('\n✅  Products and prices created.')

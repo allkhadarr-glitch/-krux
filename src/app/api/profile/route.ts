@@ -11,11 +11,18 @@ export async function GET(req: NextRequest) {
   const { userId, orgId, role } = await getSessionContext(req)
   if (!userId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
-  const { data } = await supabase
-    .from('user_profiles')
-    .select('full_name, role, phone, whatsapp_number, organization_id')
-    .eq('user_id', userId)
-    .single()
+  const [{ data }, { data: org }] = await Promise.all([
+    supabase
+      .from('user_profiles')
+      .select('full_name, role, phone, whatsapp_number, organization_id')
+      .eq('user_id', userId)
+      .single(),
+    supabase
+      .from('organizations')
+      .select('subscription_tier, subscription_status, subscription_expires_at')
+      .eq('id', orgId)
+      .single(),
+  ])
 
   return NextResponse.json({
     full_name:        data?.full_name ?? '',
@@ -23,6 +30,11 @@ export async function GET(req: NextRequest) {
     phone:            data?.phone ?? '',
     whatsapp_number:  data?.whatsapp_number ?? '',
     organization_id:  data?.organization_id ?? orgId,
+    org: {
+      subscription_tier:       org?.subscription_tier ?? 'trial',
+      subscription_status:     org?.subscription_status ?? 'active',
+      subscription_expires_at: org?.subscription_expires_at ?? null,
+    },
   })
 }
 

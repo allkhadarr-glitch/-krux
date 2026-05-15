@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 import { ChevronDown, Mail, Phone, ExternalLink, Copy, Check } from 'lucide-react'
 
@@ -73,14 +73,14 @@ function OrgRow({ org, appUrl }: { org: SignalOrg; appUrl: string }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-semibold text-white">{org.name}</span>
-            <span className={`text-[9px] font-black uppercase tracking-widest ${cfg.text}`}>{org.signal}</span>
+            <span className={`text-xs font-black uppercase tracking-widest ${cfg.text}`}>{org.signal}</span>
           </div>
-          <div className="text-[11px] text-[#64748B]">
+          <div className="text-xs text-[#64748B]">
             {org.email ?? <span className="text-[#334155] italic">no email on record</span>}
           </div>
         </div>
-        {org.ktin && <span className="font-mono text-[10px] text-[#64748B] hidden sm:block">{org.ktin}</span>}
-        <div className="text-[10px] text-[#64748B] flex-shrink-0 text-right">
+        {org.ktin && <span className="font-mono text-xs text-[#64748B] hidden sm:block">{org.ktin}</span>}
+        <div className="text-xs text-[#64748B] flex-shrink-0 text-right">
           <div>{org.ships} ship{org.ships !== 1 ? 's' : ''}{org.events > 0 ? ` · ${org.events} evt` : ''}</div>
           <div className="text-[#334155]">{timeAgo(org.signedUpAt)}</div>
         </div>
@@ -168,17 +168,17 @@ function OrgRow({ org, appUrl }: { org: SignalOrg; appUrl: string }) {
 
           {/* Follow-up note */}
           {org.signal === 'HOT' && (
-            <div className="text-[10px] text-red-400 font-semibold pt-1 border-t border-red-500/20">
+            <div className="text-xs text-red-400 font-semibold pt-1 border-t border-red-500/20">
               Active user — follow up to convert to paid. Ask: "What shipment are you tracking right now?"
             </div>
           )}
           {org.signal === 'WARM' && (
-            <div className="text-[10px] text-amber-400 pt-1 border-t border-amber-400/20">
+            <div className="text-xs text-amber-400 pt-1 border-t border-amber-400/20">
               Fresh signup — send the Loom link. Ask if they want help loading their first shipment.
             </div>
           )}
           {org.signal === 'COLD' && (
-            <div className="text-[10px] text-[#64748B] pt-1 border-t border-[#1E3A5F]">
+            <div className="text-xs text-[#64748B] pt-1 border-t border-[#1E3A5F]">
               Went quiet — one re-engagement email max. If no reply, move on.
             </div>
           )}
@@ -198,10 +198,10 @@ function LeadRow({ lead }: { lead: SignalLead }) {
         <div className="w-2 h-2 rounded-full flex-shrink-0 bg-[#00C896]" />
         <div className="flex-1 min-w-0">
           <div className="text-sm font-semibold text-white">{lead.email}</div>
-          {lead.company && <div className="text-[11px] text-[#64748B]">{lead.company} · {lead.role}</div>}
+          {lead.company && <div className="text-xs text-[#64748B]">{lead.company} · {lead.role}</div>}
         </div>
-        <span className="text-[9px] font-black uppercase tracking-widest text-[#00C896]">LEAD</span>
-        <div className="text-[10px] text-[#334155] flex-shrink-0">{timeAgo(lead.createdAt)}</div>
+        <span className="text-xs font-black uppercase tracking-widest text-[#00C896]">LEAD</span>
+        <div className="text-xs text-[#334155] flex-shrink-0">{timeAgo(lead.createdAt)}</div>
         <ChevronDown size={13} className={`text-[#334155] flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
@@ -232,7 +232,7 @@ function LeadRow({ lead }: { lead: SignalLead }) {
               <span className="text-[#64748B]">{new Date(lead.createdAt).toLocaleDateString('en-KE', { dateStyle: 'medium' })} · {timeAgo(lead.createdAt)}</span>
             </div>
           </div>
-          <div className="text-[10px] text-[#00C896] pt-1 border-t border-[#00C896]/20">
+          <div className="text-xs text-[#00C896] pt-1 border-t border-[#00C896]/20">
             Checked window checker and left their email. High intent. Send the Loom link.
           </div>
         </div>
@@ -257,7 +257,7 @@ export function AdminSignalBoard({
         <h3 className="text-white font-semibold text-sm flex items-center gap-2">
           Signal Board
         </h3>
-        <div className="flex items-center gap-3 text-[10px] text-[#64748B]">
+        <div className="flex items-center gap-3 text-xs text-[#64748B]">
           <span><span className="text-red-400 font-bold">HOT</span> {counts.HOT}</span>
           <span><span className="text-amber-400 font-bold">WARM</span> {counts.WARM}</span>
           <span><span className="text-[#64748B] font-bold">COLD</span> {counts.COLD}</span>
@@ -270,7 +270,7 @@ export function AdminSignalBoard({
       {leads.length > 0 && (
         <>
           <div className="px-5 py-2 border-t border-[#1E3A5F] bg-[#060E1A]">
-            <span className="text-[10px] text-[#00C896] font-bold uppercase tracking-widest">Window checker leads — not signed up</span>
+            <span className="text-xs text-[#00C896] font-bold uppercase tracking-widest">Window checker leads — not signed up</span>
           </div>
           {leads.map((w, i) => <LeadRow key={i} lead={w} />)}
         </>

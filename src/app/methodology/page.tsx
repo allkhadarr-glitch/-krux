@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 
 export const metadata = {
   title: 'Compliance Score Methodology — KRUX',
@@ -32,11 +32,11 @@ export default function MethodologyPage() {
             <Link href="/" className="text-[#00C896] text-xs font-black tracking-[0.35em] uppercase hover:opacity-80 transition-opacity">
               KRUX
             </Link>
-            <p className="text-[#334155] text-[10px] tracking-widest uppercase mt-0.5">East Africa&apos;s trade standard</p>
+            <p className="text-[#334155] text-xs tracking-widest uppercase mt-0.5">East Africa&apos;s trade standard</p>
           </div>
           <div className="text-right">
-            <p className="text-[#334155] text-[10px] uppercase tracking-wide">Published</p>
-            <p className="text-[#334155] text-[10px] mt-0.5">1 May 2026 · Version 1.0</p>
+            <p className="text-[#334155] text-xs uppercase tracking-wide">Published</p>
+            <p className="text-[#334155] text-xs mt-0.5">1 May 2026 · Version 1.0</p>
           </div>
         </div>
 
@@ -51,7 +51,7 @@ export default function MethodologyPage() {
 
           {/* 01 */}
           <section>
-            <p className="text-[9px] text-[#334155] uppercase tracking-[0.25em] mb-4">01 — The Score</p>
+            <p className="text-xs text-[#334155] uppercase tracking-[0.25em] mb-4">01 — The Score</p>
             <p>
               KRUX compliance scores range from 0 to 100. Scores are calculated nightly at 22:00 UTC
               (midnight East Africa Time) and reflect all verified shipment activity recorded on the KRUX
@@ -65,7 +65,7 @@ export default function MethodologyPage() {
 
           {/* 02 */}
           <section>
-            <p className="text-[9px] text-[#334155] uppercase tracking-[0.25em] mb-4">02 — Score Components</p>
+            <p className="text-xs text-[#334155] uppercase tracking-[0.25em] mb-4">02 — Score Components</p>
 
             <div className="border border-[#1E3A5F] mb-4">
               <div className="px-4 py-3 border-b border-[#1E3A5F]">
@@ -104,7 +104,7 @@ export default function MethodologyPage() {
 
           {/* 03 */}
           <section>
-            <p className="text-[9px] text-[#334155] uppercase tracking-[0.25em] mb-4">03 — Compliance Tiers</p>
+            <p className="text-xs text-[#334155] uppercase tracking-[0.25em] mb-4">03 — Compliance Tiers</p>
             <div className="border border-[#1E3A5F]">
               {TIERS.map((row, i) => (
                 <div
@@ -113,7 +113,7 @@ export default function MethodologyPage() {
                 >
                   <div className="flex items-center gap-4">
                     <span className={`text-xs font-black tracking-widest ${row.color}`}>{row.tier}</span>
-                    <span className="text-[10px] text-[#334155]">{row.description}</span>
+                    <span className="text-xs text-[#334155]">{row.description}</span>
                   </div>
                   <span className="text-xs text-[#64748B]">{row.range}</span>
                 </div>
@@ -123,7 +123,7 @@ export default function MethodologyPage() {
 
           {/* 04 */}
           <section>
-            <p className="text-[9px] text-[#334155] uppercase tracking-[0.25em] mb-4">04 — What the Score Measures</p>
+            <p className="text-xs text-[#334155] uppercase tracking-[0.25em] mb-4">04 — What the Score Measures</p>
             <p>
               The KRUX compliance score measures operational reliability — how consistently and how quickly
               an entity clears shipments through Kenya&apos;s regulatory bodies: PPB, KEBS, EPRA, KEPHIS,
@@ -138,7 +138,7 @@ export default function MethodologyPage() {
 
           {/* 05 */}
           <section>
-            <p className="text-[9px] text-[#334155] uppercase tracking-[0.25em] mb-4">05 — Data Sources</p>
+            <p className="text-xs text-[#334155] uppercase tracking-[0.25em] mb-4">05 — Data Sources</p>
             <p>
               All score inputs are derived from shipment events recorded on the KRUX platform. Events are
               logged automatically when shipment status changes. The score is a function of verified
@@ -152,7 +152,7 @@ export default function MethodologyPage() {
 
           {/* 06 */}
           <section>
-            <p className="text-[9px] text-[#334155] uppercase tracking-[0.25em] mb-4">06 — Methodology Roadmap</p>
+            <p className="text-xs text-[#334155] uppercase tracking-[0.25em] mb-4">06 — Methodology Roadmap</p>
             <p>
               Future versions of the KRUX score will incorporate additional signals: regulatory
               body-specific compliance rates, document submission lead times, penalty history, and
@@ -165,10 +165,10 @@ export default function MethodologyPage() {
 
         {/* Footer */}
         <div className="mt-16 pt-6 border-t border-[#1E3A5F] flex items-center justify-between">
-          <p className="text-[9px] text-[#334155] uppercase tracking-widest">KRUX · East Africa&apos;s trade standard</p>
+          <p className="text-xs text-[#334155] uppercase tracking-widest">KRUX · East Africa&apos;s trade standard</p>
           <a
             href={appUrl}
-            className="text-[9px] text-[#64748B] hover:text-[#00C896] uppercase tracking-widest transition-colors"
+            className="text-xs text-[#64748B] hover:text-[#00C896] uppercase tracking-widest transition-colors"
           >
             kruxvon.com
           </a>

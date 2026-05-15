@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect, useRef } from 'react'
 import { Bell, X, CheckCheck, AlertTriangle, Info, CheckCircle2 } from 'lucide-react'
 
@@ -83,7 +83,7 @@ export function NotificationBell() {
       >
         <Bell size={16} />
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-white text-xs font-bold flex items-center justify-center">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
@@ -97,7 +97,7 @@ export function NotificationBell() {
               {unread > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="text-[10px] text-[#64748B] hover:text-white flex items-center gap-1 transition-colors"
+                  className="text-xs text-[#64748B] hover:text-white flex items-center gap-1 transition-colors"
                 >
                   <CheckCheck size={12} /> Mark all read
                 </button>
@@ -131,8 +131,8 @@ export function NotificationBell() {
                           <span className="text-xs font-semibold text-white truncate">{n.title}</span>
                           {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-[#00C896] flex-shrink-0" />}
                         </div>
-                        <p className="text-[11px] text-[#64748B] mt-0.5 line-clamp-2">{n.body}</p>
-                        <p className="text-[10px] text-[#475569] mt-1">{timeAgo(n.created_at)}</p>
+                        <p className="text-xs text-[#64748B] mt-0.5 line-clamp-2">{n.body}</p>
+                        <p className="text-xs text-[#475569] mt-1">{timeAgo(n.created_at)}</p>
                       </div>
                     </div>
                   </div>

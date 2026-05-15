@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 
 export const metadata = {
   title: 'Advisory Services — KRUX',
@@ -74,11 +74,11 @@ export default function ServicesPage() {
             <Link href="/" className="text-[#00C896] text-xs font-black tracking-[0.35em] uppercase hover:opacity-80 transition-opacity">
               KRUX
             </Link>
-            <p className="text-[#334155] text-[10px] tracking-widest uppercase mt-0.5">East Africa&apos;s trade standard</p>
+            <p className="text-[#334155] text-xs tracking-widest uppercase mt-0.5">East Africa&apos;s trade standard</p>
           </div>
           <div className="text-right">
-            <p className="text-[#334155] text-[10px] uppercase tracking-wide">Advisory Services</p>
-            <p className="text-[#334155] text-[10px] mt-0.5">hq@kruxvon.com</p>
+            <p className="text-[#334155] text-xs uppercase tracking-wide">Advisory Services</p>
+            <p className="text-[#334155] text-xs mt-0.5">hq@kruxvon.com</p>
           </div>
         </div>
 
@@ -97,24 +97,24 @@ export default function ServicesPage() {
               {/* Header */}
               <div className="px-5 py-4 border-b border-[#1E3A5F] flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[9px] text-[#334155] uppercase tracking-[0.25em] mb-1">{pkg.code}</p>
+                  <p className="text-xs text-[#334155] uppercase tracking-[0.25em] mb-1">{pkg.code}</p>
                   <p className="text-white font-black text-sm tracking-wide">{pkg.name}</p>
                   <p className="text-[#64748B] text-xs mt-1">{pkg.description}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p className="text-[#00C896] font-black text-sm">{pkg.price}</p>
-                  <p className="text-[#334155] text-[10px] mt-0.5">{pkg.turnaround}</p>
-                  <p className="text-[#334155] text-[10px]">{pkg.delivery}</p>
+                  <p className="text-[#334155] text-xs mt-0.5">{pkg.turnaround}</p>
+                  <p className="text-[#334155] text-xs">{pkg.delivery}</p>
                 </div>
               </div>
 
               {/* Includes */}
               <div className="px-5 py-4 border-b border-[#1E3A5F]">
-                <p className="text-[9px] text-[#334155] uppercase tracking-[0.2em] mb-3">What&apos;s included</p>
+                <p className="text-xs text-[#334155] uppercase tracking-[0.2em] mb-3">What&apos;s included</p>
                 <div className="space-y-2">
                   {pkg.includes.map((item) => (
                     <div key={item} className="flex items-start gap-2.5">
-                      <span className="text-[#00C896] text-[10px] mt-0.5 flex-shrink-0">·</span>
+                      <span className="text-[#00C896] text-xs mt-0.5 flex-shrink-0">·</span>
                       <span className="text-[#94A3B8] text-xs">{item}</span>
                     </div>
                   ))}
@@ -123,7 +123,7 @@ export default function ServicesPage() {
 
               {/* Best for */}
               <div className="px-5 py-3">
-                <p className="text-[9px] text-[#334155] uppercase tracking-[0.2em] mb-1">Best for</p>
+                <p className="text-xs text-[#334155] uppercase tracking-[0.2em] mb-1">Best for</p>
                 <p className="text-[#64748B] text-xs">{pkg.best_for}</p>
               </div>
             </div>
@@ -132,7 +132,7 @@ export default function ServicesPage() {
 
         {/* Engagement */}
         <div className="mt-12 border border-[#1E3A5F] px-5 py-6">
-          <p className="text-[9px] text-[#334155] uppercase tracking-[0.25em] mb-4">How to engage</p>
+          <p className="text-xs text-[#334155] uppercase tracking-[0.25em] mb-4">How to engage</p>
           <div className="space-y-3 text-xs text-[#94A3B8]">
             <p>Email <a href={`mailto:${contactEmail}`} className="text-[#00C896] hover:opacity-80">{contactEmail}</a> with:</p>
             <div className="space-y-1.5 pl-3">
@@ -151,7 +151,7 @@ export default function ServicesPage() {
         <div className="mt-8 border border-[#1E3A5F] px-5 py-5 flex items-center justify-between gap-4">
           <div>
             <p className="text-white text-xs font-black mb-1">Not yet on KRUX?</p>
-            <p className="text-[#64748B] text-[11px]">Register your entity. Get your KTIN. Track every shipment.</p>
+            <p className="text-[#64748B] text-xs">Register your entity. Get your KTIN. Track every shipment.</p>
           </div>
           <a
             href={`${appUrl}/signup`}
@@ -163,8 +163,8 @@ export default function ServicesPage() {
 
         {/* Footer */}
         <div className="mt-16 pt-6 border-t border-[#1E3A5F] flex items-center justify-between">
-          <p className="text-[9px] text-[#334155] uppercase tracking-widest">KRUX · East Africa&apos;s trade standard</p>
-          <Link href="/" className="text-[9px] text-[#64748B] hover:text-[#00C896] uppercase tracking-widest transition-colors">
+          <p className="text-xs text-[#334155] uppercase tracking-widest">KRUX · East Africa&apos;s trade standard</p>
+          <Link href="/" className="text-xs text-[#64748B] hover:text-[#00C896] uppercase tracking-widest transition-colors">
             kruxvon.com
           </Link>
         </div>

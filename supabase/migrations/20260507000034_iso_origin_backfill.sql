@@ -1,0 +1,20 @@
+-- Migration 34 — Normalize origin_country to ISO 2-letter codes
+UPDATE shipments SET origin_country = 'CN' WHERE lower(origin_country) IN ('china','people''s republic of china','prc','cn');
+UPDATE shipments SET origin_country = 'IN' WHERE lower(origin_country) IN ('india','republic of india','in');
+UPDATE shipments SET origin_country = 'AE' WHERE lower(origin_country) IN ('uae','united arab emirates','dubai','ae');
+UPDATE shipments SET origin_country = 'SG' WHERE lower(origin_country) IN ('singapore','sg');
+UPDATE shipments SET origin_country = 'US' WHERE lower(origin_country) IN ('usa','united states','united states of america','us');
+UPDATE shipments SET origin_country = 'GB' WHERE lower(origin_country) IN ('uk','united kingdom','england','great britain','gb');
+UPDATE shipments SET origin_country = 'DE' WHERE lower(origin_country) IN ('germany','deutschland','de');
+UPDATE shipments SET origin_country = 'NL' WHERE lower(origin_country) IN ('netherlands','holland','nl');
+UPDATE shipments SET origin_country = 'BE' WHERE lower(origin_country) IN ('belgium','be');
+UPDATE shipments SET origin_country = 'JP' WHERE lower(origin_country) IN ('japan','jp');
+UPDATE shipments SET origin_country = 'KR' WHERE lower(origin_country) IN ('south korea','korea','republic of korea','kr');
+UPDATE shipments SET origin_country = 'PK' WHERE lower(origin_country) IN ('pakistan','pk');
+UPDATE shipments SET origin_country = 'BD' WHERE lower(origin_country) IN ('bangladesh','bd');
+UPDATE shipments SET origin_country = 'TR' WHERE lower(origin_country) IN ('turkey','türkiye','tr');
+UPDATE shipments SET origin_country = 'IT' WHERE lower(origin_country) IN ('italy','italia','it');
+UPDATE shipments SET origin_country = 'FR' WHERE lower(origin_country) IN ('france','fr');
+UPDATE shipments SET origin_country = 'ZA' WHERE lower(origin_country) IN ('south africa','za');
+UPDATE shipments SET origin_country = 'TZ' WHERE lower(origin_country) IN ('tanzania','united republic of tanzania','tz');
+UPDATE shipments SET origin_country = 'UG' WHERE lower(origin_country) IN ('uganda','ug');

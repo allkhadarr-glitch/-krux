@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { Shipment } from '@/lib/types'
 import { formatUSD, daysUntilDeadline } from '@/lib/utils'
@@ -42,7 +42,7 @@ function HeatMap({ shipments }: { shipments: EnrichedShipment[] }) {
 
   return (
     <div>
-      <p className="text-[10px] text-[#64748B] font-semibold uppercase tracking-widest mb-2">Risk Heat Map — {total} shipments</p>
+      <p className="text-xs text-[#64748B] font-semibold uppercase tracking-widest mb-2">Risk Heat Map — {total} shipments</p>
       <div className="flex flex-wrap gap-1.5">
         {shipments.map((s) => {
           const cfg = URGENCY_CONFIG[s.urgency]
@@ -65,7 +65,7 @@ function HeatMap({ shipments }: { shipments: EnrichedShipment[] }) {
           return (
             <div key={u} className="flex items-center gap-1.5">
               <div className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-              <span className={`text-[10px] ${cfg.color} font-semibold`}>{count} {cfg.label}</span>
+              <span className={`text-xs ${cfg.color} font-semibold`}>{count} {cfg.label}</span>
             </div>
           )
         })}
@@ -97,7 +97,7 @@ function StatsStrip({ shipments }: { shipments: EnrichedShipment[] }) {
           <div key={s.label} className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-4">
             <div className="flex items-center gap-2 mb-2">
               <Icon size={13} className="text-[#64748B]" />
-              <p className="text-[10px] text-[#64748B] uppercase tracking-widest font-semibold">{s.label}</p>
+              <p className="text-xs text-[#64748B] uppercase tracking-widest font-semibold">{s.label}</p>
             </div>
             <p className={`text-2xl font-black ${s.color}`}>{s.value}</p>
           </div>
@@ -128,7 +128,7 @@ function PriorityQueue({ shipments }: { shipments: EnrichedShipment[] }) {
     <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl overflow-hidden">
       <div className="px-5 py-3 border-b border-[#1E3A5F] flex items-center justify-between">
         <p className="text-xs font-bold text-white uppercase tracking-widest">Priority Queue</p>
-        <span className="text-[10px] text-[#64748B]">{top.length} shipments need action</span>
+        <span className="text-xs text-[#64748B]">{top.length} shipments need action</span>
       </div>
       <div className="divide-y divide-[#1E3A5F]">
         {top.map((s) => {
@@ -136,20 +136,20 @@ function PriorityQueue({ shipments }: { shipments: EnrichedShipment[] }) {
           const reg = s.regulatory_body?.code ?? '—'
           return (
             <div key={s.id} className={`px-5 py-3.5 flex items-center gap-4 ${s.urgency === 'CRITICAL' ? 'bg-red-500/5' : ''}`}>
-              <div className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[9px] font-black ${cfg.bg} ${cfg.color} border ${cfg.border}`}>
+              <div className={`flex-shrink-0 px-2 py-0.5 rounded-full text-xs font-black ${cfg.bg} ${cfg.color} border ${cfg.border}`}>
                 {cfg.label}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white truncate">{s.name}</p>
                 <div className="flex items-center gap-3 mt-0.5">
-                  <span className="text-[10px] font-bold text-[#00C896]">{reg}</span>
+                  <span className="text-xs font-bold text-[#00C896]">{reg}</span>
                   {s.daysRemaining != null && (
-                    <span className={`text-[10px] ${s.urgency === 'CRITICAL' ? 'text-red-400' : 'text-amber-400'} font-semibold`}>
+                    <span className={`text-xs ${s.urgency === 'CRITICAL' ? 'text-red-400' : 'text-amber-400'} font-semibold`}>
                       {s.daysRemaining}d to deadline
                     </span>
                   )}
                   {s.totalKESAtRisk > 0 && (
-                    <span className="text-[10px] text-[#64748B]">
+                    <span className="text-xs text-[#64748B]">
                       KES {s.totalKESAtRisk.toLocaleString()} at risk
                     </span>
                   )}
@@ -210,7 +210,7 @@ function MorningBriefing({ shipments }: { shipments: EnrichedShipment[] }) {
           {briefing && (
             <button
               onClick={copyToClipboard}
-              className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] text-[#64748B] border border-[#1E3A5F] rounded-lg hover:text-white hover:border-[#00C896]/30 transition-all"
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-[#64748B] border border-[#1E3A5F] rounded-lg hover:text-white hover:border-[#00C896]/30 transition-all"
             >
               <Copy size={10} />
               {copied ? 'Copied' : 'Copy to WhatsApp'}
@@ -252,12 +252,12 @@ function MorningBriefing({ shipments }: { shipments: EnrichedShipment[] }) {
         <div className="p-5">
           {stats && (
             <div className="flex items-center gap-4 mb-4 pb-4 border-b border-[#1E3A5F]">
-              {stats.critical > 0 && <span className="text-[10px] text-red-400 font-bold">{stats.critical} CRITICAL</span>}
-              {stats.urgent > 0   && <span className="text-[10px] text-amber-400 font-bold">{stats.urgent} URGENT</span>}
-              {stats.watch > 0    && <span className="text-[10px] text-blue-400 font-bold">{stats.watch} WATCH</span>}
-              {stats.on_track > 0 && <span className="text-[10px] text-emerald-400 font-bold">{stats.on_track} ON TRACK</span>}
+              {stats.critical > 0 && <span className="text-xs text-red-400 font-bold">{stats.critical} CRITICAL</span>}
+              {stats.urgent > 0   && <span className="text-xs text-amber-400 font-bold">{stats.urgent} URGENT</span>}
+              {stats.watch > 0    && <span className="text-xs text-blue-400 font-bold">{stats.watch} WATCH</span>}
+              {stats.on_track > 0 && <span className="text-xs text-emerald-400 font-bold">{stats.on_track} ON TRACK</span>}
               {stats.total_kes > 0 && (
-                <span className="text-[10px] text-[#64748B] ml-auto">
+                <span className="text-xs text-[#64748B] ml-auto">
                   KES {stats.total_kes.toLocaleString()} total at risk
                 </span>
               )}
@@ -361,7 +361,7 @@ export default function CommandCenterPage() {
               <thead>
                 <tr className="border-b border-[#1E3A5F]">
                   {['Status', 'Shipment', 'Regulator', 'Deadline', 'CIF Value', 'KES at Risk'].map((h) => (
-                    <th key={h} className="px-4 py-2.5 text-left text-[9px] font-bold text-[#64748B] uppercase tracking-widest">
+                    <th key={h} className="px-4 py-2.5 text-left text-xs font-bold text-[#64748B] uppercase tracking-widest">
                       {h}
                     </th>
                   ))}
@@ -375,12 +375,12 @@ export default function CommandCenterPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">
                           <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
-                          <span className={`text-[10px] font-black ${cfg.color}`}>{cfg.label}</span>
+                          <span className={`text-xs font-black ${cfg.color}`}>{cfg.label}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         <p className="text-sm font-medium text-white truncate max-w-[220px]">{s.name}</p>
-                        <p className="text-[10px] text-[#64748B] mt-0.5">{s.origin_port}</p>
+                        <p className="text-xs text-[#64748B] mt-0.5">{s.origin_port}</p>
                       </td>
                       <td className="px-4 py-3">
                         <RegulatorBadge body={s.regulatory_body?.code ?? '—'} />

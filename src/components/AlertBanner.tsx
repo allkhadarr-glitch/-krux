@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { DeadlineAlert } from '@/lib/alerts'
 import { AlertTriangle, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { useState } from 'react'
@@ -41,7 +41,7 @@ export default function AlertBanner({ alerts }: { alerts: DeadlineAlert[] }) {
         <div className="flex-1 min-w-0">
           {/* First line: badge + name */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded shrink-0 ${style.badge}`}>
+            <span className={`text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded shrink-0 ${style.badge}`}>
               {top.level}
             </span>
             <span className="text-sm font-semibold text-white truncate">{top.shipmentName}</span>

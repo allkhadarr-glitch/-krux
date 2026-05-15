@@ -1,7 +1,72 @@
-'use client'
+﻿'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AlertTriangle, CheckCircle2, Clock, Loader2, XCircle, Zap } from 'lucide-react'
+
+type ActivityEvent = {
+  id:            string
+  title:         string
+  status:        'DONE' | 'IN_PROGRESS'
+  shipment_name: string | null
+  portal_ref:    string | null
+  timestamp:     string
+}
+
+function ActivityFeed() {
+  const [events, setEvents] = useState<ActivityEvent[]>([])
+
+  useEffect(() => {
+    fetch('/api/activity/recent')
+      .then(r => r.json())
+      .then(d => Array.isArray(d) ? setEvents(d) : null)
+      .catch(() => {})
+  }, [])
+
+  if (!events.length) return null
+
+  function timeAgo(iso: string) {
+    const diff = Date.now() - new Date(iso).getTime()
+    const m = Math.floor(diff / 60000)
+    const h = Math.floor(m / 60)
+    const d = Math.floor(h / 24)
+    if (d > 0) return `${d}d ago`
+    if (h > 0) return `${h}h ago`
+    if (m > 0) return `${m}m ago`
+    return 'just now'
+  }
+
+  return (
+    <div className="space-y-3 pt-2">
+      <div className="flex items-center gap-2">
+        <div className="w-1.5 h-1.5 rounded-full bg-[#00C896] animate-pulse" />
+        <p className="text-xs text-[#64748B] uppercase tracking-widest font-semibold">Recent Activity</p>
+      </div>
+      <div className="space-y-0">
+        {events.map(event => (
+          <div key={event.id} className="flex items-start gap-3 py-2 border-b border-[#1E3A5F]/40 last:border-0">
+            <span className={`text-xs font-bold mt-0.5 shrink-0 w-3 text-center ${
+              event.status === 'DONE' ? 'text-[#00C896]' : 'text-amber-400'
+            }`}>
+              {event.status === 'DONE' ? '✓' : '→'}
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-[#94A3B8] leading-snug">
+                {event.title}
+                {event.shipment_name && (
+                  <span className="text-[#475569]"> · {event.shipment_name}</span>
+                )}
+              </p>
+              {event.portal_ref && (
+                <p className="text-xs text-[#475569] font-mono mt-0.5">{event.portal_ref}</p>
+              )}
+            </div>
+            <span className="text-xs text-[#334155] shrink-0 font-mono">{timeAgo(event.timestamp)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 type HitItem = {
   id:          string
@@ -93,7 +158,7 @@ export default function TodayPage() {
         {total > 0 && (
           <div className="text-right flex-shrink-0">
             <div className="text-2xl font-black text-white">{doneCount}<span className="text-[#64748B] font-normal text-sm">/{total}</span></div>
-            <div className="text-[10px] text-[#64748B] uppercase tracking-wide">done</div>
+            <div className="text-xs text-[#64748B] uppercase tracking-wide">done</div>
           </div>
         )}
       </div>
@@ -145,7 +210,7 @@ export default function TodayPage() {
               className={`bg-[#0F2040] border ${s.border} ${s.bg} rounded-xl p-4 flex gap-3`}
             >
               {/* Number */}
-              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0A1628] border border-[#1E3A5F] flex items-center justify-center text-[10px] font-bold text-[#64748B] mt-0.5">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0A1628] border border-[#1E3A5F] flex items-center justify-center text-xs font-bold text-[#64748B] mt-0.5">
                 {idx + 1}
               </div>
 
@@ -153,11 +218,11 @@ export default function TodayPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-start gap-2 flex-wrap">
                   <span className="text-sm font-semibold text-white">{item.title}</span>
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${s.badge}`}>
+                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${s.badge}`}>
                     {item.priority}
                   </span>
                   {item.type === 'IMPOSSIBLE' && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-red-900/40 text-red-300 border border-red-500/30">
+                    <span className="text-xs font-bold px-1.5 py-0.5 rounded-md bg-red-900/40 text-red-300 border border-red-500/30">
                       WINDOW CLOSED
                     </span>
                   )}
@@ -168,14 +233,14 @@ export default function TodayPage() {
                   {item.action}
                 </p>
                 {item.ref && (
-                  <p className="text-[10px] text-[#334155] mt-1 font-mono">{item.ref}</p>
+                  <p className="text-xs text-[#334155] mt-1 font-mono">{item.ref}</p>
                 )}
               </div>
 
               {/* Right side */}
               <div className="flex-shrink-0 flex flex-col items-end gap-2">
                 {item.kes_at_risk > 0 && (
-                  <span className="text-[10px] text-red-400 font-mono whitespace-nowrap">
+                  <span className="text-xs text-red-400 font-mono whitespace-nowrap">
                     KES {item.kes_at_risk.toLocaleString()}
                   </span>
                 )}
@@ -183,14 +248,14 @@ export default function TodayPage() {
                   {item.shipment_id && (
                     <button
                       onClick={() => router.push(`/dashboard/operations?open=${item.shipment_id}`)}
-                      className="text-[10px] px-2 py-1 rounded-md border border-[#1E3A5F] text-[#94A3B8] hover:border-[#00C896]/40 hover:text-white transition-all"
+                      className="text-xs px-2 py-1 rounded-md border border-[#1E3A5F] text-[#94A3B8] hover:border-[#00C896]/40 hover:text-white transition-all"
                     >
                       Open
                     </button>
                   )}
                   <button
                     onClick={() => markDone(item.id)}
-                    className="text-[10px] px-2 py-1 rounded-md bg-[#00C896]/10 border border-[#00C896]/30 text-[#00C896] hover:bg-[#00C896]/20 transition-all font-semibold"
+                    className="text-xs px-2 py-1 rounded-md bg-[#00C896]/10 border border-[#00C896]/30 text-[#00C896] hover:bg-[#00C896]/20 transition-all font-semibold"
                   >
                     Done
                   </button>
@@ -204,7 +269,7 @@ export default function TodayPage() {
       {/* Completed items (collapsed) */}
       {doneCount > 0 && (
         <div className="space-y-1.5">
-          <p className="text-[10px] text-[#334155] uppercase tracking-wide font-semibold">Completed today</p>
+          <p className="text-xs text-[#475569] uppercase tracking-wide font-semibold">Completed today</p>
           {items.filter(i => done.has(i.id)).map(item => (
             <div key={item.id} className="flex items-center gap-3 px-3 py-2 bg-[#0A1628] rounded-lg opacity-50">
               <CheckCircle2 size={13} className="text-[#00C896] flex-shrink-0" />
@@ -213,6 +278,9 @@ export default function TodayPage() {
           ))}
         </div>
       )}
+
+      {/* Activity feed — always shows recent events so dashboard feels alive */}
+      <ActivityFeed />
     </div>
   )
 }

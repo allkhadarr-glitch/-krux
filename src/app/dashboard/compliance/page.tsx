@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { Plus, Calendar, AlertTriangle, CheckCircle2, Clock, X, Check, Loader2, RefreshCw, Trash2 } from 'lucide-react'
 
@@ -26,11 +26,11 @@ function fmt(d: string) {
 }
 
 function DueBadge({ days }: { days: number }) {
-  if (days < 0)  return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/15 text-red-400 border border-red-500/30">OVERDUE {Math.abs(days)}d</span>
-  if (days === 0) return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/15 text-red-400 border border-red-500/30">DUE TODAY</span>
-  if (days <= 7)  return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">DUE IN {days}d</span>
-  if (days <= 30) return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30">DUE IN {days}d</span>
-  return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#1E3A5F] text-[#64748B] border border-[#1E3A5F]">{fmt(String(''))}{days}d away</span>
+  if (days < 0)  return <span className="px-2 py-0.5 rounded text-xs font-bold bg-red-500/15 text-red-400 border border-red-500/30">OVERDUE {Math.abs(days)}d</span>
+  if (days === 0) return <span className="px-2 py-0.5 rounded text-xs font-bold bg-red-500/15 text-red-400 border border-red-500/30">DUE TODAY</span>
+  if (days <= 7)  return <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">DUE IN {days}d</span>
+  if (days <= 30) return <span className="px-2 py-0.5 rounded text-xs font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30">DUE IN {days}d</span>
+  return <span className="px-2 py-0.5 rounded text-xs font-bold bg-[#1E3A5F] text-[#64748B] border border-[#1E3A5F]">{fmt(String(''))}{days}d away</span>
 }
 
 function AddObligationModal({ onClose, onSave }: { onClose: () => void; onSave: (o: Obligation) => void }) {
@@ -237,9 +237,9 @@ export default function CompliancePage() {
                   <tr key={o.id} className={`hover:bg-[#1E3A5F]/20 transition-colors ${o.status === 'DONE' ? 'opacity-50' : ''}`}>
                     <td className="px-4 py-3">
                       <div className="text-sm text-white font-medium">{o.title}</div>
-                      {o.notes && <div className="text-[11px] text-[#64748B] mt-0.5 truncate max-w-xs">{o.notes}</div>}
+                      {o.notes && <div className="text-xs text-[#64748B] mt-0.5 truncate max-w-xs">{o.notes}</div>}
                       {o.recurrence_days && (
-                        <div className="flex items-center gap-1 mt-1 text-[10px] text-[#475569]">
+                        <div className="flex items-center gap-1 mt-1 text-xs text-[#475569]">
                           <RefreshCw size={9} /> Every {o.recurrence_days}d
                         </div>
                       )}

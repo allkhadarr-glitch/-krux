@@ -1,6 +1,6 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
-import { Loader2, Check, User, Building2, Bell, Lock, Trash2, Copy, CheckCheck, ShieldCheck } from 'lucide-react'
+import { Loader2, Check, User, Building2, Bell, Lock, Trash2, Copy, CheckCheck, ShieldCheck, Database } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 const TYPE_LABEL: Record<string, string> = {
@@ -53,6 +53,9 @@ export default function SettingsPage() {
   const [entity, setEntity]         = useState<KruxEntity | null>(null)
   const [copied, setCopied]         = useState(false)
   const [copiedSig, setCopiedSig]   = useState(false)
+  const [consentTier, setConsentTier]     = useState<string>('aggregate')
+  const [consentSaving, setConsentSaving] = useState(false)
+  const [consentSaved, setConsentSaved]   = useState(false)
 
   async function clearDemoData() {
     setClearing(true)
@@ -101,6 +104,10 @@ export default function SettingsPage() {
     fetch('/api/entity')
       .then(r => r.json())
       .then(d => { if (!d.error) setEntity(d) })
+      .catch(() => {})
+    fetch('/api/consent')
+      .then(r => r.json())
+      .then(d => { if (d.tier) setConsentTier(d.tier) })
       .catch(() => {})
   }, [])
 
@@ -155,7 +162,7 @@ export default function SettingsPage() {
               <input value={profile.whatsapp_number} onChange={(e) => setProfile({ ...profile, whatsapp_number: e.target.value })}
                 className="w-full mt-1 bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#00C896]"
                 placeholder="+254 7XX XXX XXX (for inbound commands)" />
-              <p className="text-[10px] text-[#64748B] mt-1">Text "status" to your Twilio number to get today's shipment triage</p>
+              <p className="text-xs text-[#64748B] mt-1">Text "status" to your Twilio number to get today's shipment triage</p>
             </div>
           </div>
         </div>
@@ -214,7 +221,7 @@ export default function SettingsPage() {
               <ShieldCheck size={14} className="text-[#00C896]" />
               <h3 className="text-white font-semibold text-sm">KTIN — KRUX Trade Identity Number</h3>
               {entity.is_verified && (
-                <span className="ml-auto text-[10px] font-bold text-[#00C896] bg-[#00C896]/10 border border-[#00C896]/30 px-2 py-0.5 rounded-full">VERIFIED</span>
+                <span className="ml-auto text-xs font-bold text-[#00C896] bg-[#00C896]/10 border border-[#00C896]/30 px-2 py-0.5 rounded-full">VERIFIED</span>
               )}
             </div>
             <div className="flex items-center gap-2 mb-4">
@@ -259,11 +266,11 @@ export default function SettingsPage() {
                 </p>
               </div>
             </div>
-            <p className="text-[10px] text-[#334155] mt-3">Your permanent trade identity on the KRUX network. Banks and insurers will use this ID to verify your compliance history.</p>
+            <p className="text-xs text-[#334155] mt-3">Your permanent trade identity on the KRUX network. Banks and insurers will use this ID to verify your compliance history.</p>
 
             {/* Email signature block */}
             <div className="mt-4 border-t border-[#1E3A5F] pt-4">
-              <p className="text-[10px] text-[#64748B] uppercase tracking-wide mb-2">Email Signature Block</p>
+              <p className="text-xs text-[#64748B] uppercase tracking-wide mb-2">Email Signature Block</p>
               <div className="bg-[#060E1A] border border-[#1E3A5F] rounded-lg px-3 py-2.5 font-mono text-xs leading-relaxed select-all">
                 <p className="text-white">
                   {entity.krux_id} | {TYPE_LABEL[entity.entity_type] ?? 'Broker'}{entity.compliance_tier ? ` | ${entity.compliance_tier}` : ''}
@@ -280,7 +287,7 @@ export default function SettingsPage() {
                   setCopiedSig(true)
                   setTimeout(() => setCopiedSig(false), 2000)
                 }}
-                className="mt-2 flex items-center gap-1.5 text-[10px] text-[#64748B] hover:text-[#00C896] transition-colors"
+                className="mt-2 flex items-center gap-1.5 text-xs text-[#64748B] hover:text-[#00C896] transition-colors"
               >
                 {copiedSig ? <CheckCheck size={12} className="text-[#00C896]" /> : <Copy size={12} />}
                 {copiedSig ? 'Copied!' : 'Copy to clipboard'}
@@ -298,7 +305,7 @@ export default function SettingsPage() {
           <div className="space-y-4 text-xs">
             <div className="flex items-start gap-3 p-3 bg-[#0A1628] border border-[#1E3A5F] rounded-lg">
               <div className="w-6 h-6 rounded-full bg-[#25D366]/10 border border-[#25D366]/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-[#25D366] text-[9px] font-bold">WA</span>
+                <span className="text-[#25D366] text-xs font-bold">WA</span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white font-semibold mb-0.5">WhatsApp (Twilio)</p>
@@ -311,7 +318,7 @@ export default function SettingsPage() {
                   <div>ALERT_WHATSAPP_TO <span className="text-[#64748B] font-sans">(your +254)</span></div>
                 </div>
                 <p className="text-[#334155] mt-2 mb-1">2. In Twilio console → WhatsApp Sandbox → set webhook URL:</p>
-                <div className="font-mono text-[#00C896] text-[10px] bg-[#0A1628] px-2 py-1.5 rounded-md break-all">
+                <div className="font-mono text-[#00C896] text-xs bg-[#0A1628] px-2 py-1.5 rounded-md break-all">
                   https://kruxvon.com/api/whatsapp/inbound
                 </div>
                 <p className="text-[#334155] mt-2">3. Add your WhatsApp number above ↑ to link your account</p>
@@ -319,7 +326,7 @@ export default function SettingsPage() {
             </div>
             <div className="flex items-start gap-3 p-3 bg-[#0A1628] border border-[#1E3A5F] rounded-lg">
               <div className="w-6 h-6 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-blue-400 text-[9px] font-bold">@</span>
+                <span className="text-blue-400 text-xs font-bold">@</span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white font-semibold mb-0.5">Email Alerts (Resend)</p>
@@ -365,6 +372,88 @@ export default function SettingsPage() {
         >
           {clearing ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
           {clearing ? 'Clearing...' : 'Clear demo shipments'}
+        </button>
+      </div>
+
+      {/* Data Security */}
+      <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <ShieldCheck size={14} className="text-[#00C896]" />
+          <h3 className="text-white font-semibold text-sm">Data Security</h3>
+        </div>
+        <div className="space-y-3">
+          {[
+            ['Organisation isolation', 'Your shipments, clients, and compliance records are scoped exclusively to your organisation. No other entity on KRUX can access your data.'],
+            ['Encryption', 'All data is encrypted in transit (TLS) and at rest (AES-256). There is no unencrypted access path.'],
+            ['No data monetisation', 'KRUX does not sell or share your organisation\'s shipment data with any third party.'],
+            ['Aggregate intelligence only', 'KRUX\'s market intelligence is built from anonymised, aggregated signals. Your specific shipments are never identified in any output surfaced to other clients.'],
+          ].map(([title, desc]) => (
+            <div key={title} className="flex items-start gap-2.5">
+              <span className="text-[#00C896] text-xs mt-0.5 flex-shrink-0">·</span>
+              <p className="text-xs text-[#64748B] leading-relaxed">
+                <span className="text-[#94A3B8] font-semibold">{title} — </span>{desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Data Participation */}
+      <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-5">
+        <div className="flex items-center gap-2 mb-1">
+          <Database size={14} className="text-[#00C896]" />
+          <h3 className="text-white font-semibold text-sm">Data Participation</h3>
+        </div>
+        <p className="text-xs text-[#64748B] mb-4 leading-relaxed">
+          Choose how your shipment data contributes to KRUX intelligence. You can always upgrade — you can never be downgraded without your action.
+        </p>
+        <div className="space-y-3">
+          {[
+            { tier: 'aggregate', label: 'Aggregate Only', desc: 'Default. Your data contributes only to anonymised, market-level statistics. Nothing identifiable. No action required.' },
+            { tier: 'entity',    label: 'Entity-Level',  desc: 'Your shipments build your own KTIN compliance record and score. Shared with banks or insurers only when you request it — e.g. for trade finance.' },
+            { tier: 'pool',      label: 'Intelligence Pool', desc: 'Your data trains KRUX AI models — corridor intelligence, examination rate predictions, compliance scoring. In return: free premium access for life + early access to all intelligence features.' },
+          ].map(({ tier, label, desc }) => (
+            <label key={tier} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+              consentTier === tier
+                ? 'border-[#00C896]/40 bg-[#00C896]/5'
+                : 'border-[#1E3A5F] hover:border-[#334155]'
+            }`}>
+              <input
+                type="radio"
+                name="consent_tier"
+                value={tier}
+                checked={consentTier === tier}
+                onChange={() => setConsentTier(tier)}
+                className="mt-0.5 accent-[#00C896] flex-shrink-0"
+              />
+              <div>
+                <p className={`text-sm font-semibold ${consentTier === tier ? 'text-white' : 'text-[#94A3B8]'}`}>{label}</p>
+                <p className="text-xs text-[#64748B] mt-0.5 leading-relaxed">{desc}</p>
+              </div>
+            </label>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={async () => {
+            setConsentSaving(true)
+            try {
+              await fetch('/api/consent', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tier: consentTier }),
+              })
+              setConsentSaved(true)
+              setTimeout(() => setConsentSaved(false), 2500)
+            } finally {
+              setConsentSaving(false)
+            }
+          }}
+          disabled={consentSaving}
+          className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-[#00C896] text-[#0A1628] text-sm font-bold hover:bg-[#00A87E] disabled:opacity-50 transition-colors"
+        >
+          {consentSaving ? <Loader2 size={13} className="animate-spin" /> : consentSaved ? <Check size={13} /> : null}
+          {consentSaved ? 'Saved!' : 'Save preference'}
         </button>
       </div>
 

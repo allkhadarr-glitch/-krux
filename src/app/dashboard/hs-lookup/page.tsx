@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { Search, AlertTriangle, CheckCircle2, Info, Zap, Sparkles, Loader2, ChevronDown, ChevronRight } from 'lucide-react'
 import { HS_DATABASE, HS_CATEGORIES, searchHS, type HSCodeEntry } from '@/lib/hs-intelligence'
@@ -13,7 +13,7 @@ function DutyBadge({ pct, label }: { pct: number; label: string }) {
   return (
     <div className={`flex flex-col items-center px-3 py-2 border ${color}`}>
       <span className="text-lg font-black tabular-nums">{pct}%</span>
-      <span className="text-[9px] font-semibold uppercase tracking-wide opacity-70">{label}</span>
+      <span className="text-xs font-semibold uppercase tracking-wide opacity-70">{label}</span>
     </div>
   )
 }
@@ -25,7 +25,7 @@ function RiskBadge({ risk }: { risk: 'CRITICAL' | 'HIGH' | 'MEDIUM' }) {
     MEDIUM:   'text-blue-400 bg-blue-400/10 border border-blue-400/30',
   }
   return (
-    <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 ${styles[risk]}`}>{risk}</span>
+    <span className={`text-xs font-bold uppercase px-1.5 py-0.5 ${styles[risk]}`}>{risk}</span>
   )
 }
 
@@ -78,15 +78,15 @@ function HSCard({ entry, autoExpand, kesRate }: { entry: HSCodeEntry; autoExpand
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <span className="font-black text-white text-lg tracking-tight font-mono">{entry.code}</span>
-              <span className="text-[10px] text-[#64748B] bg-[#1E3A5F] px-2 py-0.5">{entry.category}</span>
+              <span className="text-xs text-[#64748B] bg-[#1E3A5F] px-2 py-0.5">{entry.category}</span>
             </div>
             <p className="text-sm text-[#94A3B8] leading-relaxed">{entry.description}</p>
           </div>
           <div className="shrink-0">
             {entry.pvoc_required ? (
-              <span className="text-[9px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-1.5 py-0.5">PVoC ✓</span>
+              <span className="text-xs font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-1.5 py-0.5">PVoC ✓</span>
             ) : (
-              <span className="text-[9px] font-bold text-[#64748B] bg-[#1E3A5F] border border-[#1E3A5F] px-1.5 py-0.5">No PVoC</span>
+              <span className="text-xs font-bold text-[#64748B] bg-[#1E3A5F] border border-[#1E3A5F] px-1.5 py-0.5">No PVoC</span>
             )}
           </div>
         </div>
@@ -101,16 +101,16 @@ function HSCard({ entry, autoExpand, kesRate }: { entry: HSCodeEntry; autoExpand
             <span className="text-lg font-black tabular-nums">
               {(entry.import_duty_pct + entry.vat_pct + entry.idf_levy_pct + entry.rdl_levy_pct).toFixed(1)}%
             </span>
-            <span className="text-[9px] font-semibold uppercase tracking-wide opacity-70">Total</span>
+            <span className="text-xs font-semibold uppercase tracking-wide opacity-70">Total</span>
           </div>
         </div>
 
         {/* ── Duty calculator ── */}
         <div className="mb-4 bg-[#0A1628] border border-[#1E3A5F] p-3">
-          <p className="text-[10px] text-[#64748B] font-mono uppercase tracking-widest mb-2">Calculate actual duty</p>
+          <p className="text-xs text-[#64748B] font-mono uppercase tracking-widest mb-2">Calculate actual duty</p>
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-[#64748B] font-mono">CIF USD</span>
+              <span className="text-xs text-[#64748B] font-mono">CIF USD</span>
               <div className="relative">
                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[#64748B] text-xs">$</span>
                 <input
@@ -124,9 +124,9 @@ function HSCard({ entry, autoExpand, kesRate }: { entry: HSCodeEntry; autoExpand
             </div>
             {dutyCalc && (
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-[#64748B]">→</span>
+                <span className="text-xs text-[#64748B]">→</span>
                 <span className="text-base font-black text-[#00C896] font-mono">KES {fmt(dutyCalc.totalKES)}</span>
-                <span className="text-[10px] text-[#64748B]">in duties</span>
+                <span className="text-xs text-[#64748B]">in duties</span>
               </div>
             )}
           </div>
@@ -140,38 +140,38 @@ function HSCard({ entry, autoExpand, kesRate }: { entry: HSCodeEntry; autoExpand
                 ...(dutyCalc.pvoc > 0 ? [{ label: 'KEBS PVoC fee', usd: dutyCalc.pvoc, color: 'text-amber-400' }] : []),
               ].map(row => (
                 <div key={row.label} className="flex justify-between items-center">
-                  <span className={`text-[10px] font-mono ${row.color}`}>{row.label}</span>
+                  <span className={`text-xs font-mono ${row.color}`}>{row.label}</span>
                   <div className="text-right">
-                    <span className={`text-[10px] font-mono font-bold ${row.color}`}>
+                    <span className={`text-xs font-mono font-bold ${row.color}`}>
                       KES {fmt(row.usd * kesRate)}
                     </span>
-                    <span className="text-[9px] text-[#334155] ml-1">(${fmt(row.usd)})</span>
+                    <span className="text-xs text-[#334155] ml-1">(${fmt(row.usd)})</span>
                   </div>
                 </div>
               ))}
               <div className="flex justify-between items-center border-t border-[#1E3A5F] pt-1 mt-1">
-                <span className="text-[10px] font-mono font-bold text-[#00C896]">Total duties + levies</span>
-                <span className="text-[10px] font-mono font-black text-[#00C896]">KES {fmt(dutyCalc.totalKES)}</span>
+                <span className="text-xs font-mono font-bold text-[#00C896]">Total duties + levies</span>
+                <span className="text-xs font-mono font-black text-[#00C896]">KES {fmt(dutyCalc.totalKES)}</span>
               </div>
-              <p className="text-[9px] text-[#334155] mt-1">Landed cost = CIF (KES {fmt(cif * kesRate)}) + duties (KES {fmt(dutyCalc.totalKES)}) = KES {fmt((cif + dutyCalc.totalUSD) * kesRate)}</p>
+              <p className="text-xs text-[#334155] mt-1">Landed cost = CIF (KES {fmt(cif * kesRate)}) + duties (KES {fmt(dutyCalc.totalKES)}) = KES {fmt((cif + dutyCalc.totalUSD) * kesRate)}</p>
             </div>
           )}
         </div>
 
-        <p className="text-[10px] text-[#334155] mb-3">Duty rates indicative — confirm with your clearing agent. KRA rates change with Finance Act amendments.</p>
+        <p className="text-xs text-[#334155] mb-3">Duty rates indicative — confirm with your clearing agent. KRA rates change with Finance Act amendments.</p>
 
         {entry.excise_note && (
           <div className="flex items-start gap-2 mb-3 px-3 py-2 bg-amber-400/5 border border-amber-400/20">
             <Info size={12} className="text-amber-400 shrink-0 mt-0.5" />
-            <p className="text-[11px] text-amber-300/90">{entry.excise_note}</p>
+            <p className="text-xs text-amber-300/90">{entry.excise_note}</p>
           </div>
         )}
 
         {/* Regulators */}
         <div className="flex items-center gap-2 mb-3 flex-wrap">
-          <span className="text-[10px] text-[#64748B]">Regulator{entry.regulator_codes.length !== 1 ? 's' : ''}:</span>
+          <span className="text-xs text-[#64748B]">Regulator{entry.regulator_codes.length !== 1 ? 's' : ''}:</span>
           {entry.regulator_codes.map((r) => (
-            <span key={r} className="text-[10px] font-bold text-[#00C896] bg-[#00C896]/10 border border-[#00C896]/30 px-2 py-0.5">
+            <span key={r} className="text-xs font-bold text-[#00C896] bg-[#00C896]/10 border border-[#00C896]/30 px-2 py-0.5">
               {r}
             </span>
           ))}
@@ -180,7 +180,7 @@ function HSCard({ entry, autoExpand, kesRate }: { entry: HSCodeEntry; autoExpand
         {/* Misclassification warnings */}
         {entry.misclassifications.length > 0 && (
           <div className="space-y-2 mb-3">
-            <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wide flex items-center gap-1">
+            <p className="text-xs font-bold text-[#64748B] uppercase tracking-wide flex items-center gap-1">
               <AlertTriangle size={10} className="text-amber-400" /> Misclassification Risks
             </p>
             {entry.misclassifications.map((m) => (
@@ -189,12 +189,12 @@ function HSCard({ entry, autoExpand, kesRate }: { entry: HSCodeEntry; autoExpand
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                     <span className="text-xs font-bold text-white">{entry.code}</span>
-                    <span className="text-[10px] text-[#64748B]">→ mistakenly filed as</span>
+                    <span className="text-xs text-[#64748B]">→ mistakenly filed as</span>
                     <span className="text-xs font-bold text-red-400">{m.wrong_code}</span>
                     <RiskBadge risk={m.risk} />
                   </div>
-                  <p className="text-[10px] text-[#64748B] leading-relaxed">{m.description} ({m.wrong_duty_pct}% duty)</p>
-                  <p className="text-[10px] text-amber-300/80 mt-1 leading-relaxed">{m.consequence}</p>
+                  <p className="text-xs text-[#64748B] leading-relaxed">{m.description} ({m.wrong_duty_pct}% duty)</p>
+                  <p className="text-xs text-amber-300/80 mt-1 leading-relaxed">{m.consequence}</p>
                 </div>
               </div>
             ))}
@@ -213,19 +213,19 @@ function HSCard({ entry, autoExpand, kesRate }: { entry: HSCodeEntry; autoExpand
       {expanded && (
         <div className="border-t border-[#1E3A5F] p-5 space-y-4 bg-[#0A1628]/50">
           <div>
-            <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wide mb-1.5 flex items-center gap-1">
+            <p className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1.5 flex items-center gap-1">
               <Zap size={9} className="text-red-400" /> KRA Officer Focus
             </p>
             <p className="text-xs text-[#94A3B8] leading-relaxed">{entry.kra_notes}</p>
           </div>
           <div>
-            <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wide mb-1.5 flex items-center gap-1">
+            <p className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1.5 flex items-center gap-1">
               <CheckCircle2 size={9} className="text-[#00C896]" /> Fastest Clearance Tip
             </p>
             <p className="text-xs text-[#94A3B8] leading-relaxed">{entry.clearance_tip}</p>
           </div>
           <div>
-            <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wide mb-1.5 flex items-center gap-1">
+            <p className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1.5 flex items-center gap-1">
               <Info size={9} className="text-blue-400" /> Statutory Reference
             </p>
             <p className="text-xs text-[#94A3B8] leading-relaxed italic">{entry.statutory_note}</p>
@@ -242,10 +242,10 @@ function HSCard({ entry, autoExpand, kesRate }: { entry: HSCodeEntry; autoExpand
               </button>
             ) : (
               <div>
-                <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wide mb-2 flex items-center gap-1">
+                <p className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-2 flex items-center gap-1">
                   <Sparkles size={9} className="text-[#00C896]" /> AI Analysis
                 </p>
-                <pre className="whitespace-pre-wrap text-[11px] text-[#94A3B8] leading-relaxed font-sans">{aiResult}</pre>
+                <pre className="whitespace-pre-wrap text-xs text-[#94A3B8] leading-relaxed font-sans">{aiResult}</pre>
               </div>
             )}
           </div>
@@ -293,7 +293,7 @@ export default function HSLookupPage() {
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
           <div className="w-2 h-2 rounded-full bg-[#00C896]" />
-          <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Kenya Customs Intelligence</span>
+          <span className="text-xs font-bold text-[#64748B] uppercase tracking-widest">Kenya Customs Intelligence</span>
         </div>
         <h1 className="text-2xl font-black text-white">HS Code Lookup</h1>
         <p className="text-[#64748B] text-sm mt-1">
@@ -316,7 +316,7 @@ export default function HSLookupPage() {
       {/* Popular searches */}
       {!query && (
         <div className="flex gap-2 flex-wrap mb-4">
-          <span className="text-[10px] text-[#334155] font-semibold uppercase tracking-wide self-center">Popular:</span>
+          <span className="text-xs text-[#334155] font-semibold uppercase tracking-wide self-center">Popular:</span>
           {POPULAR_SEARCHES.map((term) => (
             <button
               key={term}

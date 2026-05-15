@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { Plus, Phone, Mail, MessageSquare, Trash2, Edit2, X, Check, Loader2, Users } from 'lucide-react'
 
@@ -112,7 +112,7 @@ function AddContactModal({ onClose, onSave }: { onClose: () => void; onSave: (c:
             <div className="flex flex-wrap gap-2">
               {PORTS.map((p) => (
                 <button key={p} type="button" onClick={() => togglePort(p)}
-                  className={`px-2 py-1 rounded-md text-[10px] font-semibold border transition-all ${form.ports.includes(p) ? 'bg-[#00C896]/15 text-[#00C896] border-[#00C896]/30' : 'bg-[#0A1628] text-[#64748B] border-[#1E3A5F] hover:border-[#64748B]'}`}>
+                  className={`px-2 py-1 rounded-md text-xs font-semibold border transition-all ${form.ports.includes(p) ? 'bg-[#00C896]/15 text-[#00C896] border-[#00C896]/30' : 'bg-[#0A1628] text-[#64748B] border-[#1E3A5F] hover:border-[#64748B]'}`}>
                   {p}
                 </button>
               ))}
@@ -214,7 +214,7 @@ export default function ContactsPage() {
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <h3 className="text-white font-semibold text-sm">{c.name}</h3>
-                  <span className={`inline-block mt-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${TYPE_COLORS[c.contact_type] ?? TYPE_COLORS.OTHER}`}>
+                  <span className={`inline-block mt-1 px-2 py-0.5 rounded-md text-xs font-bold border ${TYPE_COLORS[c.contact_type] ?? TYPE_COLORS.OTHER}`}>
                     {TYPE_LABELS[c.contact_type] ?? c.contact_type}
                   </span>
                 </div>
@@ -244,13 +244,13 @@ export default function ContactsPage() {
               {c.ports.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-1">
                   {c.ports.map((p) => (
-                    <span key={p} className="px-1.5 py-0.5 bg-[#0A1628] text-[#64748B] text-[9px] rounded font-medium">{p}</span>
+                    <span key={p} className="px-1.5 py-0.5 bg-[#0A1628] text-[#64748B] text-xs rounded font-medium">{p}</span>
                   ))}
                 </div>
               )}
 
               {c.notes && (
-                <p className="mt-2 text-[11px] text-[#64748B] line-clamp-2 italic">{c.notes}</p>
+                <p className="mt-2 text-xs text-[#64748B] line-clamp-2 italic">{c.notes}</p>
               )}
             </div>
           ))}

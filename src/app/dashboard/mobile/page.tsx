@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, Loader2, Zap, RefreshCw } from 'lucide-react'
@@ -77,7 +77,7 @@ export default function MobileTodayPage() {
                 <div className="font-mono text-2xl font-black text-white leading-none">
                   {doneCount}<span className="text-[#334155] text-base font-normal">/{total}</span>
                 </div>
-                <div className="font-mono text-[10px] text-[#334155] uppercase tracking-widest mt-0.5">done</div>
+                <div className="font-mono text-xs text-[#334155] uppercase tracking-widest mt-0.5">done</div>
               </div>
             )}
             <button
@@ -105,7 +105,7 @@ export default function MobileTodayPage() {
         {/* KES at risk — shown when critical items exist */}
         {data && data.critical > 0 && data.total_kes > 0 && (
           <div className="border border-red-500/30 bg-red-500/8 px-4 py-3">
-            <div className="font-mono text-[10px] text-red-400/60 uppercase tracking-widest mb-1">
+            <div className="font-mono text-xs text-red-400/60 uppercase tracking-widest mb-1">
               At risk today · {data.critical} critical
             </div>
             <div className="font-mono text-3xl font-black text-red-400 leading-none">
@@ -149,7 +149,7 @@ export default function MobileTodayPage() {
               <div className="px-4 py-4 space-y-2">
                 {/* Badges row */}
                 <div className="flex items-center gap-2">
-                  <span className={`font-mono text-[10px] font-bold tracking-widest px-2 py-0.5 border ${
+                  <span className={`font-mono text-xs font-bold tracking-widest px-2 py-0.5 border ${
                     isCrit ? 'text-red-400 border-red-500/30 bg-red-500/10'
                     : isUrg ? 'text-amber-400 border-amber-500/30 bg-amber-500/10'
                     : 'text-[#64748B] border-[#1E3A5F] bg-[#1E3A5F]/30'
@@ -157,11 +157,11 @@ export default function MobileTodayPage() {
                     {item.priority}
                   </span>
                   {isClosed && (
-                    <span className="font-mono text-[10px] font-bold tracking-widest px-2 py-0.5 border text-red-300 border-red-500/30 bg-red-900/30">
+                    <span className="font-mono text-xs font-bold tracking-widest px-2 py-0.5 border text-red-300 border-red-500/30 bg-red-900/30">
                       CLOSED
                     </span>
                   )}
-                  <span className="font-mono text-[10px] text-[#1E3A5F] ml-auto">#{idx + 1}</span>
+                  <span className="font-mono text-xs text-[#1E3A5F] ml-auto">#{idx + 1}</span>
                 </div>
 
                 {/* Title */}
@@ -175,7 +175,7 @@ export default function MobileTodayPage() {
 
                 {/* Ref */}
                 {item.ref && (
-                  <p className="font-mono text-[10px] text-[#334155]">{item.ref}</p>
+                  <p className="font-mono text-xs text-[#334155]">{item.ref}</p>
                 )}
 
                 {/* KES at risk */}
@@ -227,7 +227,7 @@ export default function MobileTodayPage() {
         {/* Completed */}
         {doneCount > 0 && (
           <div className="space-y-1.5 pt-2">
-            <p className="font-mono text-[10px] text-[#1E3A5F] uppercase tracking-widest px-1">Completed today</p>
+            <p className="font-mono text-xs text-[#1E3A5F] uppercase tracking-widest px-1">Completed today</p>
             {items.filter(i => done.has(i.id)).map(item => (
               <div key={item.id} className="flex items-center gap-3 px-4 py-3 border border-[#1E3A5F]/30 opacity-40">
                 <CheckCircle2 size={13} className="text-[#00C896] flex-shrink-0" />

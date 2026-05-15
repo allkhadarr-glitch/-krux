@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useMemo } from 'react'
 import { Car, Calculator, AlertTriangle, Info, ChevronDown, ChevronUp } from 'lucide-react'
 
@@ -184,7 +184,7 @@ export default function MVCalculatorPage() {
                   className={INPUT + ' pl-6'}
                 />
               </div>
-              <p className="text-[10px] text-[#334155] mt-1">CIF = Cost + Insurance + Freight to Mombasa port</p>
+              <p className="text-xs text-[#334155] mt-1">CIF = Cost + Insurance + Freight to Mombasa port</p>
             </Field>
 
             <Field label="Vehicle Type">
@@ -193,12 +193,12 @@ export default function MVCalculatorPage() {
                   <option key={t.key} value={t.key}>{t.label}</option>
                 ))}
               </select>
-              <p className="text-[10px] text-[#334155] mt-1">{typeProfile.note}</p>
+              <p className="text-xs text-[#334155] mt-1">{typeProfile.note}</p>
             </Field>
 
             {typeProfile.excise && (
               <div className="bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3 py-2.5">
-                <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wide mb-2">Excise Duty by Engine Size</p>
+                <p className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-2">Excise Duty by Engine Size</p>
                 <div className="grid grid-cols-5 gap-1">
                   {EXCISE_BANDS.map(b => (
                     <div key={b.maxCC}
@@ -213,7 +213,7 @@ export default function MVCalculatorPage() {
                     </div>
                   ))}
                 </div>
-                <p className="text-[9px] text-[#334155] mt-2">Applied on: CIF + Import Duty. Finance Act 2023.</p>
+                <p className="text-xs text-[#334155] mt-2">Applied on: CIF + Import Duty. Finance Act 2023.</p>
               </div>
             )}
           </div>
@@ -226,7 +226,7 @@ export default function MVCalculatorPage() {
                 <button key={`${p.make}-${p.model}`} onClick={() => loadPreset(p)}
                   className="text-left px-3 py-2 rounded-lg border border-[#1E3A5F] hover:border-[#00C896]/30 hover:bg-[#00C896]/5 transition-all group">
                   <div className="text-xs font-semibold text-white group-hover:text-[#00C896]">{p.make} {p.model}</div>
-                  <div className="text-[10px] text-[#64748B]">{p.year} · {p.cc}cc · ${fmt(p.cif)}</div>
+                  <div className="text-xs text-[#64748B]">{p.year} · {p.cc}cc · ${fmt(p.cif)}</div>
                 </button>
               ))}
             </div>
@@ -242,7 +242,7 @@ export default function MVCalculatorPage() {
                 <p className="text-xs font-bold text-[#64748B] uppercase tracking-wide mb-1">Total Landed Cost</p>
                 <div className="text-3xl font-black text-[#00C896] tabular-nums">{fmtKES(calc.totalKES)}</div>
                 <div className="text-sm text-[#64748B] mt-1">{fmtUSD(calc.totalUSD)}</div>
-                <div className="text-[10px] text-[#334155] mt-1">@ KES {kesRate.toFixed(1)}/USD · {make || 'Vehicle'} {model} {makeYear}</div>
+                <div className="text-xs text-[#334155] mt-1">@ KES {kesRate.toFixed(1)}/USD · {make || 'Vehicle'} {model} {makeYear}</div>
 
                 {/* Tax ratio bar */}
                 <div className="mt-4">
@@ -263,7 +263,7 @@ export default function MVCalculatorPage() {
                     ].map(({ color, label }) => (
                       <div key={label} className="flex items-center gap-1">
                         <div className={`w-2 h-2 rounded-full ${color}`} />
-                        <span className="text-[9px] text-[#64748B]">{label}</span>
+                        <span className="text-xs text-[#64748B]">{label}</span>
                       </div>
                     ))}
                   </div>
@@ -314,7 +314,7 @@ export default function MVCalculatorPage() {
                     <Divider />
                     <Row label="Total Landed Cost" usd={calc.totalUSD} kes={calc.totalKES} accent="text-[#00C896]" bold />
                     <div className="pt-2">
-                      <p className="text-[10px] text-[#334155]">
+                      <p className="text-xs text-[#334155]">
                         Taxes as % of landed cost: <span className="text-amber-400 font-semibold">{Math.round(calc.dutyRatioOfTotal * 100)}%</span>
                       </p>
                     </div>
@@ -325,7 +325,7 @@ export default function MVCalculatorPage() {
               {/* KRA CRSP note */}
               <div className="flex items-start gap-2.5 bg-[#0F2040] border border-[#1E3A5F] rounded-xl px-4 py-3">
                 <Info size={13} className="text-[#64748B] flex-shrink-0 mt-0.5" />
-                <div className="text-[11px] text-[#64748B] leading-relaxed space-y-1">
+                <div className="text-xs text-[#64748B] leading-relaxed space-y-1">
                   <p><span className="text-[#94A3B8] font-semibold">KRA CRSP:</span> Kenya Revenue Authority uses a Current Retail Selling Price database as the minimum customs value. If your invoice CIF is below CRSP, KRA will uplift to CRSP — increasing all duty calculations above.</p>
                   <p><span className="text-[#94A3B8] font-semibold">Age limit:</span> Imported vehicles must be manufactured within 8 years of import. Left-hand drive vehicles cannot be registered in Kenya.</p>
                   <p><span className="text-[#94A3B8] font-semibold">Rates:</span> Finance Act 2023. Verify against current KRA tariff schedule before filing.</p>
@@ -352,7 +352,7 @@ const INPUT = 'w-full bg-[#0A1628] border border-[#1E3A5F] rounded-lg px-3 py-2 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-[10px] font-semibold text-[#64748B] uppercase tracking-wide mb-1">{label}</label>
+      <label className="block text-xs font-semibold text-[#64748B] uppercase tracking-wide mb-1">{label}</label>
       {children}
     </div>
   )
@@ -366,13 +366,13 @@ function Row({ label, usd, kes, accent, bold, sublabel }: {
     <div className={`flex items-center justify-between py-2 ${bold ? 'border-t border-[#1E3A5F] pt-3 mt-1' : ''}`}>
       <div>
         <span className={`text-xs ${bold ? 'font-bold' : 'font-medium'} ${accent ?? 'text-[#94A3B8]'}`}>{label}</span>
-        {sublabel && <div className="text-[9px] text-[#334155]">{sublabel}</div>}
+        {sublabel && <div className="text-xs text-[#334155]">{sublabel}</div>}
       </div>
       <div className="text-right">
         <div className={`text-xs tabular-nums ${bold ? 'font-bold' : 'font-medium'} ${accent ?? 'text-[#94A3B8]'}`}>
           {fmtKES(kes)}
         </div>
-        <div className="text-[9px] text-[#334155] tabular-nums">{fmtUSD(usd)}</div>
+        <div className="text-xs text-[#334155] tabular-nums">{fmtUSD(usd)}</div>
       </div>
     </div>
   )

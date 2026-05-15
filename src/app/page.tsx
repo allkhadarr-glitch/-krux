@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { ArrowRight, CheckCircle2 } from 'lucide-react'
@@ -78,7 +78,21 @@ function WindowChecker() {
       await fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: captureEmail.trim(), company: result?.regulator ?? '', role: 'window_check' }),
+        body: JSON.stringify({
+          email: captureEmail.trim(),
+          company: result?.regulator ?? '',
+          role: 'window_check',
+          lead_context: result ? {
+            result_status:  result.status,
+            regulator:      result.regulator,
+            regulator_name: result.regulator_name,
+            sla_days:       result.sla_days,
+            days_remaining: result.days_remaining,
+            days_short:     result.days_short,
+            buffer_days:    result.buffer_days,
+            kes_exposure:   result.kes_exposure,
+          } : null,
+        }),
       })
       setCaptureSent(true)
     } catch {}
@@ -133,18 +147,18 @@ function WindowChecker() {
           <div className="w-2 h-2 rounded-full bg-[#1E3A5F]" />
           <div className="w-2 h-2 rounded-full bg-[#1E3A5F]" />
         </div>
-        <span className="text-[10px] text-[#334155] ml-2 font-mono tracking-widest">KRUX · WINDOW QUERY</span>
+        <span className="text-xs text-[#64748B] ml-2 font-mono tracking-widest">KRUX · WINDOW QUERY</span>
         <div className="ml-auto flex items-center gap-1.5">
           <div className="w-1.5 h-1.5 rounded-full bg-[#00C896] animate-pulse" />
-          <span className="text-[10px] text-[#00C896] font-mono">LIVE</span>
+          <span className="text-xs text-[#00C896] font-mono">LIVE</span>
         </div>
       </div>
 
       <div className="p-5 space-y-4">
-        <p className="text-[10px] text-[#334155] font-mono tracking-widest uppercase">No account needed</p>
+        <p className="text-xs text-[#334155] font-mono tracking-widest uppercase">No account needed</p>
 
         <div className="space-y-2 pb-1">
-          <p className="text-[10px] text-[#334155] font-mono tracking-widest uppercase">Try an example</p>
+          <p className="text-xs text-[#334155] font-mono tracking-widest uppercase">Try an example</p>
           <div className="flex gap-2 flex-wrap">
             {EXAMPLES.map(ex => (
               <button
@@ -152,7 +166,7 @@ function WindowChecker() {
                 type="button"
                 onClick={() => tryExample(ex)}
                 disabled={loading}
-                className="px-3 py-1.5 border border-[#1E3A5F] text-[10px] font-mono text-[#64748B] hover:border-[#00C896]/40 hover:text-[#94A3B8] transition-all disabled:opacity-40 tracking-wide"
+                className="px-3 py-1.5 border border-[#1E3A5F] text-xs font-mono text-[#64748B] hover:border-[#00C896]/40 hover:text-[#94A3B8] transition-all disabled:opacity-40 tracking-wide"
               >
                 {ex.label}
               </button>
@@ -162,7 +176,7 @@ function WindowChecker() {
 
         <div className="space-y-3">
           <div>
-            <label className="text-[10px] text-[#64748B] uppercase tracking-widest block mb-1.5 font-mono">Regulatory body</label>
+            <label className="text-xs text-[#64748B] uppercase tracking-widest block mb-1.5 font-mono">Regulatory body</label>
             <select
               value={regulator}
               onChange={e => { setRegulator(e.target.value); setResult(null) }}
@@ -176,7 +190,7 @@ function WindowChecker() {
           </div>
 
           <div>
-            <label className="text-[10px] text-[#64748B] uppercase tracking-widest block mb-1.5 font-mono">Expected arrival date</label>
+            <label className="text-xs text-[#64748B] uppercase tracking-widest block mb-1.5 font-mono">Expected arrival date</label>
             <input
               type="date"
               value={eta}
@@ -225,7 +239,7 @@ function WindowChecker() {
                 ].map(s => (
                   <div key={s.label} className="bg-[#0A1628]/60 p-3 text-center">
                     <div className={`text-2xl font-black ${s.color} font-mono leading-none`}>{s.value}</div>
-                    <div className="text-[10px] text-[#64748B] uppercase tracking-wider mt-1 font-mono">{s.label}</div>
+                    <div className="text-xs text-[#64748B] uppercase tracking-wider mt-1 font-mono">{s.label}</div>
                   </div>
                 ))}
               </div>
@@ -234,14 +248,14 @@ function WindowChecker() {
 
               {result.status === 'IMPOSSIBLE' && (
                 <div className="border border-red-500/20 bg-red-500/5 p-3 space-y-1.5">
-                  <p className="font-mono text-[10px] text-red-400/70 uppercase tracking-widest">What to do now</p>
+                  <p className="font-mono text-xs text-red-400/70 uppercase tracking-widest">What to do now</p>
                   {[
                     'Contact your clearing agent — do not wait for the vessel',
                     'Request expedited track directly from the regulatory body',
                     'Calculate daily storage cost — your exposure grows until cleared',
                   ].map((step, i) => (
                     <div key={i} className="flex items-start gap-2">
-                      <span className="font-mono text-[10px] text-red-400/50 font-bold flex-shrink-0 mt-0.5">{i + 1}.</span>
+                      <span className="font-mono text-xs text-red-400/50 font-bold flex-shrink-0 mt-0.5">{i + 1}.</span>
                       <span className="font-mono text-xs text-[#94A3B8]">{step}</span>
                     </div>
                   ))}
@@ -258,7 +272,7 @@ function WindowChecker() {
                 {(result.status === 'IMPOSSIBLE' || result.status === 'TIGHT') && (
                   <div className="border border-[#1E3A5F] bg-[#0A1628]/60 p-3">
                     {captureSent ? (
-                      <p className="font-mono text-[10px] text-[#00C896] text-center tracking-widest">✓ We&#39;ll send you deadline alerts</p>
+                      <p className="font-mono text-xs text-[#00C896] text-center tracking-widest">✓ We&#39;ll send you deadline alerts</p>
                     ) : (
                       <div className="flex gap-2">
                         <input
@@ -272,7 +286,7 @@ function WindowChecker() {
                         <button
                           onClick={submitCapture}
                           disabled={!captureEmail.trim() || captureLoading}
-                          className="px-3 py-2 bg-[#1E3A5F] text-[#94A3B8] text-[10px] font-mono font-bold tracking-widest uppercase hover:bg-[#2E4A6F] hover:text-white transition-colors disabled:opacity-40 flex-shrink-0"
+                          className="px-3 py-2 bg-[#1E3A5F] text-[#94A3B8] text-xs font-mono font-bold tracking-widest uppercase hover:bg-[#2E4A6F] hover:text-white transition-colors disabled:opacity-40 flex-shrink-0"
                         >
                           {captureLoading ? '...' : 'Alert me'}
                         </button>
@@ -324,7 +338,7 @@ function NetworkPulse() {
         ].map(s => (
           <div key={s.label} className="px-4 py-3 text-center">
             <div className="font-mono text-2xl font-black text-white">{s.value}</div>
-            <div className="font-mono text-xs text-[#334155] uppercase tracking-widest mt-0.5">{s.label}</div>
+            <div className="font-mono text-xs text-[#64748B] uppercase tracking-widest mt-0.5">{s.label}</div>
           </div>
         ))}
       </div>
@@ -343,25 +357,25 @@ export default function Home() {
             <span className="text-[#0A1628] font-black text-xs">K</span>
           </div>
           <span className="font-mono font-bold text-sm tracking-widest">KRUX</span>
-          <span className="font-mono text-[10px] text-[#1E3A5F] ml-1 hidden sm:block">· KE</span>
+          <span className="font-mono text-xs text-[#1E3A5F] ml-1 hidden sm:block">· KE</span>
         </div>
-        <div className="flex items-center gap-4">
-          <Link href="/network" className="font-mono text-xs text-[#334155] hover:text-[#64748B] transition-colors hidden sm:block tracking-wider">
+        <div className="flex items-center gap-5">
+          <Link href="/network" className="font-mono text-sm text-[#64748B] hover:text-[#94A3B8] transition-colors hidden sm:block tracking-wider">
             Network
           </Link>
-          <Link href="/services" className="font-mono text-xs text-[#334155] hover:text-[#64748B] transition-colors hidden lg:block tracking-wider">
+          <Link href="/services" className="font-mono text-sm text-[#64748B] hover:text-[#94A3B8] transition-colors hidden lg:block tracking-wider">
             Services
           </Link>
-          <Link href="/enterprise" className="font-mono text-xs text-[#334155] hover:text-[#64748B] transition-colors hidden lg:block tracking-wider">
+          <Link href="/enterprise" className="font-mono text-sm text-[#64748B] hover:text-[#94A3B8] transition-colors hidden lg:block tracking-wider">
             Enterprise
           </Link>
-          <Link href="/partners" className="font-mono text-xs text-[#334155] hover:text-[#64748B] transition-colors hidden lg:block tracking-wider">
+          <Link href="/partners" className="font-mono text-sm text-[#64748B] hover:text-[#94A3B8] transition-colors hidden lg:block tracking-wider">
             Partners
           </Link>
-          <Link href="/login" className="font-mono text-xs text-[#334155] hover:text-[#64748B] transition-colors hidden sm:block tracking-wider">
+          <Link href="/login" className="font-mono text-sm text-[#64748B] hover:text-[#94A3B8] transition-colors hidden sm:block tracking-wider">
             Sign in
           </Link>
-          <a href="/signup" className="font-mono text-xs bg-[#00C896] text-[#0A1628] px-4 py-2 font-bold tracking-widest uppercase hover:bg-[#00C896]/90 transition-colors">
+          <a href="/signup" className="font-mono text-sm bg-[#00C896] text-[#0A1628] px-4 py-2 font-bold tracking-widest uppercase hover:bg-[#00C896]/90 transition-colors">
             Apply for KTIN
           </a>
         </div>
@@ -374,18 +388,18 @@ export default function Home() {
           {/* Left — order-2 on mobile so checker appears first */}
           <div className="space-y-10 order-2 lg:order-1">
             <div className="space-y-6">
-              <p className="font-mono text-xs text-[#334155] tracking-widest uppercase">Kenya Import Compliance</p>
+              <p className="font-mono text-xs text-[#64748B] tracking-widest uppercase">Kenya Import Intelligence</p>
               <h1 className="font-mono font-black text-[clamp(3.2rem,8vw,6rem)] leading-[0.95] tracking-tight">
                 The window<br/>closes before<br/>your goods<br/>leave origin.
               </h1>
               <p className="font-mono text-lg text-[#64748B] leading-relaxed max-w-sm">
-                Every Kenya import has a regulatory window. Each body has its own processing timeline. Miss it and goods sit at the port of entry. KRUX calculates your window before goods ship — not when the container arrives.
+                Every Kenya import has a regulatory window. Miss it and goods sit at port. KRUX calculates your window before goods ship — and issues a permanent trade identity that follows every clearance you make.
               </p>
             </div>
 
             {/* Regulator scope grid */}
             <div className="space-y-2">
-              <p className="font-mono text-xs text-[#1E3A5F] tracking-widest uppercase mb-4">All 9 regulatory bodies · Kenya live</p>
+              <p className="font-mono text-xs text-[#64748B] tracking-widest uppercase mb-4">All 9 regulatory bodies · Kenya live</p>
               <div className="grid grid-cols-1 gap-2">
                 {REGULATOR_SCOPE.map(r => (
                   <div key={r.code} className="flex items-center gap-4">
@@ -415,12 +429,107 @@ export default function Home() {
         </div>
       </section>
 
+      {/* KTIN */}
+      <section className="border-t border-[#1E3A5F]/60 bg-[#060E1A]">
+        <div className="max-w-6xl mx-auto px-6 sm:px-10 py-20">
+          <div className="grid md:grid-cols-2 gap-16 items-center">
+
+            <div className="space-y-6">
+              <p className="font-mono text-xs text-[#64748B] tracking-widest uppercase">KTIN — KRUX Trade Identity Number</p>
+              <h2 className="font-mono font-black text-4xl sm:text-5xl text-white leading-tight">
+                Your compliance record.<br/>Permanent. Numbered.
+              </h2>
+              <p className="font-mono text-lg text-[#64748B] leading-relaxed">
+                KRUX issues every importer, clearing agent, and manufacturer a permanent trade identity number. One number, tied to every clearance you run. Banks reference it. Regulators recognize it. Partners trust it.
+              </p>
+              <div className="space-y-3">
+                {[
+                  'Issued on registration — permanent and numbered',
+                  'Tier computed from your actual clearance history — not self-reported',
+                  'Public verification page you can share with banks and partners',
+                ].map(f => (
+                  <div key={f} className="flex items-start gap-3">
+                    <CheckCircle2 size={15} className="text-[#00C896] flex-shrink-0 mt-0.5" />
+                    <span className="font-mono text-base text-[#64748B]">{f}</span>
+                  </div>
+                ))}
+              </div>
+              <a href="/signup" className="inline-flex items-center gap-2 font-mono text-sm text-[#00C896] font-bold tracking-widest uppercase hover:text-[#00C896]/70 transition-colors">
+                Apply for your KTIN <ArrowRight size={13} />
+              </a>
+            </div>
+
+            {/* Sample card — KTIN number dominates */}
+            <div className="border border-yellow-400/20 bg-yellow-400/5 p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs text-[#64748B] tracking-widest uppercase">Founding operator · Kenya</span>
+                <span className="font-mono text-sm text-yellow-400 font-bold tracking-widest border border-yellow-400/30 px-3 py-1">GOLD</span>
+              </div>
+              <div className="font-mono font-black text-3xl sm:text-4xl text-white tracking-wider leading-none">
+                KRUX-IMP-<br className="sm:hidden"/>KE-00047
+              </div>
+              <div className="grid grid-cols-3 gap-4 pt-2">
+                {[
+                  { label: 'Issued',    value: '01 May 2026', color: 'text-[#64748B]' },
+                  { label: 'Shipments', value: '47 cleared',  color: 'text-[#64748B]' },
+                  { label: 'On-time',   value: '87%',         color: 'text-yellow-400' },
+                ].map(f => (
+                  <div key={f.label}>
+                    <div className="font-mono text-xs text-[#334155] uppercase tracking-wider mb-1">{f.label}</div>
+                    <div className={`font-mono text-sm font-bold ${f.color}`}>{f.value}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="border-t border-yellow-400/10 pt-5">
+                <span className="font-mono text-xs text-[#334155] tracking-wide select-all">
+                  kruxvon.com/verify/KRUX-IMP-KE-00047
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Operators */}
+      <section className="border-t border-[#1E3A5F]/60">
+        <div className="max-w-6xl mx-auto px-6 sm:px-10 py-20">
+          <p className="font-mono text-xs text-[#64748B] tracking-widest uppercase mb-10">Who operates on the network</p>
+          <div className="grid md:grid-cols-3 gap-px bg-[#1E3A5F]/30">
+            {[
+              {
+                type: 'Clearing Agents',
+                ktin: 'KRUX-AGT-KE-XXXXX',
+                desc: 'Every client\'s shipments from one terminal. Compliance intelligence becomes a service you bill for.',
+              },
+              {
+                type: 'Importers',
+                ktin: 'KRUX-IMP-KE-XXXXX',
+                desc: 'Know your window before goods leave origin. Your KTIN follows your compliance record permanently.',
+              },
+              {
+                type: 'Manufacturers',
+                ktin: 'KRUX-MFG-KE-XXXXX',
+                desc: 'Import raw materials with full regulatory intelligence. Supplier licenses and audit schedules tracked.',
+              },
+            ].map(op => (
+              <div key={op.type} className="bg-[#0A1628] p-8 space-y-3">
+                <div>
+                  <p className="font-mono text-lg font-bold text-white">{op.type}</p>
+                  <p className="font-mono text-xs text-[#1E3A5F] mt-1">{op.ktin}</p>
+                </div>
+                <p className="font-mono text-base text-[#64748B] leading-relaxed">{op.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Without / With */}
       <section className="border-t border-[#1E3A5F]/60 bg-[#060E1A]">
         <div className="max-w-6xl mx-auto px-6 sm:px-10 py-16">
           <div className="grid md:grid-cols-2 gap-px bg-[#1E3A5F]/30">
             <div className="bg-[#060E1A] p-10 space-y-6">
-              <p className="font-mono text-xs text-[#334155] tracking-widest uppercase">Without KRUX</p>
+              <p className="font-mono text-xs text-[#64748B] tracking-widest uppercase">Without KRUX</p>
               <div className="space-y-4">
                 {[
                   'Finding out about a missed deadline from a demurrage invoice at the port',
@@ -462,7 +571,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-6 sm:px-10 py-16">
           <div className="grid lg:grid-cols-2 gap-16 items-start">
             <div className="space-y-6 order-2 lg:order-1">
-              <p className="font-mono text-xs text-[#334155] tracking-widest uppercase">What you see every morning</p>
+              <p className="font-mono text-xs text-[#64748B] tracking-widest uppercase">What you see every morning</p>
               <h2 className="font-mono font-black text-4xl sm:text-5xl text-white leading-tight">
                 Your hit list.<br/>Sorted by<br/>what it costs.
               </h2>
@@ -479,7 +588,7 @@ export default function Home() {
                   <div className="w-1.5 h-1.5 rounded-full bg-[#00C896] animate-pulse" />
                   <span className="font-mono text-xs text-[#00C896] tracking-widest">TODAY&#39;S HIT LIST</span>
                 </div>
-                <span className="font-mono text-[10px] text-[#334155]">3 critical</span>
+                <span className="font-mono text-xs text-[#334155]">3 critical</span>
               </div>
               <div className="divide-y divide-[#1E3A5F]/40">
                 {[
@@ -505,20 +614,20 @@ export default function Home() {
                   <div key={item.rank} className={`p-4 border-l-2 ${item.border} space-y-2`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-[10px] text-[#334155]">#{item.rank}</span>
-                        <span className={`font-mono text-[10px] font-bold tracking-widest ${item.priority === 'CRITICAL' ? 'text-red-400' : 'text-amber-400'}`}>{item.priority}</span>
-                        <span className={`font-mono text-[10px] ${item.statusColor}`}>{item.status}</span>
+                        <span className="font-mono text-xs text-[#334155]">#{item.rank}</span>
+                        <span className={`font-mono text-xs font-bold tracking-widest ${item.priority === 'CRITICAL' ? 'text-red-400' : 'text-amber-400'}`}>{item.priority}</span>
+                        <span className={`font-mono text-xs ${item.statusColor}`}>{item.status}</span>
                       </div>
                       <span className="font-mono text-xs font-bold text-white">{item.kes}</span>
                     </div>
                     <p className="font-mono text-sm font-bold text-white">{item.name}</p>
                     <p className="font-mono text-xs text-[#64748B]">{item.detail}</p>
-                    <p className="font-mono text-[10px] text-[#00C896]">→ {item.action}</p>
+                    <p className="font-mono text-xs text-[#00C896]">→ {item.action}</p>
                   </div>
                 ))}
               </div>
               <div className="px-5 py-3 bg-[#060E1A] border-t border-[#1E3A5F] flex items-center justify-between">
-                <span className="font-mono text-[10px] text-[#334155]">0 / 3 done today</span>
+                <span className="font-mono text-xs text-[#334155]">0 / 3 done today</span>
                 <span className="font-mono text-xs font-bold text-red-400">KES 255,320 at risk</span>
               </div>
             </div>
@@ -529,7 +638,7 @@ export default function Home() {
       {/* How it works */}
       <section className="border-t border-[#1E3A5F]/60">
         <div className="max-w-6xl mx-auto px-6 sm:px-10 py-16">
-          <p className="font-mono text-xs text-[#334155] tracking-widest uppercase mb-10">How it works</p>
+          <p className="font-mono text-xs text-[#64748B] tracking-widest uppercase mb-10">How it works</p>
           <div className="grid md:grid-cols-3 gap-px bg-[#1E3A5F]/30">
             {[
               {
@@ -552,101 +661,6 @@ export default function Home() {
                 <span className="font-mono text-xs text-[#1E3A5F] font-bold tracking-widest">{s.step}</span>
                 <h3 className="font-mono text-lg font-bold text-white">{s.title}</h3>
                 <p className="font-mono text-base text-[#64748B] leading-relaxed">{s.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* KTIN */}
-      <section className="border-t border-[#1E3A5F]/60 bg-[#060E1A]">
-        <div className="max-w-6xl mx-auto px-6 sm:px-10 py-20">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-
-            <div className="space-y-6">
-              <p className="font-mono text-xs text-[#334155] tracking-widest uppercase">KTIN — KRUX Trade Identity Number</p>
-              <h2 className="font-mono font-black text-4xl sm:text-5xl text-white leading-tight">
-                Your compliance record.<br/>Permanent. Numbered.
-              </h2>
-              <p className="font-mono text-lg text-[#64748B] leading-relaxed">
-                Every registered operator gets a KTIN. One number, issued once, tied to your actual clearance record across every shipment you have ever run. Banks can reference it. Clients can verify it.
-              </p>
-              <div className="space-y-3">
-                {[
-                  'Issued on registration — permanent and numbered',
-                  'Tier computed from your actual clearance history — not self-reported',
-                  'Public verification page you can share with banks and partners',
-                ].map(f => (
-                  <div key={f} className="flex items-start gap-3">
-                    <CheckCircle2 size={15} className="text-[#00C896] flex-shrink-0 mt-0.5" />
-                    <span className="font-mono text-base text-[#64748B]">{f}</span>
-                  </div>
-                ))}
-              </div>
-              <a href="/signup" className="inline-flex items-center gap-2 font-mono text-sm text-[#00C896] font-bold tracking-widest uppercase hover:text-[#00C896]/70 transition-colors">
-                Apply for your KTIN <ArrowRight size={13} />
-              </a>
-            </div>
-
-            {/* Sample card — KTIN number dominates */}
-            <div className="border border-yellow-400/20 bg-yellow-400/5 p-8 space-y-6">
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-xs text-[#334155] tracking-widest uppercase">Founding operator · Kenya</span>
-                <span className="font-mono text-sm text-yellow-400 font-bold tracking-widest border border-yellow-400/30 px-3 py-1">GOLD</span>
-              </div>
-              <div className="font-mono font-black text-3xl sm:text-4xl text-white tracking-wider leading-none">
-                KRUX-IMP-<br className="sm:hidden"/>KE-00047
-              </div>
-              <div className="grid grid-cols-3 gap-4 pt-2">
-                {[
-                  { label: 'Issued',    value: '01 May 2026', color: 'text-[#64748B]' },
-                  { label: 'Shipments', value: '47 cleared',  color: 'text-[#64748B]' },
-                  { label: 'On-time',   value: '87%',         color: 'text-yellow-400' },
-                ].map(f => (
-                  <div key={f.label}>
-                    <div className="font-mono text-xs text-[#334155] uppercase tracking-wider mb-1">{f.label}</div>
-                    <div className={`font-mono text-sm font-bold ${f.color}`}>{f.value}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t border-yellow-400/10 pt-5">
-                <span className="font-mono text-xs text-[#334155] tracking-wide select-all">
-                  kruxvon.com/verify/KRUX-IMP-KE-00047
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Operators */}
-      <section className="border-t border-[#1E3A5F]/60">
-        <div className="max-w-6xl mx-auto px-6 sm:px-10 py-20">
-          <p className="font-mono text-xs text-[#334155] tracking-widest uppercase mb-10">Who operates on the network</p>
-          <div className="grid md:grid-cols-3 gap-px bg-[#1E3A5F]/30">
-            {[
-              {
-                type: 'Clearing Agents',
-                ktin: 'KRUX-AGT-KE-XXXXX',
-                desc: 'Every client\'s shipments from one terminal. Compliance intelligence becomes a service you bill for.',
-              },
-              {
-                type: 'Importers',
-                ktin: 'KRUX-IMP-KE-XXXXX',
-                desc: 'Know your window before goods leave origin. Your KTIN follows your compliance record permanently.',
-              },
-              {
-                type: 'Manufacturers',
-                ktin: 'KRUX-MFG-KE-XXXXX',
-                desc: 'Import raw materials with full regulatory intelligence. Supplier licenses and audit schedules tracked.',
-              },
-            ].map(op => (
-              <div key={op.type} className="bg-[#0A1628] p-8 space-y-3">
-                <div>
-                  <p className="font-mono text-lg font-bold text-white">{op.type}</p>
-                  <p className="font-mono text-xs text-[#1E3A5F] mt-1">{op.ktin}</p>
-                </div>
-                <p className="font-mono text-base text-[#64748B] leading-relaxed">{op.desc}</p>
               </div>
             ))}
           </div>
@@ -683,11 +697,11 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-[#1E3A5F]/60 px-6 sm:px-10 py-6">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <span className="font-mono text-xs text-[#1E3A5F]">KRUX · KRUXVON Ltd · Kenya</span>
+          <span className="font-mono text-xs text-[#475569]">KRUX · KRUXVON Ltd · Kenya</span>
           <div className="flex items-center gap-5">
-            <Link href="/terms"   className="font-mono text-xs text-[#1E3A5F] hover:text-[#334155] transition-colors">Terms</Link>
-            <Link href="/privacy" className="font-mono text-xs text-[#1E3A5F] hover:text-[#334155] transition-colors">Privacy</Link>
-            <a href="mailto:hq@kruxvon.com" className="font-mono text-xs text-[#1E3A5F] hover:text-[#334155] transition-colors">hq@kruxvon.com</a>
+            <Link href="/terms"   className="font-mono text-xs text-[#475569] hover:text-[#64748B] transition-colors">Terms</Link>
+            <Link href="/privacy" className="font-mono text-xs text-[#475569] hover:text-[#64748B] transition-colors">Privacy</Link>
+            <a href="mailto:hq@kruxvon.com" className="font-mono text-xs text-[#475569] hover:text-[#64748B] transition-colors">hq@kruxvon.com</a>
           </div>
         </div>
       </footer>

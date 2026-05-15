@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { TrendingUp, AlertTriangle, CheckCircle2, Clock, DollarSign, Loader2, BarChart3 } from 'lucide-react'
 
@@ -25,7 +25,7 @@ const COST_LABELS: Record<string, string> = {
 function Stat({ label, value, sub, color = 'text-white' }: { label: string; value: string; sub?: string; color?: string }) {
   return (
     <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-4">
-      <p className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wide mb-2">{label}</p>
+      <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wide mb-2">{label}</p>
       <p className={`text-2xl font-bold ${color}`}>{value}</p>
       {sub && <p className="text-xs text-[#64748B] mt-1">{sub}</p>}
     </div>

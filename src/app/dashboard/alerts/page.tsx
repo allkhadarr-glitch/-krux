@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect, useCallback } from 'react'
 import {
   Bell, AlertTriangle, CheckCircle2, Info, X, CheckCheck,
@@ -162,7 +162,7 @@ export default function AlertsPage() {
           >
             {f.label}
             {f.count !== undefined && f.count > 0 && (
-              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+              <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${
                 f.key === 'unread' && f.count > 0
                   ? 'bg-red-500/20 text-red-400'
                   : 'bg-[#0A1628] text-[#64748B]'
@@ -211,7 +211,7 @@ export default function AlertsPage() {
                     <div className="flex items-start gap-2 mb-1">
                       <span className="text-sm font-semibold text-white flex-1">{n.title}</span>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="text-[11px] text-[#475569]">{timeAgo(n.created_at)}</span>
+                        <span className="text-xs text-[#475569]">{timeAgo(n.created_at)}</span>
                         {n.action_url && (
                           <a
                             href={n.action_url}
@@ -235,7 +235,7 @@ export default function AlertsPage() {
                       <div className="flex gap-2 mt-2 flex-wrap">
                         {Object.entries(n.metadata).slice(0, 4).map(([k, v]) =>
                           v && typeof v !== 'object' ? (
-                            <span key={k} className="text-[10px] bg-[#0A1628] border border-[#1E3A5F] rounded px-2 py-0.5 text-[#475569]">
+                            <span key={k} className="text-xs bg-[#0A1628] border border-[#1E3A5F] rounded px-2 py-0.5 text-[#475569]">
                               {k.replace(/_/g, ' ')}: <span className="text-[#64748B]">{String(v)}</span>
                             </span>
                           ) : null

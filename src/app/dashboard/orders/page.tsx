@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { PurchaseOrder, POMilestone, RiskFlag } from '@/lib/types'
 import { formatUSD, formatDate } from '@/lib/utils'
@@ -49,7 +49,7 @@ function MilestoneRow({
         <p className={`text-xs font-medium truncate ${milestone.is_completed ? 'text-[#64748B] line-through' : 'text-white'}`}>
           {milestone.name}
         </p>
-        <p className={`text-[10px] mt-0.5 ${overdue ? 'text-red-400' : 'text-[#64748B]'}`}>
+        <p className={`text-xs mt-0.5 ${overdue ? 'text-red-400' : 'text-[#64748B]'}`}>
           {overdue
             ? `${Math.abs(daysLeft)}d overdue`
             : milestone.is_completed
@@ -58,7 +58,7 @@ function MilestoneRow({
         </p>
       </div>
       {milestone.triggers_payment && milestone.payment_amount_usd && (
-        <span className="text-[10px] text-[#00C896] font-semibold shrink-0">
+        <span className="text-xs text-[#00C896] font-semibold shrink-0">
           {formatUSD(milestone.payment_amount_usd)}
         </span>
       )}
@@ -69,7 +69,7 @@ function MilestoneRow({
 // ─── Milestone progress bar ───────────────────────────────────
 
 function MilestoneBar({ milestones }: { milestones: POMilestone[] }) {
-  if (!milestones.length) return <span className="text-[10px] text-[#64748B]">No milestones</span>
+  if (!milestones.length) return <span className="text-xs text-[#64748B]">No milestones</span>
   const done = milestones.filter((m) => m.is_completed).length
   const pct  = Math.round((done / milestones.length) * 100)
   return (
@@ -77,7 +77,7 @@ function MilestoneBar({ milestones }: { milestones: POMilestone[] }) {
       <div className="flex-1 h-1.5 bg-[#0A1628] rounded-full overflow-hidden">
         <div className="h-full bg-[#00C896] rounded-full transition-all" style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-[10px] text-[#64748B] shrink-0">{done}/{milestones.length}</span>
+      <span className="text-xs text-[#64748B] shrink-0">{done}/{milestones.length}</span>
     </div>
   )
 }
@@ -107,27 +107,27 @@ function POCard({
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[po.status] ?? ''}`}>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[po.status] ?? ''}`}>
                 {po.status.replace('_', ' ')}
               </span>
               {overdue > 0 && (
-                <span className="flex items-center gap-1 text-[10px] text-red-400 font-semibold">
+                <span className="flex items-center gap-1 text-xs text-red-400 font-semibold">
                   <AlertTriangle size={10} />
                   {overdue} overdue
                 </span>
               )}
               {po.has_penalty_clause && (
-                <span className="text-[10px] text-amber-400">⚡ Penalty clause</span>
+                <span className="text-xs text-amber-400">⚡ Penalty clause</span>
               )}
             </div>
             <p className="text-sm font-semibold text-white truncate">{po.product_name}</p>
-            <p className="text-[11px] text-[#64748B] mt-0.5">
+            <p className="text-xs text-[#64748B] mt-0.5">
               {po.po_number} · {po.manufacturer?.company_name ?? '—'}
             </p>
           </div>
           <div className="text-right shrink-0">
             <p className="text-sm font-bold text-white">{formatUSD(po.po_value_usd)}</p>
-            <p className="text-[10px] text-[#64748B]">{advancePct}% advance</p>
+            <p className="text-xs text-[#64748B]">{advancePct}% advance</p>
             {expanded ? <ChevronDown size={14} className="text-[#64748B] ml-auto mt-1" /> : <ChevronRight size={14} className="text-[#64748B] ml-auto mt-1" />}
           </div>
         </div>
@@ -135,17 +135,17 @@ function POCard({
         {/* Advance progress */}
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div>
-            <p className="text-[10px] text-[#64748B] mb-1">Advance paid</p>
+            <p className="text-xs text-[#64748B] mb-1">Advance paid</p>
             <div className="h-1.5 bg-[#0A1628] rounded-full overflow-hidden">
               <div className="h-full bg-amber-500 rounded-full" style={{ width: `${advancePct}%` }} />
             </div>
-            <p className="text-[10px] text-amber-400 mt-0.5">{formatUSD(advancePaid)} at risk</p>
+            <p className="text-xs text-amber-400 mt-0.5">{formatUSD(advancePaid)} at risk</p>
           </div>
           <div>
-            <p className="text-[10px] text-[#64748B] mb-1">Milestones</p>
+            <p className="text-xs text-[#64748B] mb-1">Milestones</p>
             <MilestoneBar milestones={milestones} />
             {po.expected_delivery_date && (
-              <p className="text-[10px] text-[#64748B] mt-0.5">ETA {formatDate(po.expected_delivery_date)}</p>
+              <p className="text-xs text-[#64748B] mt-0.5">ETA {formatDate(po.expected_delivery_date)}</p>
             )}
           </div>
         </div>

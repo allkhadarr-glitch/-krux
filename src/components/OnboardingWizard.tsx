@@ -35,12 +35,11 @@ export function OnboardingWizard({ onDismiss }: { onDismiss: () => void }) {
   const isLast = step === STEPS.length - 1
 
   function next() {
-    if (isLast) {
+    if (isLast || current.href) {
       onDismiss()
       if (current.href) window.location.href = current.href
     } else {
-      if (current.href) window.location.href = current.href
-      else setStep((s) => s + 1)
+      setStep((s) => s + 1)
     }
   }
 
